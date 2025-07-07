@@ -1,0 +1,73 @@
+{% extends 'userpages/index.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="pc-container">
+    <div class="pc-content">
+      <div class="card-body">
+        <!-- Hiển thị thông báo lỗi nếu có -->
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {% comment %} <div class="text-end p-4 pb-0">
+          <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addbaucuModal">
+            <i class="ti ti-plus f-18"></i> Tạo Bầu Cử Mới
+          </a>
+        </div> {% endcomment %}
+        <div class="table-responsive">
+          <div class="datatable-wrapper datatable-loading no-footer searchable fixed-columns">
+            <div class="datatable-top">
+              <div class="datatable-dropdown"></div>
+              <div class="datatable-search d-flex gap-2">
+             <form class="px-3" method="get" action="{% url 'baucu_u' %}">
+                <div class="d-flex gap-2 align-items-stretch">
+                  <input id="searchInput" name="keyword" class="form-control search_data"
+                        placeholder="Tìm lịch bầu cử..." type="search"
+                        title="Search within table" aria-controls="pc-dt-simple"
+                        value="{% if keyword %}{{ keyword }}{% endif %}">
+                  <button type="submit" id="searchButton" class="btn btn-primary">Search</button>
+                </div>
+              </form>
+             </div>
+            
+                <div class="page-header">
+      <div class="page-block">
+        <div class="row align-items-center">
+          <div class="col-md-12">
+            <div class="page-header-title">
+              {% comment %} <h2 class="mb-0">Các cuộc bầu cử</h2> {% endcomment %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="row g-4">
+            {% for baucu in baucus %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ baucu.title }}</h5>
+                        <p class="card-text text-muted flex-grow-1">{{ baucu.description|truncatewords:25 }}</p>
+                        <ul class="list-unstyled text-muted small">
+                            <li><strong>Bắt đầu:</strong> {{ baucu.start_date|date:'H:i, d/m/Y' }}</li>
+                            <li><strong>Kết thúc:</strong> {{ baucu.end_date|date:'H:i, d/m/Y' }}</li>
+                        </ul>
+                        <a href="{% url 'chitiet_baucu' baucu.id %}" class="btn btn-primary mt-auto">Tham gia bỏ phiếu</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center p-5 bg-light rounded">
+                    <p class="h5">Không tìm thấy cuộc bầu cử nào.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    
+
+
+{% endblock %}

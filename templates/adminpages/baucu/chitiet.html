@@ -1,0 +1,170 @@
+{% extends 'adminpages/index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="pc-container">
+  <div class="pc-content">
+    <div class="card">
+      <div class="card-header">
+        <h3> {{ baucu.title }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <h4>Thông tin chung</h4>
+            <p><strong></strong> {{ baucu.description }}</p>
+          </div>
+          <div class="col-md-4">
+            <h4>Thời gian</h4>
+            <p><strong>Bắt đầu:</strong> {{ baucu.start_date|date:"H:i, d/m/Y" }}</p>
+            <p><strong>Kết thúc:</strong> {{ baucu.end_date|date:"H:i, d/m/Y" }}</p>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>Danh sách ứng cử viên</h4>
+            <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUngCuVienModal">
+                <i class="ti ti-plus f-18"></i> Thêm Ứng Cử Viên
+            </a>
+        </div>
+
+<div class="candidate-grid-container">
+  <div class="row g-4">
+    {% for ungcuvien in ungcuviens %}
+    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+      <div class="card h-100 text-center candidate-card">
+        <div class="candidate-card-img-wrapper">
+            {% if ungcuvien.avatar %}
+            <img src="{{ ungcuvien.avatar.url }}" class="card-img-top candidate-image" alt="{{ ungcuvien.name }}">
+            {% else %}
+            <img src="{% static 'images/user/avatar-8.jpg' %}" class="card-img-top candidate-image" alt="Default Avatar">
+            {% endif %}
+        </div>
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mt-2">{{ ungcuvien.name }}</h5>
+          <p class="card-text text-muted small flex-grow-1">{{ ungcuvien.description|truncatewords:15 }}</p>
+          
+          <div class="mt-auto">
+            <ul class="list-inline mb-0 d-flex justify-content-center">
+              <li class="list-inline-item" data-bs-toggle="tooltip" title="Sửa">
+                <a href="#" class="avtar avtar-xs btn-link-primary edit-ung-cu-vien-btn"
+                   data-bs-toggle="modal"
+                   data-bs-target="#editUngCuVienModal"
+                   data-id="{{ ungcuvien.id }}"
+                   data-name="{{ ungcuvien.name }}"
+                   data-description="{{ ungcuvien.description }}"
+                   data-image-url="{% if ungcuvien.image %}{{ ungcuvien.image.url }}{% endif %}">
+                  <i class="ti ti-edit-circle f-18"></i>
+                </a>
+              </li>
+                <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" title="Xóa">
+                    <a href="{% url 'delete_ungcuvien' ungcuvien.id %}" class="avtar avtar-xs btn-link-danger delete-btn">
+                        <i class="ti ti-trash f-18"></i>
+                    </a>
+                </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="text-center p-5 border rounded bg-light">
+        <i class="ti ti-users-group f-48 text-muted mb-3"></i>
+        <h5 class="text-muted">Chưa có ứng cử viên</h5>
+        <p class="text-muted mb-0">Hiện chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+        <div class="mt-4">
+          <a href="{% url 'baucu' %}" class="btn btn-secondary">
+            <i class="ti ti-arrow-left"></i> Quay lại danh sách
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="addUngCuVienModal" tabindex="-1" aria-labelledby="addUngCuVienModalLabel" >
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUngCuVienModalLabel">Thêm Ứng Cử Viên Mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+       {% include "adminpages/ungcuvien/add_ungcuvien.html" %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" form="addUngCuVienForm" class="btn btn-primary">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="editUngCuVienModal" tabindex="-1" aria-labelledby="editUngCuVienModalLabel" >
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUngCuVienModalLabel">Sửa Thông Tin Ứng Cử Viên</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+       {% include "adminpages/ungcuvien/edit_ungcuvien.html" %}
+      </div>
+      <input type="hidden" id="edit-url-template" data-url="{% url 'edit_ungcuvien' 0 %}">
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" form="editUngCuVienForm" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Script để xử lý modal Sửa thông tin ứng cử viên
+  const editUngCuVienButtons = document.querySelectorAll('.edit-ung-cu-vien-btn');
+  const editForm = document.getElementById('editUngCuVienForm');
+  const nameInput = document.getElementById('edit_id_name');
+  const descriptionInput = document.getElementById('edit_id_description');
+  const currentImage = document.getElementById('current_image');
+  const defaultAvatar = "{% static 'images/default-avatar.png' %}";
+
+  editUngCuVienButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const id = button.dataset.id;
+      const name = button.dataset.name;
+      const description = button.dataset.description;
+      const imageUrl = button.dataset.imageUrl;
+
+        // Lấy URL mẫu từ thẻ input ẩn
+        const urlTemplate = document.getElementById('edit-url-template').dataset.url;
+
+
+        editForm.action = urlTemplate.replace('0', id);
+      nameInput.value = name;
+      descriptionInput.value = description;
+
+      if (imageUrl) {
+        currentImage.src = imageUrl;
+        currentImage.style.display = 'block';
+      } else {
+        currentImage.src = defaultAvatar;
+      }
+    });
+  });
+
+
+});
+</script>
+
+{% endblock %}

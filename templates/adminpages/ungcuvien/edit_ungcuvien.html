@@ -1,0 +1,17 @@
+         <form id="editUngCuVienForm" method="post" action="" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="edit_id_name" class="form-label">Tên Ứng Cử Viên</label>
+            <input type="text" name="name" class="form-control" id="edit_id_name" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_id_description" class="form-label">Thông tin</label>
+            <textarea name="description" class="form-control" id="edit_id_description" rows="4"></textarea>
+          </div>
+          <div class="mb-3">
+             <label for="edit_id_image" class="form-label">Thay đổi ảnh đại diện</label>
+            
+             <input type="file" name="image" class="form-control" id="edit_id_image" accept="image/*">
+             <small class="form-text text-muted">Bỏ trống nếu không muốn thay đổi ảnh.</small>
+          </div>
+        </form>
