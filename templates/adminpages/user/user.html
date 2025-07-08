@@ -1,0 +1,173 @@
+{% extends 'adminpages/index.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="pc-container">
+    <div class="pc-content">
+      <div class="card-body">
+        <!-- Hiển thị thông báo lỗi nếu có -->
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <div class="text-end p-4 pb-0">
+          <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#adduserModal">
+            <i class="ti ti-plus f-18"></i> Thêm người dùng
+          </a>
+        </div>
+        <div class="table-responsive">
+          <div class="datatable-wrapper datatable-loading no-footer searchable fixed-columns">
+            <div class="datatable-top">
+              <div class="datatable-dropdown"></div>
+              <div class="datatable-search d-flex gap-2">
+             <form class="px-3" method="get" action="{% url 'ds_user' %}">
+                <div class="d-flex gap-2 align-items-stretch">
+                  <input id="searchInput" name="keyword" class="form-control search_data"
+                        placeholder="Tìm người dùng..." type="search"
+                        title="Search within table" aria-controls="pc-dt-simple"
+                        value="{% if keyword %}{{ keyword }}{% endif %}">
+                  <button type="submit" id="searchButton" class="btn btn-primary">Search</button>
+                </div>
+              </form>
+             </div>
+            
+               
+            </div>
+            <div class="datatable-container">
+              <table class="table table-hover datatable-table" id="pc-dt-simple">
+                <thead>
+                  <tr>
+                    <th style="width: 3.888888888888889%;"></th>
+                    <th style="width: 8%;">User Name</th>
+                    <th style="width: 8.88888888888889%;">Họ Tên</th>
+                    <th style="width: 8%;">Email</th>
+                    <th style="width: 8.88888888888889%;">Thao tác</th>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if users %}
+                    {% for user in users %}
+                      <tr data-index="0">
+                        <td>
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                          </div>
+                        </td>
+                        <td>
+                          <div class="row">
+                            <div class="col-auto pe-0"></div>
+                            <div class="col">
+                              <h6 class="mb-1">{{ user.username }}</h6>
+                              <p class="text-muted f-12 mb-0"></p>
+                            </div>
+                          </div>
+                        </td>
+                        <td><p class="text-muted f-12 mb-0">{{ user.first_name }} {{ user.last_name }}</p></td>
+                        <td><p class="text-muted f-12 mb-0">{{ user.email }}</p></td>
+
+                        <td>
+                          <ul class="list-inline me-auto mb-0">
+                            <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="View">
+                              <a href="#" class="avtar avtar-xs btn-link-secondary" data-bs-toggle="modal" data-bs-target="#cust-modal">
+                                <i class="ti ti-eye f-18"></i>
+                              </a>
+                            </li>
+                            <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="Edit">
+                              <a href="#" class="avtar avtar-xs btn-link-primary edit-user-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#edituserModal"
+                                data-id="{{ user.id }}"
+                                data-username="{{ user.username }}"
+                                data-firstname="{{ user.first_name }}"
+                                data-lastname="{{ user.last_name }}"
+                                data-email="{{ user.email }}">
+                                
+                                <i class="ti ti-edit-circle f-18"></i>
+                              </a>
+                            </li>
+                            <li class="list-inline-item align-bottom  " data-bs-toggle="tooltip" aria-label="Delete">
+                               <a href="{% url 'delete_user' user.id %}" class="avtar avtar-xs btn-link-danger delete" >
+                                <i class="ti ti-trash f-18"></i>
+                              </a>
+                            </li>
+                          </ul>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                  <p class="no-data-message">Chưa có người dùng nào để hiển thị.</p>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="datatable-bottom"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Thêm  -->
+      <div class="modal fade" id="adduserModal" tabindex="-1" aria-labelledby="adduserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="adduserModalLabel">Thông tin người dùng</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              {% include 'adminpages/user/add_user.html' %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <button type="submit" form="adduserForm" class="btn btn-primary">Thêm</button>
+            </div>
+          </div>
+        </div>
+      </div>
+       <!-- Modal Sửa Địa Điểm -->
+      <div class="modal fade" id="edituserModal" tabindex="-1" aria-labelledby="edituserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id=editduserModalLabel">Sửa Thông Tin</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              {% include 'adminpages/user/edit_user.html'  %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <button type="submit" form="edituserForm" class="btn btn-primary">Sửa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const editButtons = document.querySelectorAll('.edit-user-btn');
+  const form = document.getElementById('edituserForm');
+
+  editButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const id = button.dataset.id;
+      const username = button.dataset.username;
+      const firstname = button.dataset.firstname;
+      const lastname = button.dataset.lastname;
+      const email = button.dataset.email;
+
+      // Gán dữ liệu vào các input
+      form.action = `edit/${id}/`;  // cập nhật action
+      form.querySelector('#id_username').value = username;
+      form.querySelector('#id_firstname').value = firstname;
+      form.querySelector('#id_lastname').value = lastname;
+      form.querySelector('#id_email').value = email;
+    });
+  });
+});
+</script>
+
+
+{% endblock %}

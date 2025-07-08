@@ -31,54 +31,59 @@
         </div>
 
 <div class="candidate-grid-container">
-  <div class="row g-4">
+<div class="list-group">
     {% for ungcuvien in ungcuviens %}
-    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-      <div class="card h-100 text-center candidate-card">
-        <div class="candidate-card-img-wrapper">
-            {% if ungcuvien.avatar %}
-            <img src="{{ ungcuvien.avatar.url }}" class="card-img-top candidate-image" alt="{{ ungcuvien.name }}">
-            {% else %}
-            <img src="{% static 'images/user/avatar-8.jpg' %}" class="card-img-top candidate-image" alt="Default Avatar">
-            {% endif %}
+    <div class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 align-items-center">
+            <!-- Avatar -->
+            <div class="me-3">
+                {% if ungcuvien.avatar %}
+                <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60" style="object-fit: cover;">
+                {% else %}
+                <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
+                {% endif %}
+            </div>
+
+            <!-- Tên và Mô tả -->
+            <div class="flex-grow-1">
+                <h5 class="mb-1">{{ ungcuvien.name }}</h5>
+                <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
+            </div>
+
+            <!-- Các nút thao tác -->
+            <div class="ms-auto">
+                <ul class="list-inline mb-0 d-flex justify-content-center">
+                    <li class="list-inline-item" data-bs-toggle="tooltip" title="Sửa">
+                        <a href="#" class="avtar avtar-xs btn-link-primary edit-ung-cu-vien-btn"
+                           data-bs-toggle="modal"
+                           data-bs-target="#editUngCuVienModal"
+                           data-id="{{ ungcuvien.id }}"
+                           data-name="{{ ungcuvien.name }}"
+                           data-description="{{ ungcuvien.description }}"
+                           data-image-url="{% if ungcuvien.image %}{{ ungcuvien.image.url }}{% endif %}">
+                            <i class="ti ti-edit-circle f-18"></i>
+                        </a>
+                    </li>
+                    <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" title="Xóa">
+                        <a href="{% url 'delete_ungcuvien' ungcuvien.id %}" class="avtar avtar-xs btn-link-danger delete-btn">
+                            <i class="ti ti-trash f-18"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title mt-2">{{ ungcuvien.name }}</h5>
-          <p class="card-text text-muted small flex-grow-1">{{ ungcuvien.description|truncatewords:15 }}</p>
-          
-          <div class="mt-auto">
-            <ul class="list-inline mb-0 d-flex justify-content-center">
-              <li class="list-inline-item" data-bs-toggle="tooltip" title="Sửa">
-                <a href="#" class="avtar avtar-xs btn-link-primary edit-ung-cu-vien-btn"
-                   data-bs-toggle="modal"
-                   data-bs-target="#editUngCuVienModal"
-                   data-id="{{ ungcuvien.id }}"
-                   data-name="{{ ungcuvien.name }}"
-                   data-description="{{ ungcuvien.description }}"
-                   data-image-url="{% if ungcuvien.image %}{{ ungcuvien.image.url }}{% endif %}">
-                  <i class="ti ti-edit-circle f-18"></i>
-                </a>
-              </li>
-                <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" title="Xóa">
-                    <a href="{% url 'delete_ungcuvien' ungcuvien.id %}" class="avtar avtar-xs btn-link-danger delete-btn">
-                        <i class="ti ti-trash f-18"></i>
-                    </a>
-                </li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
     {% empty %}
+    <!-- Trường hợp không có ứng viên nào -->
     <div class="col-12">
-      <div class="text-center p-5 border rounded bg-light">
-        <i class="ti ti-users-group f-48 text-muted mb-3"></i>
-        <h5 class="text-muted">Chưa có ứng cử viên</h5>
-        <p class="text-muted mb-0">Hiện chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
-      </div>
+        <div class="text-center p-5 border rounded bg-light">
+            <i class="ti ti-users-group f-48 text-muted mb-3"></i>
+            <h5 class="text-muted">Chưa có ứng cử viên</h5>
+            <p class="text-muted mb-0">Hiện chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
+        </div>
     </div>
     {% endfor %}
-  </div>
+</div>
 </div>
 
         <div class="mt-4">

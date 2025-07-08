@@ -43,6 +43,12 @@
 <!-- [Body] Start -->
 
 <body data-pc-preset="preset-1" data-pc-direction="ltr" data-pc-theme="light">
+<!-- base.html -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-danger">{{ message }}</div>
+  {% endfor %}
+{% endif %}
   <!-- [ Pre-loader ] start -->
 <div class="loader-bg">
   <div class="loader-track">
@@ -56,7 +62,12 @@
     <div class="m-header">
       <a href="../dashboard/index.html" class="b-brand text-primary">
         <!-- ========   Change your logo from here   ============ -->
-        <img src="../assets/images/logo-dark.svg" class="img-fluid logo-lg" alt="logo">
+          {% if request.user.is_authenticated %}
+            <span>Xin chào, {{ request.user.username }}</span>
+          <br><br> <a href="{% url 'logout' %}">Đăng xuất</a>
+          {% else %}
+            <a href="{% url 'login' %}">Đăng nhập</a>
+          {% endif %}
       </a>
     </div>
     <div class="navbar-content">
@@ -75,7 +86,7 @@
         <li class="pc-item">
           <a href="{% url 'baucu_u' %}" class="pc-link">
             <span class="pc-micon"><i class="ti ti-typography"></i></span>
-            <span class="pc-mtext">Bầu Cử</span>
+            <span class="pc-mtext">Bầu Cử </span>
           </a>
         </li>
         {% comment %} <li class="pc-item">

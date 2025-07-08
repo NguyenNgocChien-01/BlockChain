@@ -1,0 +1,27 @@
+{% extends 'userpages/index.html' %}
+{% load static %}
+
+{% block title %}Đăng Ký Làm Cử Tri{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-header">
+                    <h4 class="mb-0">Xác Nhận Đăng Ký Cử Tri</h4>
+                </div>
+                <div class="card-body p-4">
+                    <i class="ti ti-key" style="font-size: 48px; color: var(--bs-primary);"></i>
+                    <p class="mt-3">Hành động này sẽ tạo ra một cặp khóa mã hóa (công khai và bí mật) cho tài khoản của bạn để tham gia bỏ phiếu.</p>
+                    <p class="text-muted small">Khóa của bạn sẽ được bảo mật và cần thiết cho mọi hoạt động bầu cử trong hệ thống.</p>
+                    <form method="POST" action="{% url 'dangky_cutri' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-100">Xác nhận và Tạo Khóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

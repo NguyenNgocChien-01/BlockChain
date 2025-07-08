@@ -1,0 +1,20 @@
+ <form id="edituserForm" method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label  class="form-label">Tên đăng nhập</label>
+            <input type="text" name="username" class="form-control" id="id_username" placeholde="Tên đăng nhập" required>
+          </div>
+          <div class="mb-3">
+            <label  class="form-label">Họ</label>
+            <input type="text" name="firstname" class="form-control" id="id_firstname" placeholde="Họ" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tên</label>
+            <input type="text" name="lastname" class="form-control" id="id_lastname" placeholde="Tên" required>
+          </div>
+          <div class="mb-3">
+            <label  class="form-label">Email</label>
+            <input type="mail" name="email" class="form-control" id="id_email" placeholde="Email" required>
+          </div>
+
+        </form>

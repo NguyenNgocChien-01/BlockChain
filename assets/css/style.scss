@@ -85,44 +85,48 @@ File: style.css
 .candidate-card {
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     border: 1px solid #e0e0e0;
-    border-radius: 0.75rem; /* Bo tròn góc card */
-    overflow: hidden; /* Đảm bảo ảnh không tràn ra ngoài */
+    border-radius: 0.75rem;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%; 
-  }
 
-  .candidate-card:hover {
+    /* --- THAY ĐỔI Ở ĐÂY --- */
+    width: 100%;
+    max-width: 200px; 
+    height: 200px; 
+    margin: 0 auto; 
+}
+
+.candidate-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     cursor: pointer;
-  }
+}
 
-  .candidate-image {
-    width: 100%;
-    /* Tạo ảnh vuông hoàn hảo */
+.candidate-image {
+    width: 100%; /* Cho ảnh chiếm toàn bộ chiều rộng của card */
     aspect-ratio: 1 / 1;
-    object-fit: cover; /* Đảm bảo ảnh không bị méo */
+    object-fit: cover;
     border-bottom: 1px solid #eee;
-  }
+}
 
-  .card-title {
+.card-title {
     font-weight: 600;
-  }
-  
-  /* Căn chỉnh các nút thao tác */
-  .card-body .list-inline {
-    gap: 15px; /* Tạo khoảng cách giữa 2 nút */
-  }
+}
 
-  .avtar {
+/* Căn chỉnh các nút thao tác */
+.card-body .list-inline {
+    gap: 15px; /* Tạo khoảng cách giữa 2 nút */
+}
+
+.avtar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     transition: background-color 0.2s ease;
-  }
-  .avtar:hover {
-      background-color: #f0f0f0;
-  }
-  
+}
+
+.avtar:hover {
+    background-color: #f0f0f0;
+}

@@ -10,11 +10,7 @@
           <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
 
-        {% comment %} <div class="text-end p-4 pb-0">
-          <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addbaucuModal">
-            <i class="ti ti-plus f-18"></i> Tạo Bầu Cử Mới
-          </a>
-        </div> {% endcomment %}
+
         <div class="table-responsive">
           <div class="datatable-wrapper datatable-loading no-footer searchable fixed-columns">
             <div class="datatable-top">
@@ -54,7 +50,7 @@
                             <li><strong>Bắt đầu:</strong> {{ baucu.start_date|date:'H:i, d/m/Y' }}</li>
                             <li><strong>Kết thúc:</strong> {{ baucu.end_date|date:'H:i, d/m/Y' }}</li>
                         </ul>
-                        <a href="{% url 'chitiet_baucu' baucu.id %}" class="btn btn-primary mt-auto">Tham gia bỏ phiếu</a>
+                        <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-primary mt-auto">Tham gia bỏ phiếu</a>
                     </div>
                 </div>
             </div>

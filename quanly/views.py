@@ -1,3 +1,4 @@
+from django.contrib import messages 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Q
 from .models import *
@@ -107,3 +108,76 @@ def edit_ungcuvien(request, id):
     baucu_id = ungcuvien.ballot.id
 
     return redirect('chitiet_baucu', id=baucu_id)
+
+
+    # Phần cua user
+def ds_user(request):
+    keyword = request.GET.get('keyword', '')
+    users = User.objects.filter(
+            Q(username__icontains=keyword) | Q(email__icontains=keyword) |
+            Q(first_name__icontains=keyword) | Q(last_name__icontains=keyword)
+        )
+    
+    if keyword:
+        users = users.all()
+        
+    context = {
+        'users': users,
+        'keyword': keyword, # Giữ lại keyword để hiển thị trên ô tìm kiếm
+    }
+    
+    return render(request, 'adminpages/user/user.html', context)
+
+
+def add_user(request):
+
+    if request.method == 'POST':
+
+        username = request.POST.get('username')
+        first_name = request.POST.get('firstname')
+        last_name = request.POST.get('lastname')
+        email = request.POST.get('email')
+        password = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+
+        if password != password2:
+            return redirect('add_user')
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Tên đăng nhập này đã tồn tại!')
+            return redirect('add_user')
+
+
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+
+        messages.success(request, f'Tạo người dùng "{username}" thành công!')
+        return redirect('ds_user') # Chuyển hướng về trang danh sách
+
+        
+    return redirect('ds_user')
+
+
+def delete_user(request, id):
+    user = get_object_or_404(User, id=id)
+    user.delete()
+    return redirect('ds_user')
+
+def edit_user(request, id):
+    user = get_object_or_404(User, id=id)
+
+    if request.method == "POST":
+        user.username = request.POST.get('username')
+        user.first_name = request.POST.get('firstname')
+        user.last_name = request.POST.get('lastname')
+        user.email = request.POST.get('email')
+
+    user.save()
+
+    return redirect('ds_user')

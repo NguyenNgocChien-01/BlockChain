@@ -15,4 +15,8 @@ urlpatterns = [
     path('baucu/delete_ungcuvien/<int:id>',delete_ungcuvien, name='delete_ungcuvien'),
     path('baucu/add_ungcuvien/<int:id>',add_ungcuvien, name='add_ungcuvien'),
     path('baucu/edit_ungcuvien/<int:id>',edit_ungcuvien, name='edit_ungcuvien'),
+    path('ds_user/',ds_user,name='ds_user'),
+    path('ds_user/add/', add_user, name='add_user'),
+    path('ds_user/delete/<int:id>/', delete_user, name='delete_user'),
+    path('ds_user/edit/<int:id>/', edit_user, name='edit_user'),
 ]
