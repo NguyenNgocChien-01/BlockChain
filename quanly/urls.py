@@ -4,6 +4,7 @@ from django.urls import include, path
 
 from quanly import admin
 from quanly.views import *
+from quanly import views
 
 urlpatterns = [
     path('',trangchu,name='trangchu'),
@@ -19,4 +20,7 @@ urlpatterns = [
     path('ds_user/add/', add_user, name='add_user'),
     path('ds_user/delete/<int:id>/', delete_user, name='delete_user'),
     path('ds_user/edit/<int:id>/', edit_user, name='edit_user'),
+    path('ketqua/<int:id>/', views.ketqua_baucu, name='ketqua_baucu'),
+
+
 ]

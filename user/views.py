@@ -146,3 +146,48 @@ def dangky_cutri_success(request):
         'private_key': private_key,
     }
     return render(request, 'userpages/dangky_cutri_success.html', context)
+
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+
+@csrf_exempt
+def bo_phieu(request, id):
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, 'Bạn cần đăng nhập để bỏ phiếu.')
+            return redirect('login')
+
+        try:
+            ballot = get_object_or_404(Ballot, pk=id)
+            voter = request.user.voter
+            now = timezone.now()
+
+            if not (ballot.start_date <= now <= ballot.end_date):
+                messages.error(request, 'Cuộc bầu cử này không còn hiệu lực.')
+                return redirect('chitiet_baucu_u', id=id)
+
+            if Vote.objects.filter(ballot=ballot, voter_public_key=voter.public_key).exists():
+                messages.warning(request, 'Bạn đã bỏ phiếu rồi.')
+                return redirect('chitiet_baucu_u', id=id)
+
+            candidate_id = request.POST.get('candidate')
+            if not candidate_id:
+                messages.error(request, 'Bạn chưa chọn ứng cử viên.')
+                return redirect('chitiet_baucu_u', id=id)
+
+            candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
+
+            Vote.objects.create(
+                ballot=ballot,
+                candidate=candidate,
+                voter_public_key=voter.public_key
+            )
+
+            messages.success(request, 'Bỏ phiếu thành công!')
+            return redirect('chitiet_baucu_u', id=id)
+
+        except Exception as e:
+            messages.error(request, f'Lỗi khi bỏ phiếu: {e}')
+            return redirect('chitiet_baucu_u', id=id)
+
+    return redirect('chitiet_baucu_u', id=id)
