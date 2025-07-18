@@ -10,11 +10,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 def candidate_avatar_path(instance, filename):
-    """
-    Hàm này sẽ tạo một đường dẫn để lưu file avatar.
-    Tên file sẽ được đổi thành một chuỗi UUID duy nhất.
-    Ví dụ: media/avatars/f1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg
-    """
+
     # Lấy phần mở rộng của file (ví dụ: .jpg, .png)
     ext = os.path.splitext(filename)[1]
     # Tạo tên file mới bằng uuid4
