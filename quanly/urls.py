@@ -20,7 +20,10 @@ urlpatterns = [
     path('ds_user/add/', add_user, name='add_user'),
     path('ds_user/delete/<int:id>/', delete_user, name='delete_user'),
     path('ds_user/edit/<int:id>/', edit_user, name='edit_user'),
+    path('ds_user/<int:user_id>/revoke-voter/', views.revoke_voter_status, name='revoke_voter_status'),
     path('ketqua/<int:id>/', views.ketqua_baucu, name='ketqua_baucu'),
+    path('dsphieu/<int:ballot_id>/', danhsach_phieubau, name='danhsach_phieubau'),
+
 
 
 ]

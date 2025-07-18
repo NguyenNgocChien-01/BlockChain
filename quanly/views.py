@@ -114,17 +114,24 @@ def edit_ungcuvien(request, id):
     # Phần cua user
 def ds_user(request):
     keyword = request.GET.get('keyword', '')
-    users = User.objects.filter(
-            Q(username__icontains=keyword) | Q(email__icontains=keyword) |
-            Q(first_name__icontains=keyword) | Q(last_name__icontains=keyword)
-        )
     
+    # Bắt đầu với một QuerySet chứa tất cả user.
+    # Dùng select_related('voter') để tối ưu, lấy thông tin Voter cùng lúc,
+    # tránh việc truy vấn lặp lại vào database.
+    users_list = User.objects.select_related('voter').all().order_by('id')
+
+    # Nếu có keyword, áp dụng bộ lọc để thu hẹp kết quả
     if keyword:
-        users = users.all()
+        users_list = users_list.filter(
+            Q(username__icontains=keyword) |
+            Q(first_name__icontains=keyword) |
+            Q(last_name__icontains=keyword) |
+            Q(email__icontains=keyword)
+        )
         
     context = {
-        'users': users,
-        'keyword': keyword, # Giữ lại keyword để hiển thị trên ô tìm kiếm
+        'users': users_list,
+        'keyword': keyword,
     }
     
     return render(request, 'adminpages/user/user.html', context)
@@ -183,18 +190,85 @@ def edit_user(request, id):
 
     return redirect('ds_user')
 
+def revoke_voter_status(request, user_id):
+
+    user_to_update = get_object_or_404(User, pk=user_id)
+    
+    if hasattr(user_to_update, 'voter'):
+        try:
+            # Việc xóa Voter sẽ xóa cả khóa của họ
+            user_to_update.voter.delete()
+            messages.success(request, f'Đã hủy bỏ vai trò cử tri của người dùng "{user_to_update.username}".')
+        except Exception as e:
+            messages.error(request, f'Đã có lỗi xảy ra: {e}')
+    else:
+        messages.warning(request, f'Người dùng "{user_to_update.username}" không phải là cử tri.')
+        
+    return redirect('ds_user')
+
 def ketqua_baucu(request, id):
+
     baucu = get_object_or_404(Ballot, id=id)
 
-    # Đếm số phiếu cho từng ứng cử viên trong cuộc bầu cử
+    # Đếm số phiếu 
     ketqua = Vote.objects.filter(candidate__ballot=baucu)\
-                .values('candidate__id', 'candidate__name')\
-                .annotate(so_phieu=Count('id'))\
-                .order_by('-so_phieu')
+        .values('candidate__name')\
+        .annotate(so_phieu=Count('id'))\
+        .order_by('-so_phieu')
+
+    # Tính tổng 
+   
+    tong_so_phieu = sum(item['so_phieu'] for item in ketqua)
+
+    #  tỷ lệ phần trăm 
+
+    for item in ketqua:
+        if tong_so_phieu > 0:
+            # Làm tròn đến 2 chữ số thập phân
+            item['phan_tram'] = round((item['so_phieu'] / tong_so_phieu) * 100, 2)
+        else:
+            item['phan_tram'] = 0
+
 
     context = {
         'baucu': baucu,
         'ketqua': ketqua,
+        'tong_so_phieu': tong_so_phieu,
     }
 
     return render(request, 'adminpages/baucu/ketqua.html', context)
+
+def danhsach_phieubau(request, ballot_id):
+
+    ballot = get_object_or_404(Ballot, id=ballot_id)
+    
+   
+
+    votes = Vote.objects.filter(ballot=ballot).order_by('timestamp') # Sắp xếp theo thời gian bỏ phiếu
+
+    vote_details = []
+    for vote in votes:
+        voter_username = "Không xác định" # Mặc định
+        try:
+            voter_obj = Voter.objects.get(public_key=vote.voter_public_key)
+            voter_username = voter_obj.user.username
+        except Voter.DoesNotExist:
+            pass 
+
+        vote_details.append({
+            'id': vote.id,
+            'candidate_name': vote.candidate.name,
+            'voter_public_key': vote.voter_public_key,
+            'voter_username': voter_username, # Thêm username vào đây
+            'signature': vote.signature,
+            'timestamp': vote.timestamp,
+            'block_id': vote.block.id if vote.block else 'Chưa vào khối'
+        })
+    
+    context = {
+        'ballot': ballot,
+        'vote_details': vote_details, # Dữ liệu đã xử lý để hiển thị
+    }
+    
+
+    return render(request, 'adminpages/baucu/danhsach_phieubau.html', context)

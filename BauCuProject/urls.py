@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('home/',include('quanly.urls'),name='quanly'),
+    path('',include('quanly.urls'),name='quanly'),
     path('user/',include('user.urls'),name='user')
 ]
 

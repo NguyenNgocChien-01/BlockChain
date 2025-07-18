@@ -41,6 +41,7 @@
                     <th style="width: 8%;">User Name</th>
                     <th style="width: 8.88888888888889%;">Họ Tên</th>
                     <th style="width: 8%;">Email</th>
+                    <th style="width: 8%;">Vai trò</th>
                     <th style="width: 8.88888888888889%;">Thao tác</th>
 
                   </tr>
@@ -65,9 +66,25 @@
                         </td>
                         <td><p class="text-muted f-12 mb-0">{{ user.first_name }} {{ user.last_name }}</p></td>
                         <td><p class="text-muted f-12 mb-0">{{ user.email }}</p></td>
+                                  <td>
+                                    {# LOGIC HIỂN THỊ VAI TRÒ #}
+                                    {% if user.is_staff %}
+                                        <span class="badge bg-light-success">Admin</span>
+                                    {% elif user.voter %}
+                                        <span class="badge bg-light-primary">Cử tri</span>
+                                    {% else %}
+                                        <span class="badge bg-light-secondary">Người dùng</span>
+                                    {% endif %}
+                                </td>
 
                         <td>
                           <ul class="list-inline me-auto mb-0">
+
+                              <li class="list-inline-item" data-bs-toggle="tooltip">
+                                  <a href="{% url 'revoke_voter_status' user.id %}" class="avtar avtar-xs btn-link-warning revoke-voter-btn">
+                                      <i class="ti ti-lock-off"></i>
+                                  </a>
+                              </li>
                             <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="View">
                               <a href="#" class="avtar avtar-xs btn-link-secondary" data-bs-toggle="modal" data-bs-target="#cust-modal">
                                 <i class="ti ti-eye f-18"></i>
