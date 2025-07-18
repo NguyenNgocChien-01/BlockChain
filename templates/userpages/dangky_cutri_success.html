@@ -3,45 +3,124 @@
 
 {% block title %}Đăng Ký Thành Công - Lưu Khóa Của Bạn{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Main container for the key display */
+    .key-display-wrapper {
+        position: relative;
+    }
+
+    /* The styled box containing the key */
+    .key-display {
+        background-color: #f0f2f5; /* A slightly darker, more distinct background */
+        border: 1px solid #ced4da;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Adds a subtle depth */
+        margin-top: 0.5rem;
+    }
+
+    /* Styling for the textarea holding the key */
+    .key-display textarea {
+        background-color: transparent;
+        border: none;
+        resize: none;
+        color: #212529; /* Darker text for better readability */
+        width: 100%;
+        font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9em;
+        padding-right: 45px; /* Make space for the copy button */
+        -webkit-user-select: all; /* Allow easy selection on iOS */
+        -moz-user-select: all; /* Allow easy selection on Firefox */
+        -ms-user-select: all; /* Allow easy selection on IE/Edge */
+        user-select: all; /* Allow easy text selection */
+    }
+    
+    .key-display textarea:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    /* Copy button style */
+    .btn-copy {
+        position: absolute;
+        top: 50%;
+        right: 1.25rem;
+        transform: translateY(-50%);
+        border: none;
+        background: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-copy:hover {
+        background-color: #e9ecef;
+        color: #000;
+    }
+    
+    .btn-copy .ti {
+        font-size: 1.2rem;
+        vertical-align: middle;
+    }
+
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="pc-container">
     <div class="pc-content">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-xl-8 col-lg-10">
                 <div class="card">
-                    <div class="card-body text-center">
+                    <div class="card-body text-center p-4 p-sm-5">
                         <i class="ti ti-circle-check text-success" style="font-size: 60px;"></i>
                         <h2 class="mt-3">Đăng Ký Thành Công!</h2>
                         <p class="text-muted">Tài khoản và khóa của bạn đã được tạo. Vui lòng sao chép và lưu trữ các khóa dưới đây ở một nơi an toàn.</p>
-                        
+
                         <div class="alert alert-danger mt-4" role="alert">
                             <h4 class="alert-heading">CẢNH BÁO QUAN TRỌNG</h4>
-                            <p><strong>Khóa Bí Mật (Private Key)</strong> giống như mật khẩu ngân hàng của bạn. <strong>TUYỆT ĐỐI KHÔNG</strong> chia sẻ nó cho bất kỳ ai. Nếu làm mất, bạn sẽ không thể bỏ phiếu và không thể khôi phục lại.</p>
+                            <p><strong>Khóa Bí Mật (Private Key)</strong> là thông tin tối mật. <strong>TUYỆT ĐỐI KHÔNG</strong> chia sẻ nó cho bất kỳ ai. Nếu làm mất, bạn sẽ không thể bỏ phiếu và không thể khôi phục lại.</p>
                             <hr>
                             <p class="mb-0">Đây là lần duy nhất hệ thống hiển thị Khóa Bí Mật cho bạn.</p>
                         </div>
 
-                        <!-- Hiển thị Khóa Công Khai -->
-                        <div class="mt-4">
-                            <h5>Khóa Công Khai (Public Key)</h5>
-                            <p class="text-muted small">Bạn có thể chia sẻ khóa này để người khác xác thực.</p>
-                            <div class="input-group">
-                                <textarea id="publicKey" class="form-control font-monospace" rows="5" readonly>{{ public_key }}</textarea>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('publicKey')">Copy</button>
+                        <div class="row mt-4 text-start g-3">
+                            <div class="col-md-6">
+                                <h5><i class="ti ti-key text-info me-2"></i>Khóa Công Khai</h5>
+                                <div class="key-display-wrapper">
+                                    <div class="key-display">
+                                        <textarea id="publicKey" class="form-control" rows="8" readonly>{{ public_key }}</textarea>
+                                    </div>
+                                    <button class="btn-copy" onclick="copyToClipboard('publicKey', this)" title="Sao chép Khóa Công Khai">
+                                        <i class="ti ti-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h5><i class="ti ti-lock text-danger me-2"></i>Khóa Bí Mật</h5>
+                                <div class="key-display-wrapper">
+                                    <div class="key-display">
+                                        <textarea id="privateKey" class="form-control" rows="8" readonly>{{ private_key }}</textarea>
+                                    </div>
+                                    <button class="btn-copy" onclick="copyToClipboard('privateKey', this)" title="Sao chép Khóa Bí Mật">
+                                        <i class="ti ti-copy"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Hiển thị Khóa Bí Mật -->
                         <div class="mt-4">
-                            <h5>Khóa Bí Mật (Private Key) - HÃY LƯU LẠI!</h5>
-                            <div class="input-group">
-                                <textarea id="privateKey" class="form-control font-monospace" rows="8" readonly>{{ private_key }}</textarea>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('privateKey')">Copy</button>
-                            </div>
+                            <button class="btn btn-success" onclick="downloadKeys()">
+                                <i class="ti ti-download me-2"></i>Tải Xuống Cả Hai Khóa
+                            </button>
                         </div>
 
                         <div class="d-grid mt-4">
-                            <a href="{% url 'baucu_u' %}" class="btn btn-primary btn-lg">Tôi đã lưu khóa, tiếp tục đến trang chủ</a>
+                            <a href="{% url 'baucu_u' %}" class="btn btn-primary btn-lg">Tôi đã lưu khóa an toàn, tiếp tục đến trang chủ</a>
                         </div>
                     </div>
                 </div>
@@ -51,16 +130,50 @@
 </div>
 
 <script>
-function copyToClipboard(elementId) {
+// Chức năng sao chép vào clipboard với phản hồi cho người dùng
+function copyToClipboard(elementId, buttonElement) {
     const textArea = document.getElementById(elementId);
-    textArea.select();
-    textArea.setSelectionRange(0, 99999); // For mobile devices
-    try {
-        document.execCommand('copy');
-        alert('Đã sao chép vào clipboard!');
-    } catch (err) {
-        alert('Lỗi! Không thể sao chép.');
-    }
+    // Sử dụng API Clipboard hiện đại, an toàn
+    navigator.clipboard.writeText(textArea.value).then(() => {
+        // Thông báo thành công
+        const originalIcon = buttonElement.innerHTML;
+        buttonElement.innerHTML = '<i class="ti ti-check text-success"></i>'; // Thay icon thành dấu check
+        
+        // Quay lại icon cũ sau 2 giây
+        setTimeout(() => {
+            buttonElement.innerHTML = originalIcon;
+        }, 2000);
+    }).catch(err => {
+        console.error('Lỗi khi sao chép: ', err);
+        alert('Không thể sao chép tự động. Vui lòng sao chép thủ công.');
+    });
+}
+
+// Chức năng tải khóa xuống (đã sửa lỗi nhỏ)
+function downloadKeys() {
+    const publicKey = document.getElementById('publicKey').value; // Sửa: Dùng .value thay vì .textContent
+    const privateKey = document.getElementById('privateKey').value; // Sửa: Dùng .value thay vì .textContent
+    const username = "{{ username|escapejs }}"; // Thêm escapejs để an toàn
+
+    const content = `LƯU TRỮ CẨN THẬN - KHÓA BẦU CỬ CỦA BẠN\n` +
+                    `========================================\n\n` +
+                    `Username: ${username}\n\n` +
+                    `----- BEGIN PUBLIC KEY -----\n` +
+                    `${publicKey}\n` +
+                    `----- END PUBLIC KEY -----\n\n` +
+                    `----- BEGIN PRIVATE KEY -----\n` +
+                    `CẢNH BÁO: TUYỆT ĐỐI KHÔNG CHIA SẺ KHÓA NÀY!\n` +
+                    `${privateKey}\n` +
+                    `----- END PRIVATE KEY -----\n`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `baucu_keys_${username}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href); // Giải phóng bộ nhớ
 }
 </script>
 {% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'adminpages/index.html' %}
+{% load static %}
+
+{% block title %}Danh Sách Phiếu Bầu: {{ ballot.title }}{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Danh Sách Phiếu Bầu: {{ ballot.title }}</h4>
+                    <a href="{% url 'ketqua_baucu' ballot.id %}" class="btn btn-outline-primary">
+                        <i class="ti ti-chart-pie"></i> Xem Kết Quả Bầu Cử
+                    </a>
+                </div>
+                <p class="text-muted mt-2 mb-0">Hiển thị chi tiết từng phiếu bầu đã được ghi nhận cho cuộc bầu cử này.</p>
+            </div>
+            <div class="card-body">
+
+                {% if vote_details %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID Phiếu</th>
+                                    <th>Thời Gian Bầu</th>
+                                    <th>Ứng Viên</th>
+                                    <th>Người Bầu (Username)</th>
+                                    <th>Khóa Công Khai Cử Tri</th>
+                                    <th>Chữ Ký Số</th>
+                                    <th>Trạng Thái Khối</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vote in vote_details %}
+                                <tr>
+                                    <td>{{ vote.id }}</td>
+                                    <td>{{ vote.timestamp|date:"d/m/Y H:i:s" }}</td>
+                                    <td><strong>{{ vote.candidate_name }}</strong></td>
+                                    <td>{{ vote.voter_username }}</td>
+                                    <td>
+                                        <code class="text-muted text-break" title="{{ vote.voter_public_key }}">
+                                            {{ vote.voter_public_key|slice:"0:40" }}...
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <code class="text-muted text-break" title="{{ vote.signature }}">
+                                            {{ vote.signature|slice:"0:40" }}...
+                                        </code>
+                                    </td>
+                                    <td>
+                                        {% if vote.block_id != 'Chưa vào khối' %}
+                                            <span class="badge bg-success">Đã vào khối #{{ vote.block_id }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">{{ vote.block_id }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="ti ti-vote-off f-48 text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có phiếu bầu nào được ghi nhận.</h5>
+                        <p class="text-muted mb-0">Hãy bắt đầu bỏ phiếu để xem danh sách tại đây!</p>
+                    </div>
+                {% endif %}
+
+                <div class="mt-5">
+                    <a href="{% url 'chitiet_baucu' ballot.id %}" class="btn btn-secondary">
+                        <i class="ti ti-arrow-left"></i> Quay lại Chi tiết Cuộc Bầu Cử
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

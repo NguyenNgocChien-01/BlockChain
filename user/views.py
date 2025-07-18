@@ -6,7 +6,10 @@ from django.contrib.auth import authenticate, login as auth_login
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from django.contrib import messages
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils import timezone # Đảm bảo đã import timezone
 from django.contrib.auth import logout as auth_logout
+from django.db.models import Q
 
 # Create your views here.
 def user(request):
@@ -42,16 +45,33 @@ def logout(request):
 # views.py
 def ds_baucu(request):
     keyword = request.GET.get('keyword', '')
+    
+    all_ballots = Ballot.objects.all()
+
     if keyword:
-        baucus = Ballot.objects.filter(title__icontains=keyword)
-    else:
-        baucus = Ballot.objects.all()
+        all_ballots = all_ballots.filter(
+            Q(title__icontains=keyword) | Q(description__icontains=keyword)
+        )
+    
+    now = timezone.now() # Lấy thời gian hiện tại
+    active_or_upcoming_ballots = all_ballots.filter(end_date__gte=now).order_by('start_date')
+
+    paginator = Paginator(active_or_upcoming_ballots, 9) 
+    page = request.GET.get('page')
+
+    try:
+        baucus = paginator.page(page)
+    except PageNotAnInteger:
+        baucus = paginator.page(1)
+    except EmptyPage:
+        baucus = paginator.page(paginator.num_pages)
 
     context = {
-        'baucus': baucus,
-        'keyword': keyword,
+        'baucus': baucus,        
+        'keyword': keyword,      
+        'now': now, # THÊM DÒNG NÀY: Truyền biến 'now' vào context
     }
-    # Render template mới dành cho user
+    
     return render(request, 'userpages/baucu/baucu.html', context)
 
 def chitiet_baucu_u(request, id):
@@ -86,8 +106,13 @@ def chitiet_baucu_u(request, id):
 def view_dangky_cutri(request):
     return render(request, 'userpages/dangky_cutri.html')
 
-def dangky_cutri(request):
+def strip_pem_headers(pem_str):
+    """Loại bỏ BEGIN/END và khoảng trắng dư"""
+    lines = pem_str.strip().splitlines()
+    lines = [line for line in lines if not line.startswith("-----")]
+    return ''.join(lines)
 
+def dangky_cutri(request):
     if hasattr(request.user, 'voter'):
         messages.warning(request, 'Tài khoản của bạn đã được đăng ký làm cử tri.')
         return redirect('baucu_u')
@@ -97,28 +122,36 @@ def dangky_cutri(request):
             # --- SINH KHÓA ---
             private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
             private_pem = private_key.private_bytes(
-               encoding=serialization.Encoding.PEM,
-               format=serialization.PrivateFormat.PKCS8,
-               encryption_algorithm=serialization.NoEncryption()
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
             )
             public_key = private_key.public_key()
             public_pem = public_key.public_bytes(
-               encoding=serialization.Encoding.PEM,
-               format=serialization.PublicFormat.SubjectPublicKeyInfo
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
-            
+
+            # --- TÁCH NỘI DUNG KHỎI HEADER/FOOTER ---
+            def strip_pem_headers(pem_str):
+                lines = pem_str.strip().splitlines()
+                lines = [line for line in lines if not line.startswith("-----")]
+                return ''.join(lines)
+
+            public_base64 = strip_pem_headers(public_pem.decode('utf-8'))
+            private_base64 = strip_pem_headers(private_pem.decode('utf-8'))
+
             # --- TẠO VOTER ---
             Voter.objects.create(
                 user=request.user,
-                public_key=public_pem.decode('utf-8'),
-                private_key_encrypted=private_pem.decode('utf-8')
+                public_key=public_base64,
+                private_key_encrypted=private_base64
             )
-            
-            # --- LƯU KHÓA VÀO SESSION ĐỂ HIỂN THỊ MỘT LẦN ---
-            request.session['newly_generated_public_key'] = public_pem.decode('utf-8')
-            request.session['newly_generated_private_key'] = private_pem.decode('utf-8')
-            
-            # Chuyển hướng đến trang hiển thị khóa
+
+            # --- LƯU VÀO SESSION ---
+            request.session['newly_generated_public_key'] = public_base64
+            request.session['newly_generated_private_key'] = private_base64
+
             return redirect('dangky_cutri_success')
 
         except Exception as e:
@@ -126,6 +159,7 @@ def dangky_cutri(request):
             return redirect('dangky_cutri')
 
     return render(request, 'userpages/dangky_cutri.html')
+
 
 
 
@@ -150,7 +184,7 @@ def dangky_cutri_success(request):
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
-@csrf_exempt
+
 def bo_phieu(request, id):
     if request.method == 'POST':
         if not request.user.is_authenticated:
