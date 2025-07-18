@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Q
 from .models import *
-
+from django.db.models import Count
+from .models import Ballot, Vote
 # Create your views here.
 def trangchu(request):
     return render(request,'adminpages/index.html')
@@ -181,3 +182,19 @@ def edit_user(request, id):
     user.save()
 
     return redirect('ds_user')
+
+def ketqua_baucu(request, id):
+    baucu = get_object_or_404(Ballot, id=id)
+
+    # Đếm số phiếu cho từng ứng cử viên trong cuộc bầu cử
+    ketqua = Vote.objects.filter(candidate__ballot=baucu)\
+                .values('candidate__id', 'candidate__name')\
+                .annotate(so_phieu=Count('id'))\
+                .order_by('-so_phieu')
+
+    context = {
+        'baucu': baucu,
+        'ketqua': ketqua,
+    }
+
+    return render(request, 'adminpages/baucu/ketqua.html', context)

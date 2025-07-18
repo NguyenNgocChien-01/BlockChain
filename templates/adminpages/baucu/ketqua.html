@@ -1,0 +1,30 @@
+{% extends 'adminpages/index.html' %}
+
+{% block content %}
+<div class="pc-container">
+  <div class="pc-content">
+    <h2>Kết quả bầu cử: {{ baucu.title }}</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Ứng cử viên</th>
+          <th>Số phiếu</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in ketqua %}
+        <tr>
+          <td>{{ item.candidate__name }}</td>
+          <td>{{ item.so_phieu }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2">Chưa có phiếu nào</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="{% url 'baucu' %}" class="btn btn-secondary">Quay lại</a>
+  </div>
+</div>
+{% endblock %}
