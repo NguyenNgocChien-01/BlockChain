@@ -1,0 +1,17 @@
+{
+    "ballot_id": 7,
+    "ballot_title": "Bầu cử B",
+    "exported_at": "2025-07-21T15:15:31.340213+00:00",
+    "chain_hash": "e96000bee7c2b6c3ab002ec6d9224f0134155011e0fdedd237a6b0a89db33bbb",
+    "blocks": [
+        {
+            "index": 19,
+            "data": "Phiếu 22: Tui (bởi MIIBIjAN...)",
+            "previous_hash": "0",
+            "hash": "001c531c7e4e867e6ad8fc60bc4fb0993b88cc363d8d27da6278e99ccbde3920",
+            "nonce": 124,
+            "difficulty": 2,
+            "timestamp": "Mon Jul 21 22:15:31 2025"
+        }
+    ]
+}

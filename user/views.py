@@ -10,6 +10,22 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone # Đảm bảo đã import timezone
 from django.contrib.auth import logout as auth_logout
 from django.db.models import Q
+from cryptography.fernet import Fernet
+from base64 import urlsafe_b64encode, urlsafe_b64decode
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+from django.http import JsonResponse 
+import json
+from cryptography.hazmat.primitives.asymmetric import padding
+
+from .user_utils import (
+    strip_pem_headers,
+    _check_vote_eligibility,
+    _decrypt_private_key_from_strings, 
+    _sign_vote_data,
+    _verify_signature_internal
+)
 
 # Create your views here.
 def user(request):
@@ -46,6 +62,7 @@ def logout(request):
 def ds_baucu(request):
     keyword = request.GET.get('keyword', '')
     
+    # Bắt đầu với tất cả các cuộc bầu cử, KHÔNG CÓ BỘ LỌC THỜI GIAN NỮA
     all_ballots = Ballot.objects.all()
 
     if keyword:
@@ -53,10 +70,12 @@ def ds_baucu(request):
             Q(title__icontains=keyword) | Q(description__icontains=keyword)
         )
     
-    now = timezone.now() # Lấy thời gian hiện tại
-    active_or_upcoming_ballots = all_ballots.filter(end_date__gte=now).order_by('start_date')
 
-    paginator = Paginator(active_or_upcoming_ballots, 9) 
+    all_ballots = all_ballots.order_by('-start_date')
+
+    now = timezone.now() 
+
+    paginator = Paginator(all_ballots, 9) 
     page = request.GET.get('page')
 
     try:
@@ -69,7 +88,7 @@ def ds_baucu(request):
     context = {
         'baucus': baucus,        
         'keyword': keyword,      
-        'now': now, # THÊM DÒNG NÀY: Truyền biến 'now' vào context
+        'now': now,
     }
     
     return render(request, 'userpages/baucu/baucu.html', context)
@@ -115,113 +134,172 @@ def strip_pem_headers(pem_str):
 def dangky_cutri(request):
     if hasattr(request.user, 'voter'):
         messages.warning(request, 'Tài khoản của bạn đã được đăng ký làm cử tri.')
-        return redirect('baucu_u')
+        return redirect('baucu_u') 
 
     if request.method == 'POST':
+        # --- BỎ CÁC DÒNG KIỂM TRA MẬT KHẨU NÀY VÀ MÃ HÓA ---
+        # password_for_key_encryption = request.POST.get('password_for_key_encryption')
+        # password_confirm = request.POST.get('password_for_key_encryption_confirm')
+        # if not password_for_key_encryption or not password_confirm:
+        #     messages.error(request, 'Vui lòng nhập mật khẩu mã hóa khóa và xác nhận.')
+        #     return render(request, 'userpages/dangky_cutri.html') 
+        # if password_for_key_encryption != password_confirm:
+        #     messages.error(request, 'Mật khẩu mã hóa khóa không khớp. Vui lòng thử lại.')
+        #     return render(request, 'userpages/dangky_cutri.html')
+
         try:
-            # --- SINH KHÓA ---
-            private_key = rsa.generate_private_key(public_exponent=65537, key_size=1024)
-            private_pem = private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+            private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            private_pem_bytes = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()
             )
             public_key = private_key.public_key()
-            public_pem = public_key.public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            public_pem_bytes = public_key.public_bytes(
+                encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
-
-            # --- TÁCH NỘI DUNG KHỎI HEADER/FOOTER ---
-            def strip_pem_headers(pem_str):
-                lines = pem_str.strip().splitlines()
-                lines = [line for line in lines if not line.startswith("-----")]
-                return ''.join(lines)
-
-            public_base64 = strip_pem_headers(public_pem.decode('utf-8'))
-            private_base64 = strip_pem_headers(private_pem.decode('utf-8'))
-
-            # --- TẠO VOTER ---
-            Voter.objects.create(
-                user=request.user,
-                public_key=public_base64,
-                private_key_encrypted=private_base64
-            )
-
-            # --- LƯU VÀO SESSION ---
-            request.session['newly_generated_public_key'] = public_base64
-            request.session['newly_generated_private_key'] = private_base64
-
-            return redirect('dangky_cutri_success')
+            public_base64 = strip_pem_headers(public_pem_bytes.decode('utf-8'))
+            
+            # --- KHÔNG CÓ SALT VÀ KHÔNG MÃ HÓA PRIVATE KEY BẰNG MẬT KHẨU ---
+            # salt = os.urandom(16)
+            # kdf = PBKDF2HMAC(...)
+            # derived_key_for_fernet = ...
+            # f = Fernet(...)
+            # encrypted_private_key_data = f.encrypt(private_pem_bytes)
+            
+            Voter.objects.create(user=request.user, public_key=public_base64)
+            
+            key_data_for_download = {
+                "public_key": public_base64, 
+                "private_key_pem_b64": urlsafe_b64encode(private_pem_bytes).decode('utf-8'), # LƯU PRIVATE KEY PLAINTEXT (BASE64)
+                "user_id": request.user.id, "username": request.user.username,
+                "created_at": timezone.now().isoformat(), 
+                "encryption_method": "NONE" # Ghi chú rằng không có mã hóa
+            }
+            
+            return JsonResponse({
+                'success': True, 'message': 'Đăng ký cử tri thành công! File khóa của bạn sẽ được tải xuống. Vui lòng lưu trữ nó an toàn.',
+                'key_data': key_data_for_download, 'username': request.user.username,
+                'timestamp_str': timezone.now().strftime('%Y%m%d%H%M%S'), 'redirect_url': '/user/baucu/' 
+            })
 
         except Exception as e:
-            messages.error(request, f'Đã có lỗi xảy ra khi sinh khóa: {e}')
-            return redirect('dangky_cutri')
-
+            return JsonResponse({
+                'success': False, 'message': f'Đã có lỗi xảy ra khi sinh khóa: {e}', 'error_detail': str(e)
+            }, status=400)
+    
     return render(request, 'userpages/dangky_cutri.html')
 
 
 
-
-def dangky_cutri_success(request):
-    """
-    Hiển thị khóa cho người dùng MỘT LẦN DUY NHẤT sau khi tạo.
-    """
-    # Lấy khóa từ session và xóa nó đi để không hiển thị lại
-    public_key = request.session.pop('newly_generated_public_key', None)
-    private_key = request.session.pop('newly_generated_private_key', None)
-
-    # Nếu không có khóa trong session (người dùng vào thẳng URL), chuyển về trang chủ
-    if not public_key or not private_key:
-        return redirect('user')
-
-    context = {
-        'public_key': public_key,
-        'private_key': private_key,
-    }
-    return render(request, 'userpages/dangky_cutri_success.html', context)
-
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+
+def _check_vote_eligibility(request, ballot, voter):
+  
+    now = timezone.now()
+
+    # Kiểm tra thời gian bầu cử
+    if not (ballot.start_date <= now <= ballot.end_date):
+        messages.error(request, 'Cuộc bầu cử này không còn hiệu lực.')
+        return redirect('chitiet_baucu_u', id=ballot.id)
+
+    # Kiểm tra cử tri đã bỏ phiếu trong cuộc bầu cử này chưa
+    if Vote.objects.filter(ballot=ballot, voter_public_key=voter.public_key).exists():
+        messages.warning(request, 'Bạn đã bỏ phiếu trong cuộc bầu cử này rồi.')
+        return redirect('chitiet_baucu_u', id=ballot.id)
+    
+
+    return None 
 
 
 def bo_phieu(request, id):
     if request.method == 'POST':
-        if not request.user.is_authenticated:
-            messages.error(request, 'Bạn cần đăng nhập để bỏ phiếu.')
-            return redirect('login')
-
         try:
             ballot = get_object_or_404(Ballot, pk=id)
+            
+            if not hasattr(request.user, 'voter'):
+                messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
+                return redirect('view_dangky_cutri')
             voter = request.user.voter
-            now = timezone.now()
 
-            if not (ballot.start_date <= now <= ballot.end_date):
-                messages.error(request, 'Cuộc bầu cử này không còn hiệu lực.')
-                return redirect('chitiet_baucu_u', id=id)
-
-            if Vote.objects.filter(ballot=ballot, voter_public_key=voter.public_key).exists():
-                messages.warning(request, 'Bạn đã bỏ phiếu rồi.')
-                return redirect('chitiet_baucu_u', id=id)
+            eligibility_check_result = _check_vote_eligibility(request, ballot, voter)
+            if eligibility_check_result:
+                return eligibility_check_result
 
             candidate_id = request.POST.get('candidate')
             if not candidate_id:
                 messages.error(request, 'Bạn chưa chọn ứng cử viên.')
-                return redirect('chitiet_baucu_u', id=id)
-
+                return redirect('chitiet_baucu_u', id=ballot.id)
             candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
 
-            Vote.objects.create(
-                ballot=ballot,
-                candidate=candidate,
-                voter_public_key=voter.public_key
+
+            private_key = None
+            input_public_key_str = None
+            private_key_pem_b64 = None 
+
+            if 'key_file' in request.FILES and request.FILES['key_file']:
+                key_file = request.FILES['key_file']
+                file_content = key_file.read().decode('utf-8')
+                key_data = json.loads(file_content)
+                
+                private_key_pem_b64 = key_data.get('private_key_pem_b64') # Lấy private key plaintext (Base64)
+                input_public_key_str = key_data.get('public_key')
+
+                if not private_key_pem_b64 or not input_public_key_str:
+                    messages.error(request, 'File khóa không hợp lệ hoặc bị thiếu thông tin.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                if input_public_key_str != voter.public_key:
+                    messages.error(request, 'Khóa công khai trong file không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
+                private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
+
+            elif request.POST.get('private_key_pem_b64') and request.POST.get('public_key'):
+                private_key_pem_b64 = request.POST.get('private_key_pem_b64')
+                input_public_key_str = request.POST.get('public_key')
+
+                if not private_key_pem_b64 or not input_public_key_str: 
+                    messages.error(request, 'Vui lòng điền đầy đủ thông tin khóa bí mật và public key.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                if input_public_key_str != voter.public_key:
+                    messages.error(request, 'Khóa công khai đã nhập không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
+                private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
+
+            else:
+                messages.error(request, 'Vui lòng cung cấp khóa bí mật bằng cách tải file hoặc dán chuỗi.')
+                return redirect('chitiet_baucu_u', id=ballot.id)
+            
+            if private_key is None: 
+                messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
+                return redirect('chitiet_baucu_u', id=ballot.id)
+
+            timestamp_signed_at = timezone.now().isoformat()
+            signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
+            is_verified_internally = _verify_signature_internal(voter.public_key, f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}", signed_signature_b64)
+            if not is_verified_internally:
+                messages.error(request, 'Lỗi xác minh nội bộ sau khi ký. Phiếu bầu bị từ chối.')
+                return redirect('chitiet_baucu_u', id=ballot.id)
+
+            vote = Vote.objects.create(
+                ballot=ballot, candidate=candidate, voter_public_key=voter.public_key,
+                signature=signed_signature_b64, timestamp=timestamp_signed_at
             )
+            messages.success(request, 'Bỏ phiếu thành công và đã được xác minh bằng chữ ký số!')
+            return redirect('chitiet_baucu_u', id=ballot.id)
 
-            messages.success(request, 'Bỏ phiếu thành công!')
-            return redirect('chitiet_baucu_u', id=id)
-
+        except json.JSONDecodeError:
+            messages.error(request, 'File khóa không phải là định dạng JSON hợp lệ.')
+            return redirect('chitiet_baucu_u', id=ballot.id)
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect('chitiet_baucu_u', id=ballot.id)
         except Exception as e:
-            messages.error(request, f'Lỗi khi bỏ phiếu: {e}')
-            return redirect('chitiet_baucu_u', id=id)
+            messages.error(request, f'Lỗi hệ thống khi bỏ phiếu: {e}')
+            return redirect('chitiet_baucu_u', id=ballot.id)
 
     return redirect('chitiet_baucu_u', id=id)

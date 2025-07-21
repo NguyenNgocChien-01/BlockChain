@@ -13,6 +13,7 @@ urlpatterns = [
     path('baucu/delete/<int:id>/', delete_baucu, name='delete_baucu'),
     path('baucu/edit/<int:id>/', edit_baucu, name='edit_baucu'),
     path('baucu/chitiet/<int:id>',chitiet_baucu, name='chitiet_baucu'),
+    path('baucu/<int:id>/ketthuc/', ketthuc_baucu, name='ketthuc_baucu'),
     path('baucu/delete_ungcuvien/<int:id>',delete_ungcuvien, name='delete_ungcuvien'),
     path('baucu/add_ungcuvien/<int:id>',add_ungcuvien, name='add_ungcuvien'),
     path('baucu/edit_ungcuvien/<int:id>',edit_ungcuvien, name='edit_ungcuvien'),
@@ -23,6 +24,7 @@ urlpatterns = [
     path('ds_user/<int:user_id>/revoke-voter/', views.revoke_voter_status, name='revoke_voter_status'),
     path('ketqua/<int:id>/', views.ketqua_baucu, name='ketqua_baucu'),
     path('dsphieu/<int:ballot_id>/', danhsach_phieubau, name='danhsach_phieubau'),
+    path('baucu/dao_all/', dao_all_block, name='dao_all'),
 
 
 

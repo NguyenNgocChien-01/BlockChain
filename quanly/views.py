@@ -3,7 +3,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Q
 from .models import *
 from django.db.models import Count
+from django.db import transaction
 from .models import Ballot, Vote
+
+from django.core.management import call_command
 # Create your views here.
 def trangchu(request):
     return render(request,'adminpages/index.html')
@@ -56,16 +59,20 @@ def edit_baucu(request, id):
     baucu.save()
     return redirect('baucu') 
 
-def chitiet_baucu(request,id):
-    baucu = get_object_or_404(Ballot,id=id)
+def chitiet_baucu(request, id):
+    baucu = get_object_or_404(Ballot, id=id)
     ungcuviens = Candidate.objects.filter(ballot=baucu)
+
+    now = timezone.now()
+
+    is_active = baucu.start_date <= now and baucu.end_date >= now
 
     context = {
         'baucu': baucu,
-        'ungcuviens':ungcuviens
+        'ungcuviens': ungcuviens,
+        'is_active': is_active, 
     }
-    
-    return render(request,'adminpages/baucu/chitiet.html',context)
+    return render(request, 'adminpages/baucu/chitiet.html', context)
 
 def add_ungcuvien(request, id):
     baucu = get_object_or_404(Ballot,id = id)
@@ -94,6 +101,24 @@ def delete_ungcuvien(request, id):
     # ungcuvien.delete()
     
     return redirect('chitiet_baucu', id=baucu_id)
+
+def ketthuc_baucu(request, id):
+    ballot = get_object_or_404(Ballot, id=id)
+
+    # Check if the ballot has already ended
+    now = timezone.now()
+    if ballot.end_date < now:
+        messages.warning(request, f"Cuộc bầu cử '{ballot.title}' đã kết thúc rồi.")
+        return redirect('chitiet_baucu', id=id)
+
+    try:
+        ballot.end_date = now
+        ballot.save()
+        messages.success(request, f"Đã kết thúc cuộc bầu cử '{ballot.title}' ngay lập tức.")
+    except Exception as e:
+        messages.error(request, f"Lỗi khi kết thúc cuộc bầu cử: {e}")
+    
+    return redirect('chitiet_baucu', id=id)
 
 def edit_ungcuvien(request, id):
     ungcuvien = get_object_or_404(Candidate, id=id)
@@ -272,3 +297,19 @@ def danhsach_phieubau(request, ballot_id):
     
 
     return render(request, 'adminpages/baucu/danhsach_phieubau.html', context)
+
+
+def dao_all_block(request):
+
+
+    try:
+       
+        call_command('dao_block', '--force-mine')
+        
+        messages.success(request, "Đã thực hiện đào khối thành công cho TẤT CẢ các cuộc bầu cử có phiếu chờ.")
+
+    except Exception as e:
+        messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
+
+
+    return redirect('baucu')
