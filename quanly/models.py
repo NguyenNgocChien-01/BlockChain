@@ -56,7 +56,8 @@ class Voter(models.Model):
     """Mở rộng User mặc định để lưu khóa công khai cho mỗi cử tri."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Người dùng")
     public_key = models.TextField("Khóa công khai", unique=True)
-    private_key_encrypted = models.TextField("Khóa bí mật đã mã hóa")
+    # private_key_encrypted = models.TextField("Khóa bí mật đã mã hóa") # Đã xóa
+    # salt = models.CharField("Salt cho mã hóa khóa bí mật", max_length=32, blank=True, null=True) # Đã xóa
 
     class Meta:
         verbose_name = "Cử Tri"
@@ -80,18 +81,41 @@ class Block(models.Model):
         ordering = ['-id'] # Sắp xếp theo ID giảm dần (mới nhất lên đầu)
 
     # CÁC PHƯƠNG THỨC LOGIC
-    def get_vote_data_string(self):
+    def get_vote_data_summary(self):
         """
-        Lấy dữ liệu từ các phiếu bầu liên quan và tạo thành một chuỗi ổn định.
-        Đây là cách thay thế cho thuộc tính 'data' trong class Python thuần.
+        Trả về một chuỗi tóm tắt dữ liệu phiếu bầu để đưa vào trường 'data' của JSON.
+        Hoặc bạn có thể trả về một danh sách các dictionary đầy đủ hơn nếu muốn.
+        Ví dụ này sẽ trả về một chuỗi để khớp với ví dụ "Giao dich A: 10VND"
         """
-        # self.votes.all() hoạt động vì có 'related_name' trong ForeignKey của model Vote
-        votes = self.votes.all().order_by('id') 
-        return "".join([str(v.id) for v in votes])
+        votes = self.votes.all().order_by('id')
+        if not votes:
+            return "No transactions"
+        
+        summaries = []
+        for v in votes:
+            # Bạn có thể điều chỉnh cách hiển thị dữ liệu phiếu bầu trong trường "data"
+            summaries.append(f"Phiếu {v.id}: {v.candidate.name} (bởi {v.voter_public_key[:8]}...)")
+        return "; ".join(summaries)
+    
+    def to_json_serializable(self):
+        """
+        Chuyển đổi Block thành dictionary có thể serialize thành JSON,
+        phù hợp với cấu trúc file log bạn mong muốn.
+        """
+        return {
+            "index": self.id, # Dùng id của Django model làm index
+            "data": self.get_vote_data_summary() if self.id != 1 else "Genesis Block", # "Genesis Block" cho block đầu tiên
+            "previous_hash": self.previous_hash if self.previous_hash else "0", # "0" cho Genesis
+            "hash": self.hash,
+            "nonce": self.nonce,
+            "difficulty": self.difficulty,
+            "timestamp": self.timestamp.strftime("%a %b %d %H:%M:%S %Y"), # Format khớp ví dụ "Mon Jun 16 18:04:41 2025"
+            # "chain_hash" không phải thuộc tính của Block riêng lẻ, sẽ được tính cho toàn bộ file
+        }
 
     def calculate_hash(self):
         """Tính toán hash dựa trên toàn bộ các thuộc tính của khối."""
-        vote_data = self.get_vote_data_string()
+        vote_data = self.self.get_vote_data_summary() 
         # Dùng self.id thay cho index
         value = f"{self.id}{self.timestamp}{vote_data}{self.previous_hash}{self.difficulty}{self.nonce}"
         return hashlib.sha256(value.encode()).hexdigest()

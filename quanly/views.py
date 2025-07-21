@@ -3,7 +3,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Q
 from .models import *
 from django.db.models import Count
+from django.db import transaction
 from .models import Ballot, Vote
+
+
 # Create your views here.
 def trangchu(request):
     return render(request,'adminpages/index.html')
@@ -272,3 +275,5 @@ def danhsach_phieubau(request, ballot_id):
     
 
     return render(request, 'adminpages/baucu/danhsach_phieubau.html', context)
+
+

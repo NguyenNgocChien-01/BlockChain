@@ -45,11 +45,11 @@
 
 <body data-pc-preset="preset-1" data-pc-direction="ltr" data-pc-theme="light">
 <!-- base.html -->
-{% if messages %}
+{% comment %} {% if messages %}
   {% for message in messages %}
     <div class="alert alert-danger">{{ message }}</div>
   {% endfor %}
-{% endif %}
+{% endif %} {% endcomment %}
   <!-- [ Pre-loader ] start -->
 <div class="loader-bg">
   <div class="loader-track">

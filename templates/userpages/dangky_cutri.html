@@ -1,27 +1,158 @@
 {% extends 'userpages/index.html' %}
 {% load static %}
 
-{% block title %}Đăng Ký Làm Cử Tri{% endblock %}
+{% block title %}Đăng Ký Cử Tri{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card text-center">
-                <div class="card-header">
-                    <h4 class="mb-0">Xác Nhận Đăng Ký Cử Tri</h4>
-                </div>
-                <div class="card-body p-4">
-                    <i class="ti ti-key" style="font-size: 48px; color: var(--bs-primary);"></i>
-                    <p class="mt-3">Hành động này sẽ tạo ra một cặp khóa mã hóa (công khai và bí mật) cho tài khoản của bạn để tham gia bỏ phiếu.</p>
-                    <p class="text-muted small">Khóa của bạn sẽ được bảo mật và cần thiết cho mọi hoạt động bầu cử trong hệ thống.</p>
-                    <form method="POST" action="{% url 'dangky_cutri' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary w-100">Xác nhận và Tạo Khóa</button>
-                    </form>
-                </div>
+<div class="pc-container"> {# Giữ lại container chính #}
+    <div class="pc-content"> {# Giữ lại content area #}
+        <div class="card"> {# Bọc nội dung trong card #}
+            <div class="card-header">
+                <h3 class="mb-0">Đăng Ký Làm Cử Tri</h3>
             </div>
-        </div>
-    </div>
-</div>
+            <div class="card-body"> {# Bọc nội dung form trong card-body #}
+                {# Hiển thị thông báo từ Django Messages Framework #}
+                {% if messages %}
+                    <div class="mb-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# Container hiển thị thông báo AJAX - QUAN TRỌNG: ĐẢM BẢO CÓ DIV NÀY #}
+                <div id="ajax_message_container" class="mb-3"></div>
+
+                <div class=" mb-4">
+                    {% comment %} <i class="ti ti-key f-50 text-primary mb-2"></i> {# Icon lớn hơn #}
+                    <p class="lead mb-2">Để bảo mật phiếu bầu, chúng tôi sẽ sinh một cặp khóa duy nhất cho bạn.</p> {% endcomment %}
+                    <p class="text-info fst-italic">Khi đăng ký thành công, một file JSON chứa khóa công khai và khóa bí mật của bạn sẽ được tự động tải xuống. Khóa bí mật trong file sẽ được mã hóa bằng mật khẩu bạn nhập dưới đây.</p>
+                    {% comment %} <div class="alert alert-danger p-2 mb-0">
+                        <i class="ti ti-alert-triangle-filled me-2"></i>
+                        <strong class="text-uppercase">Cảnh báo quan trọng:</strong> VUI LÒNG LƯU TRỮ FILE KHÓA NÀY VÀ MẬT KHẨU CỦA NÓ VÀO NƠI AN TOÀN TUYỆT ĐỐI! Nếu mất file hoặc quên mật khẩu, bạn sẽ không thể bỏ phiếu.
+                    </div> {% endcomment %}
+                </div>
+
+                {# FORM ĐĂNG KÝ CỬ TRI #}
+                <form id="registerVoterForm" method="POST" action="{% url 'dangky_cutri' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_password_for_key_encryption" class="form-label">Mật khẩu để mã hóa file khóa bí mật <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="id_password_for_key_encryption" name="password_for_key_encryption" required>
+                        <div class="form-text text-start">Mật khẩu này dùng để bảo vệ file khóa bí mật của bạn. Vui lòng ghi nhớ!</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password_for_key_encryption_confirm" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="id_password_for_key_encryption_confirm" name="password_for_key_encryption_confirm" required>
+                    </div>
+
+                    <div class="d-grid mt-4"> {# Nút toàn chiều rộng #}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="ti ti-file-export me-2"></i> Đăng ký & Sinh Khóa
+                        </button>
+                    </div>
+                </form>
+            </div>{# /card-body #}
+        </div>{# /card #}
+    </div>{# /pc-content #}
+</div>{# /pc-container #}
+
+{# SCRIPT JAVASCRIPT CHO AJAX VÀ TẢI FILE #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerVoterForm');
+    const ajaxMessageContainer = document.getElementById('ajax_message_container');
+
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault(); // Ngăn chặn gửi form mặc định
+
+        ajaxMessageContainer.innerHTML = ''; // Xóa thông báo cũ
+
+        const password = document.getElementById('id_password_for_key_encryption').value;
+        const confirmPassword = document.getElementById('id_password_for_key_encryption_confirm').value;
+
+        if (password !== confirmPassword) {
+            displayMessage('Mật khẩu mã hóa khóa không khớp. Vui lòng thử lại.', 'danger');
+            return;
+        }
+        if (!password) {
+            displayMessage('Vui lòng nhập mật khẩu mã hóa khóa.', 'danger');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const csrfToken = formData.get('csrfmiddlewaretoken');
+
+        try {
+            // Tắt nút submit và hiển thị spinner/loading
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: formData
+            });
+
+            const data = await response.json(); // Phân tích phản hồi JSON
+
+            if (data.success) {
+                // Tạo file JSON và kích hoạt tải xuống
+                const keyData = data.key_data;
+                const username = data.username;
+                const timestampStr = data.timestamp_str;
+                const redirectUrl = data.redirect_url;
+
+                const fileName = `voter_keys_${username}_${timestampStr}.json`;
+                const jsonStr = JSON.stringify(keyData, null, 4);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                displayMessage(data.message, 'success');
+                // Chuyển hướng sau khi tải xuống
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 2000); // Chuyển hướng sau 2 giây
+            } else {
+                displayMessage(data.message, 'danger');
+                console.error('Lỗi từ server:', data.error_detail || data.message);
+                // Kích hoạt lại nút và khôi phục nội dung nếu lỗi
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="ti ti-file-export me-2"></i> Đăng ký & Sinh Khóa';
+            }
+        } catch (error) {
+            displayMessage('Đã xảy ra lỗi mạng hoặc lỗi không xác định. Vui lòng thử lại.', 'danger');
+            console.error('Lỗi Fetch:', error);
+            // Kích hoạt lại nút và khôi phục nội dung nếu lỗi
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="ti ti-file-export me-2"></i> Đăng ký & Sinh Khóa';
+        }
+    });
+
+    function displayMessage(message, type) {
+        ajaxMessageContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+    }
+});
+</script>
+
 {% endblock %}
