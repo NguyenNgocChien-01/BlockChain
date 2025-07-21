@@ -1,35 +1,17 @@
 {
     "ballot_id": 7,
     "ballot_title": "Bầu cử B",
-    "exported_at": "2025-07-21T13:59:38.978899+00:00",
-    "chain_hash": "7d47ab922177cfe99ae7eb646d6445510157dfef808fecc070339062e17ddebf",
+    "exported_at": "2025-07-21T15:15:31.340213+00:00",
+    "chain_hash": "e96000bee7c2b6c3ab002ec6d9224f0134155011e0fdedd237a6b0a89db33bbb",
     "blocks": [
         {
-            "index": 7,
-            "data": "Phiếu 9: Tui (bởi MIIBIjAN...)",
+            "index": 19,
+            "data": "Phiếu 22: Tui (bởi MIIBIjAN...)",
             "previous_hash": "0",
-            "hash": "0000612235b2aa4ed9d1d59c2d1d0877a629fba412a0767d63a1b5a28a137678",
-            "nonce": 34330,
-            "difficulty": 4,
-            "timestamp": "Mon Jul 21 13:16:12 2025"
-        },
-        {
-            "index": 8,
-            "data": "Phiếu 10: Tui (bởi MIIBIjAN...); Phiếu 11: Tui (bởi MIIBIjAN...)",
-            "previous_hash": "0000612235b2aa4ed9d1d59c2d1d0877a629fba412a0767d63a1b5a28a137678",
-            "hash": "00009558f6411b9d457ba78f1c691a917fbc49fffba6f7292a12553c3dc1de8f",
-            "nonce": 21358,
-            "difficulty": 4,
-            "timestamp": "Mon Jul 21 13:34:06 2025"
-        },
-        {
-            "index": 13,
-            "data": "Phiếu 16: Tui (bởi MIIBIjAN...)",
-            "previous_hash": "00009558f6411b9d457ba78f1c691a917fbc49fffba6f7292a12553c3dc1de8f",
-            "hash": "00671e9eb6f983317f198019a4058c10c96f494625fe28ae6c30575c4b5009f9",
-            "nonce": 151,
+            "hash": "001c531c7e4e867e6ad8fc60bc4fb0993b88cc363d8d27da6278e99ccbde3920",
+            "nonce": 124,
             "difficulty": 2,
-            "timestamp": "Mon Jul 21 13:59:38 2025"
+            "timestamp": "Mon Jul 21 22:15:31 2025"
         }
     ]
 }

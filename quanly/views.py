@@ -6,7 +6,7 @@ from django.db.models import Count
 from django.db import transaction
 from .models import Ballot, Vote
 
-
+from django.core.management import call_command
 # Create your views here.
 def trangchu(request):
     return render(request,'adminpages/index.html')
@@ -299,3 +299,17 @@ def danhsach_phieubau(request, ballot_id):
     return render(request, 'adminpages/baucu/danhsach_phieubau.html', context)
 
 
+def dao_all_block(request):
+
+
+    try:
+       
+        call_command('dao_block', '--force-mine')
+        
+        messages.success(request, "Đã thực hiện đào khối thành công cho TẤT CẢ các cuộc bầu cử có phiếu chờ.")
+
+    except Exception as e:
+        messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
+
+
+    return redirect('baucu')

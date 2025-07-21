@@ -11,9 +11,19 @@
         {% endif %}
 
         <div class="text-end p-4 pb-0">
-          <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addbaucuModal">
-            <i class="ti ti-plus f-18"></i> Tạo Bầu Cử Mới
-          </a>
+<div class="text-end p-4 pb-0 d-flex justify-content-end gap-2">
+    
+    <a href="{% url 'dao_all' %}" 
+       class="btn btn-warning" 
+       onclick="return confirm('Bạn có chắc chắn muốn ép đào khối cho TẤT CẢ các cuộc bầu cử không? Hành động này sẽ gom tất cả các phiếu đang chờ trên toàn hệ thống vào các khối mới ngay lập tức.')">
+        <i class="ti ti-chisel"></i> Đào Tất Cả Các Khối
+    </a>
+
+    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addbaucuModal">
+        <i class="ti ti-plus f-18"></i> Tạo Bầu Cử Mới
+    </a>
+
+</div>
         </div>
         <div class="table-responsive">
           <div class="datatable-wrapper datatable-loading no-footer searchable fixed-columns">

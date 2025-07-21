@@ -4,6 +4,7 @@ import time
 import uuid
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import localtime
 
 # Create your models here.
 from django.db import models
@@ -109,7 +110,7 @@ class Block(models.Model):
             "hash": self.hash,
             "nonce": self.nonce,
             "difficulty": self.difficulty,
-            "timestamp": self.timestamp.strftime("%a %b %d %H:%M:%S %Y"), # Format khớp ví dụ "Mon Jun 16 18:04:41 2025"
+           "timestamp": localtime(self.timestamp).strftime("%a %b %d %H:%M:%S %Y"),
             # "chain_hash" không phải thuộc tính của Block riêng lẻ, sẽ được tính cho toàn bộ file
         }
 
