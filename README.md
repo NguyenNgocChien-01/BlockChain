@@ -17,3 +17,7 @@ Tạo bầu cử --> Thêm ứng viên --> Đăng nhập user --> Đăng ký c�
 ``` bash
 python manage.py dao_block
 ````
+
+
+File block được lưu riêng cho mỗi bầu cử trong quanly\save_blockchain
+File chạy dòng lệnh được lưu trong quanly\management\commands
