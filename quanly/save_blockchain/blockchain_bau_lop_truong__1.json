@@ -1,0 +1,44 @@
+{
+    "ballot_id": 1,
+    "ballot_title": "Bầu Lớp Trường ",
+    "exported_at": "2025-07-21T17:47:37.837247+00:00",
+    "chain_hash": "a7cbfbf1111e936b82d1785f5e045c66ade0c613fa4596b2d0009682b36c7a44",
+    "blocks": [
+        {
+            "index": 20,
+            "data": "Phiếu 23: Nguyễn Ngọc Chiến (bởi MIIBIjAN...)",
+            "previous_hash": "0",
+            "hash": "00e1d4f436353d47421a5e8ee6f5efae361e90e75f249b53d2a5d64eaa125438",
+            "nonce": 173,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 00:21:28 2025"
+        },
+        {
+            "index": 22,
+            "data": "Phiếu 26: Gia Khánh (bởi MIIBIjAN...)",
+            "previous_hash": "00e1d4f436353d47421a5e8ee6f5efae361e90e75f249b53d2a5d64eaa125438",
+            "hash": "009e4a59e928a82c676cf3c111d6ece658d6e450458edcf7423cba8236735eb0",
+            "nonce": 170,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 00:23:56 2025"
+        },
+        {
+            "index": 25,
+            "data": "Phiếu 28: Gia Khánh (bởi MIIBIjAN...)",
+            "previous_hash": "009e4a59e928a82c676cf3c111d6ece658d6e450458edcf7423cba8236735eb0",
+            "hash": "0077ebb0eed8670ba9932fa68cb6c22ac153e2a5fc448a4b32d517e3e4cd3b59",
+            "nonce": 275,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 00:33:50 2025"
+        },
+        {
+            "index": 27,
+            "data": "Phiếu 30: Khương (bởi MIIBIjAN...)",
+            "previous_hash": "0077ebb0eed8670ba9932fa68cb6c22ac153e2a5fc448a4b32d517e3e4cd3b59",
+            "hash": "00ed5322876ed5a41ac7b08ae3a9a87f7b10166d9dbce04ba4a0c28207d078ea",
+            "nonce": 256,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 00:47:37 2025"
+        }
+    ]
+}
