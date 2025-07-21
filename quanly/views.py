@@ -232,28 +232,26 @@ def revoke_voter_status(request, user_id):
     return redirect('ds_user')
 
 def ketqua_baucu(request, id):
-
     baucu = get_object_or_404(Ballot, id=id)
 
-    # Đếm số phiếu 
+
+    if baucu.end_date > timezone.now():
+        messages.warning(request, f"Cuộc bầu cử '{baucu.title}' vẫn đang diễn ra. Kết quả chỉ có thể được xem sau khi đã kết thúc.")
+        return redirect('chitiet_baucu', id=id)
+
+
     ketqua = Vote.objects.filter(candidate__ballot=baucu)\
         .values('candidate__name')\
         .annotate(so_phieu=Count('id'))\
         .order_by('-so_phieu')
 
-    # Tính tổng 
-   
     tong_so_phieu = sum(item['so_phieu'] for item in ketqua)
-
-    #  tỷ lệ phần trăm 
 
     for item in ketqua:
         if tong_so_phieu > 0:
-            # Làm tròn đến 2 chữ số thập phân
             item['phan_tram'] = round((item['so_phieu'] / tong_so_phieu) * 100, 2)
         else:
             item['phan_tram'] = 0
-
 
     context = {
         'baucu': baucu,
@@ -304,7 +302,7 @@ def dao_all_block(request):
 
     try:
        
-        call_command('dao_block', '--force-mine')
+        call_command('dao_block', '--force-mine','--force-restore')
         
         messages.success(request, "Đã thực hiện đào khối thành công cho TẤT CẢ các cuộc bầu cử có phiếu chờ.")
 
