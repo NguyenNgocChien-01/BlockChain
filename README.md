@@ -21,4 +21,9 @@ python manage.py dao_block
 
 
 File block được lưu riêng cho mỗi bầu cử trong quanly\save_blockchain
+
 File chạy dòng lệnh được lưu trong quanly\management\commands
+
+model lưu trong quanly/models.py
+
+template lưu file html
