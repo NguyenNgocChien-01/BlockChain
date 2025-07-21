@@ -9,9 +9,7 @@ cd BlockChain
 
 
 ### 1.Khởi động server:
-
-Bash
-
+```bash
 python manage.py runserver
-
+```
 
