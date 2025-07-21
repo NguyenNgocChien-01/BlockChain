@@ -1,0 +1,44 @@
+{
+    "ballot_id": 9,
+    "ballot_title": "Bầu Cử O",
+    "exported_at": "2025-07-21T14:04:37.229103+00:00",
+    "chain_hash": "ef3dc2daa06e8808bb0511c5bdb0c342b392eca1ceeade94d200938c09fd9357",
+    "blocks": [
+        {
+            "index": 10,
+            "data": "Phiếu 13: aa (bởi MIIBIjAN...)",
+            "previous_hash": "0",
+            "hash": "000098b81881ff49e7b07d8cb4b474b490a81ce8857265a8813e83a7cc5673ba",
+            "nonce": 17927,
+            "difficulty": 4,
+            "timestamp": "Mon Jul 21 13:49:13 2025"
+        },
+        {
+            "index": 11,
+            "data": "Phiếu 14: aa (bởi MIIBIjAN...)",
+            "previous_hash": "000098b81881ff49e7b07d8cb4b474b490a81ce8857265a8813e83a7cc5673ba",
+            "hash": "0000598d144f4ea01a7dac14135b2835c2d5a3871b00351b656c82660ec3af49",
+            "nonce": 68490,
+            "difficulty": 4,
+            "timestamp": "Mon Jul 21 13:50:14 2025"
+        },
+        {
+            "index": 12,
+            "data": "Phiếu 15: aa (bởi MIIBIjAN...)",
+            "previous_hash": "0000598d144f4ea01a7dac14135b2835c2d5a3871b00351b656c82660ec3af49",
+            "hash": "0064c3473d936591bf0b6474350e6c368b55c12b65102161c623053fcf5f2ee1",
+            "nonce": 103,
+            "difficulty": 2,
+            "timestamp": "Mon Jul 21 13:58:46 2025"
+        },
+        {
+            "index": 14,
+            "data": "Phiếu 17: aa (bởi MIIBIjAN...)",
+            "previous_hash": "0064c3473d936591bf0b6474350e6c368b55c12b65102161c623053fcf5f2ee1",
+            "hash": "006a450f40abe5a14749c730778d1e162243827eb63b7e869a69e562d9f58055",
+            "nonce": 342,
+            "difficulty": 2,
+            "timestamp": "Mon Jul 21 14:04:36 2025"
+        }
+    ]
+}

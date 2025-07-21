@@ -115,7 +115,7 @@ class Block(models.Model):
 
     def calculate_hash(self):
         """Tính toán hash dựa trên toàn bộ các thuộc tính của khối."""
-        vote_data = self.self.get_vote_data_summary() 
+        vote_data = self.get_vote_data_summary() 
         # Dùng self.id thay cho index
         value = f"{self.id}{self.timestamp}{vote_data}{self.previous_hash}{self.difficulty}{self.nonce}"
         return hashlib.sha256(value.encode()).hexdigest()

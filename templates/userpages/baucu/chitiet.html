@@ -36,7 +36,39 @@
                 {% endif %}
 
                 <h4>Danh sách ứng cử viên</h4>
+                {# DI CHUYỂN PHẦN HIỂN THỊ ỨNG CỬ VIÊN RA NGOÀI ĐÂY #}
+                <div class="list-group mb-3">
+                    {% for ungcuvien in ungcuviens %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 align-items-center">
+                            <div class="me-3">
+                                {% if ungcuvien.avatar %}
+                                    <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60">
+                                {% else %}
+                                    <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">{{ ungcuvien.name }}</h5>
+                                <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="ms-auto">
+                                {# Radio button chỉ hiển thị nếu cuộc bầu cử đang hoạt động và người dùng đủ điều kiện #}
+                                {% if is_active and request.user.is_authenticated and is_voter and not has_voted %}
+                                <input type="radio" class="form-check-input" name="candidate" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}" required>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center p-5">
+                        <p class="text-muted">Chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {# KẾT THÚC PHẦN HIỂN THỊ ỨNG CỬ VIÊN #}
 
+                {# HIỂN THỊ CÁC THÔNG BÁO VÀ FORM BỎ PHIẾU (NẾU CÓ) #}
                 {% if not request.user.is_authenticated %}
                     <div class="alert alert-warning text-center" role="alert">
                         <i class="ti ti-user-x f-48 mb-3"></i>
@@ -61,81 +93,54 @@
                         <h4 class="alert-heading">Cuộc bầu cử chưa diễn ra hoặc đã kết thúc.</h4>
                         <p>Vui lòng quay lại trong khoảng thời gian bỏ phiếu đã được thông báo.</p>
                 {% else %}
-                    <form method="POST" action="{% url 'bo_phieu' baucu.id %}" id="voteForm" enctype="multipart/form-data"> {# Cần enctype để xử lý file tải lên #}
-                        {% csrf_token %}
-                        <div class="list-group mb-3">
-                            {% for ungcuvien in ungcuviens %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 align-items-center">
-                                    <div class="me-3">
-                                        {% if ungcuvien.avatar %}
-                                            <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60">
-                                        {% else %}
-                                            <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h5 class="mb-1">{{ ungcuvien.name }}</h5>
-                                        <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <input type="radio" class="form-check-input" name="candidate" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}" required>
-                                    </div>
+                    {% if ungcuviens %}
+                        <form method="POST" action="{% url 'bo_phieu' baucu.id %}" id="voteForm" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {# Candidate radios now handled directly in the list-group above #}
+                            
+                            <h5 class="mt-4 mb-3">Cung cấp khóa bí mật của bạn:</h5>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="toggleKeyInputMethod" checked>
+                                <label class="form-check-label" for="toggleKeyInputMethod">Sử dụng Tải File (tắt để dán chuỗi)</label>
+                            </div>
+
+                            {# PHẦN TẢI FILE #}
+                            <div id="fileInputSection" class="mb-3">
+                                <label for="keyFile" class="form-label">Tải lên thông tin của bạn</label>
+                                <input type="file" class="form-control" id="keyFile" name="key_file" accept=".json" required>
+                                <div class="form-text">Đây là file bạn đã tải xuống khi đăng ký cử tri.</div>
+                            </div>
+
+                            {# PHẦN DÁN CHUỖI #}
+                            <div id="stringInputSection" class="mb-3" style="display: none;">
+                                <p class="text-muted">Dán các chuỗi khóa từ file JSON của bạn:</p>
+                                <div class="mb-3">
+                                    <label for="id_public_key" class="form-label">Khóa công khai (public_key)</label>
+                                    <textarea class="form-control" id="id_public_key" name="public_key" rows="3"></textarea>
+                                    <div class="form-text">Dán chuỗi "public_key" từ file JSON đã tải xuống.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_private_key_pem_b64" class="form-label">Khóa bí mật (private_key_pem_b64)</label>
+                                    <textarea class="form-control" id="id_private_key_pem_b64" name="private_key_pem_b64" rows="5"></textarea>
+                                    <div class="form-text">Dán chuỗi "private_key_pem_b64" từ file JSON đã tải xuống.</div>
                                 </div>
                             </div>
-                            {% empty %}
-                            <div class="text-center p-5">
-                                <p class="text-muted">Chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
+
+                            {# BỎ HOÀN TOÀN KHỐI NHẬP MẬT KHẨU GIẢI MÃ NÀY VÀ TRƯỜNG SALT #}
+                            {# Khối div mb-3 cho mật khẩu giải mã đã được loại bỏ #}
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary" id="submitVoteButton" onclick="return confirm('Bạn có chắc chắn muốn bỏ phiếu không? Hành động này không thể thay đổi.')">
+                                    <i class="ti ti-hand-click"></i> Xác nhận bỏ phiếu
+                                </button>
                             </div>
-                            {% endfor %}
-                        </div>
-
-                        <h5 class="mt-4 mb-3">Cung cấp khóa bí mật của bạn:</h5>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="toggleKeyInputMethod" checked>
-                            <label class="form-check-label" for="toggleKeyInputMethod">Sử dụng Tải File (tắt để dán chuỗi)</label>
-                        </div>
-
-                        {# PHẦN TẢI FILE #}
-                        <div id="fileInputSection" class="mb-3">
-                            <label for="keyFile" class="form-label">Tải lên thông tin của bạn</label>
-                            <input type="file" class="form-control" id="keyFile" name="key_file" accept=".json" required>
-                            <div class="form-text">Đây là file bạn đã tải xuống khi đăng ký cử tri.</div>
-                        </div>
-
-                        {# PHẦN DÁN CHUỖI #}
-                        <div id="stringInputSection" class="mb-3" style="display: none;">
-                             <p class="text-muted">Dán các chuỗi khóa từ file JSON của bạn:</p>
-                            <div class="mb-3">
-                                <label for="id_public_key" class="form-label">Khóa công khai (public_key)</label>
-                                <textarea class="form-control" id="id_public_key" name="public_key" rows="3"></textarea>
-                                <div class="form-text">Dán chuỗi "public_key" từ file JSON đã tải xuống.</div>
+                        {% else %}
+                            <div class="alert alert-warning text-center mt-4" role="alert">
+                                <h4 class="alert-heading">Không có ứng cử viên để bỏ phiếu.</h4>
+                                <p>Cuộc bầu cử này hiện chưa có ứng cử viên nào.</p>
                             </div>
-
-                            <div class="mb-3">
-                                <label for="id_private_key_encrypted" class="form-label">Khóa bí mật đã mã hóa (private_key_encrypted)</label>
-                                <textarea class="form-control" id="id_private_key_encrypted" name="private_key_encrypted" rows="5"></textarea>
-                                <div class="form-text">Dán chuỗi "private_key_encrypted" từ file JSON đã tải xuống.</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="id_salt" class="form-label">Salt (salt)</label>
-                                <textarea class="form-control" id="id_salt" name="salt" rows="2"></textarea>
-                                <div class="form-text">Dán chuỗi "salt" từ file JSON đã tải xuống.</div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="id_password_for_key_decryption" class="form-label">Mật khẩu để giải mã khóa bí mật</label>
-                            <input type="password" class="form-control" id="id_password_for_key_decryption" name="password_for_key_decryption" required>
-                            <div class="form-text">Nhập mật khẩu bạn đã dùng để mã hóa file khóa khi đăng ký cử tri.</div>
-                        </div>
-
-                        <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary" id="submitVoteButton" onclick="return confirm('Bạn có chắc chắn muốn bỏ phiếu không? Hành động này không thể thay đổi.')">
-                                <i class="ti ti-hand-click"></i> Xác nhận bỏ phiếu
-                            </button>
-                        </div>
+                        {% endif %}
                     </form>
                 {% endif %}
 
@@ -157,40 +162,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const keyFile = document.getElementById('keyFile');
     const public_key_textarea = document.getElementById('id_public_key');
-    const private_key_encrypted_textarea = document.getElementById('id_private_key_encrypted');
-    const salt_textarea = document.getElementById('id_salt');
+    const private_key_pem_b64_textarea = document.getElementById('id_private_key_pem_b64'); 
+    
+    const voteForm = document.getElementById('voteForm');
 
-    // Hàm để cập nhật thuộc tính 'required'
-    function updateRequiredAttributes() {
-        if (toggleKeyInputMethod.checked) { // Tải File
-            keyFile.setAttribute('required', 'required');
-            public_key_textarea.removeAttribute('required');
-            private_key_encrypted_textarea.removeAttribute('required');
-            salt_textarea.removeAttribute('required');
-        } else { // Dán Chuỗi
-            keyFile.removeAttribute('required');
-            public_key_textarea.setAttribute('required', 'required');
-            private_key_encrypted_textarea.setAttribute('required', 'required');
-            salt_textarea.setAttribute('required', 'required');
+    if (voteForm) {
+        function updateRequiredAttributes() {
+            if (toggleKeyInputMethod.checked) { // Tải File
+                keyFile.setAttribute('required', 'required');
+                public_key_textarea.removeAttribute('required');
+                private_key_pem_b64_textarea.removeAttribute('required');
+            } else { // Dán Chuỗi
+                keyFile.removeAttribute('required');
+                public_key_textarea.setAttribute('required', 'required');
+                private_key_pem_b64_textarea.setAttribute('required', 'required');
+            }
         }
+
+        fileInputSection.style.display = toggleKeyInputMethod.checked ? 'block' : 'none';
+        stringInputSection.style.display = toggleKeyInputMethod.checked ? 'none' : 'block';
+        updateRequiredAttributes(); 
+
+        toggleKeyInputMethod.addEventListener('change', function() {
+            if (toggleKeyInputMethod.checked) {
+                fileInputSection.style.display = 'block';
+                stringInputSection.style.display = 'none';
+            } else {
+                fileInputSection.style.display = 'none';
+                stringInputSection.style.display = 'block';
+            }
+            updateRequiredAttributes();
+        });
     }
-
-    // Thiết lập trạng thái ban đầu dựa trên checkbox
-    fileInputSection.style.display = toggleKeyInputMethod.checked ? 'block' : 'none';
-    stringInputSection.style.display = toggleKeyInputMethod.checked ? 'none' : 'block';
-    updateRequiredAttributes(); // Cập nhật thuộc tính required khi tải trang
-
-    // Lắng nghe sự kiện thay đổi của checkbox
-    toggleKeyInputMethod.addEventListener('change', function() {
-        if (toggleKeyInputMethod.checked) {
-            fileInputSection.style.display = 'block';
-            stringInputSection.style.display = 'none';
-        } else {
-            fileInputSection.style.display = 'none';
-            stringInputSection.style.display = 'block';
-        }
-        updateRequiredAttributes(); // Cập nhật thuộc tính required khi thay đổi
-    });
 });
 </script>
 {% endblock %}
