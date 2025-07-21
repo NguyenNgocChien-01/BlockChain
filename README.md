@@ -4,6 +4,7 @@ Clone repository về máy:
 ```bash
 git clone https://github.com/NguyenNgocChien-01/BlockChain.git
 cd BlockChain
+pip install Django
 ```
 
 ### 1. Khởi động server:
