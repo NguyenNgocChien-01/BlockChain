@@ -12,6 +12,8 @@ from collections import Counter
 # Create your views here.
 def trangchu(request):
     return render(request,'adminpages/index.html')
+def chart(request):
+    return render(request,'adminpages/chart.html')
 
 def baucu(request):
     keyword = request.GET.get('keyword', '')

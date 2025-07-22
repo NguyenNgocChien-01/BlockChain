@@ -8,6 +8,7 @@ from quanly import views
 
 urlpatterns = [
     path('',trangchu,name='trangchu'),
+    path('chart/',chart,name='chart'),
     path('baucu/',baucu,name='baucu'),
     path('baucu/add/', add_baucu, name='add_baucu'),
     path('baucu/delete/<int:id>/', delete_baucu, name='delete_baucu'),
