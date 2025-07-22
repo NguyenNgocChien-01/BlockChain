@@ -37,4 +37,9 @@ model lưu trong quanly/models.py
 
 template lưu file html
 
+### Kiểm phiếu (ví dụ phiếu của bầu cử c lưu trông save_blockchain)
+``` bash
+python manage.py kiem_phieu blockchain_bau_cu_c_8.json
+````
+
 

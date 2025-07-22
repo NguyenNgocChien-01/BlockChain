@@ -95,7 +95,7 @@ class Block(models.Model):
         summaries = []
         for v in votes:
             # Bạn có thể điều chỉnh cách hiển thị dữ liệu phiếu bầu trong trường "data"
-            summaries.append(f"Phiếu {v.id}: {v.candidate.name} (bởi {v.voter_public_key[:8]}...)")
+            summaries.append(f"Phiếu bầu cho: {v.candidate.name} )")
         return "; ".join(summaries)
     
     def to_json_serializable(self):

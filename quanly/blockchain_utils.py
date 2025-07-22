@@ -7,11 +7,10 @@ from quanly.models import Block, Ballot # Đảm bảo đã import đúng các m
 import unicodedata # Để xử lý ký tự có dấu
 
 
-# --- HÀM HỖ TRỢ TÍNH TOÁN CHECKSUM VÀ ĐƯỜNG DẪN FILE ---
 
-# Hàm này vẫn giữ lại nếu cần dùng cho mục đích khác
+
+
 def calculate_file_checksum(filepath: str) -> str:
-    """Tính toán SHA256 hash của nội dung file."""
     hasher = hashlib.sha256()
     with open(filepath, 'rb') as f:
         while True:
@@ -21,11 +20,8 @@ def calculate_file_checksum(filepath: str) -> str:
             hasher.update(chunk)
     return hasher.hexdigest()
 
+  # Trả về đường dẫn tới file JSON blockchain cho một cuộc bầu cử riêng lẻ
 def get_blockchain_file_path(ballot_id: int, base_export_dir: str) -> str:
-    """
-    Trả về đường dẫn tới file JSON blockchain cho một cuộc bầu cử riêng lẻ.
-    base_export_dir: Thư mục gốc để lưu trữ (ví dụ: save_blockchain_per_ballot).
-    """
     os.makedirs(base_export_dir, exist_ok=True)
     
     try:
@@ -41,13 +37,10 @@ def get_blockchain_file_path(ballot_id: int, base_export_dir: str) -> str:
     return os.path.join(base_export_dir, file_name)
 
 
-# --- HÀM LƯU VÀ XÁC MINH (CHO TỪNG CUỘC BẦU CỬ) ---
+
 
 def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir: str) -> tuple[bool, str]:
-    """
-    Xuất toàn bộ blockchain của một cuộc bầu cử ra file JSON.
-    Giá trị chain_hash (checksum) được lưu TRONG file JSON.
-    """
+
     blockchain_file_path = get_blockchain_file_path(ballot_id, base_export_dir)
 
     try:
@@ -60,17 +53,16 @@ def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir
 
         blockchain_data_list = [block.to_json_serializable() for block in blockchain_blocks]
 
-        # 1. Tính toán chain_hash của MẢNG 'blocks'
-        # Đảm bảo dữ liệu được sắp xếp (sort_keys=True) để hash luôn nhất quán
+        # 1. Tính toán chain_hash 
         full_blocks_json_string = json.dumps(blockchain_data_list, indent=4, ensure_ascii=False, sort_keys=True)
         chain_hash_of_blocks = hashlib.sha256(full_blocks_json_string.encode('utf-8')).hexdigest()
 
-        # 2. Tạo cấu trúc dữ liệu xuất cuối cùng, bao gồm 'chain_hash' ở cấp cao nhất
+        # 2. Tạo cấu trúc dữ liệu xuất cuối cùng
         full_export_data = {
             "ballot_id": ballot_obj.id,
             "ballot_title": ballot_obj.title,
             "exported_at": timezone.now().isoformat(),
-            "chain_hash": chain_hash_of_blocks, # <-- CHUỖI CHECKSUM ĐƯỢC LƯU Ở ĐÂY
+            "chain_hash": chain_hash_of_blocks, 
             "blocks": blockchain_data_list # Danh sách các block
         }
 
@@ -85,10 +77,6 @@ def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir
         return False, f"Lỗi khi lưu blockchain vào JSON: {e}"
 
 def verify_blockchain_integrity(ballot_id: int, base_export_dir: str) -> tuple[bool, str]:
-    """
-    Kiểm tra tính toàn vẹn của file blockchain JSON bằng cách xác minh chain_hash nội bộ.
-    Phát hiện sửa đổi dữ liệu bên trong file.
-    """
     blockchain_file_path = get_blockchain_file_path(ballot_id, base_export_dir)
 
     if not os.path.exists(blockchain_file_path):
@@ -106,7 +94,6 @@ def verify_blockchain_integrity(ballot_id: int, base_export_dir: str) -> tuple[b
         blocks_data = full_export_data["blocks"]
 
         # 2. Tái tạo chuỗi JSON của mảng 'blocks' và tính toán lại hash
-        # PHẢI DÙNG CÙNG CÁC THAM SỐ NHƯ LÚC LƯU (indent, ensure_ascii, sort_keys)
         recalculated_blocks_json_string = json.dumps(blocks_data, indent=4, ensure_ascii=False, sort_keys=True)
         current_chain_hash = hashlib.sha256(recalculated_blocks_json_string.encode('utf-8')).hexdigest()
 
