@@ -1,6 +1,6 @@
 # File: user/user_utils.py
 
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric import padding, rsa, ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC # Vẫn cần nếu bạn muốn quay lại dùng salt/mật khẩu
 from cryptography.hazmat.backends import default_backend
@@ -69,8 +69,13 @@ def _sign_vote_data(private_key, ballot_id: int, candidate_id: int, voter_public
     """Ký dữ liệu phiếu bầu bằng private key."""
     data_to_be_signed_raw = f"{ballot_id}-{candidate_id}-{voter_public_key}-{timestamp_signed_at}"
     data_to_be_signed_hash = hashlib.sha256(data_to_be_signed_raw.encode('utf-8')).digest()
+    # signature = private_key.sign(
+    #     data_to_be_signed_hash, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+    # )
+        # Thay vì dùng padding.PSS của RSA, chúng ta dùng ec.ECDSA
     signature = private_key.sign(
-        data_to_be_signed_hash, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+        data_to_be_signed_hash,
+        ec.ECDSA(hashes.SHA256()) 
     )
     return urlsafe_b64encode(signature).decode('utf-8')
 
@@ -82,8 +87,15 @@ def _verify_signature_internal(public_key_str: str, data_to_be_signed_raw: str, 
         data_to_be_signed_hash = hashlib.sha256(data_to_be_signed_raw.encode('utf-8')).digest()
         public_pem_with_headers = f"-----BEGIN PUBLIC KEY-----\n{public_key_str}\n-----END PUBLIC KEY-----\n" # Đảm bảo có xuống dòng cuối
         public_key = serialization.load_pem_public_key(public_pem_with_headers.encode('utf-8'), backend=default_backend())
+        # RSA
+        # public_key.verify(
+        #     signature_bytes, data_to_be_signed_hash, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+        # )
+        #  ec.ECDSA để xác minh
         public_key.verify(
-            signature_bytes, data_to_be_signed_hash, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+            signature_bytes,
+            data_to_be_signed_hash,
+            ec.ECDSA(hashes.SHA256())
         )
         return True
     except Exception as e:

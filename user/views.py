@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, render
 from quanly.models import *
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as auth_login
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives import serialization
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -137,18 +137,10 @@ def dangky_cutri(request):
         return redirect('baucu_u') 
 
     if request.method == 'POST':
-        # --- BỎ CÁC DÒNG KIỂM TRA MẬT KHẨU NÀY VÀ MÃ HÓA ---
-        # password_for_key_encryption = request.POST.get('password_for_key_encryption')
-        # password_confirm = request.POST.get('password_for_key_encryption_confirm')
-        # if not password_for_key_encryption or not password_confirm:
-        #     messages.error(request, 'Vui lòng nhập mật khẩu mã hóa khóa và xác nhận.')
-        #     return render(request, 'userpages/dangky_cutri.html') 
-        # if password_for_key_encryption != password_confirm:
-        #     messages.error(request, 'Mật khẩu mã hóa khóa không khớp. Vui lòng thử lại.')
-        #     return render(request, 'userpages/dangky_cutri.html')
 
         try:
-            private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            # private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            private_key = ec.generate_private_key(ec.SECP256R1())
             private_pem_bytes = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()
             )
@@ -158,12 +150,7 @@ def dangky_cutri(request):
             )
             public_base64 = strip_pem_headers(public_pem_bytes.decode('utf-8'))
             
-            # --- KHÔNG CÓ SALT VÀ KHÔNG MÃ HÓA PRIVATE KEY BẰNG MẬT KHẨU ---
-            # salt = os.urandom(16)
-            # kdf = PBKDF2HMAC(...)
-            # derived_key_for_fernet = ...
-            # f = Fernet(...)
-            # encrypted_private_key_data = f.encrypt(private_pem_bytes)
+
             
             Voter.objects.create(user=request.user, public_key=public_base64)
             
