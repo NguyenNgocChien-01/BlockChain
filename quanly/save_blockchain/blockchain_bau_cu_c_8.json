@@ -1,0 +1,17 @@
+{
+    "ballot_id": 8,
+    "ballot_title": "Bầu cử C",
+    "exported_at": "2025-07-22T03:45:12.529039+00:00",
+    "chain_hash": "90a353b9caf7dadf9dccbc472eed0ca48d849b200e23a1b9323818186e302ce0",
+    "blocks": [
+        {
+            "index": 28,
+            "data": "Phiếu bầu cho: Nguyễn Ngọc Chiến )",
+            "previous_hash": "0",
+            "hash": "007e685c78cde547ba83bf943a4ecc987b9fbf632e729db37abc5dcc5add0a38",
+            "nonce": 252,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 10:45:12 2025"
+        }
+    ]
+}
