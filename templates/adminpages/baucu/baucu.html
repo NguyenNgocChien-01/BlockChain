@@ -48,11 +48,11 @@
                 <thead>
                   <tr>
                     <th style="width: 3.888888888888889%;"></th>
-                    <th style="width: 15%;">Tên</th>
+                    <th style="width: 10%;">Tên</th>
                     <th style="width: 15%;">Mô tả</th>
-                    <th style="width: 8%;">Thời gian bắt đầu</th>
-                    <th style="width: 8%;">Thời gian kết thúc</th>
-                    <th style="width: 8%;">Chi tiết</th>
+                    {% comment %} <th style="width: 8%;">Thời gian bắt đầu</th>
+                    <th style="width: 8%;">Thời gian kết thúc</th> {% endcomment %}
+                    <th style="width: 8%;">Trạng thái</th>
                     <th style="width: 8.88888888888889%;">Thao tác</th>
 
                   </tr>
@@ -76,12 +76,17 @@
                           </div>
                         </td>
                         <td><p class="text-muted f-12 mb-0">{{ baucu.description }}</p></td>
-                        <td><p class="text-muted f-12 mb-0">{{ baucu.start_date|date:'Y-m-d H:i' }}</p></td>
-                        <td><p class="text-muted f-12 mb-0">{{ baucu.end_date|date:'Y-m-d H:i' }}</p></td>
-                        <td>          
-                        <a href="{% url 'chitiet_baucu' baucu.id %}" class="btn btn-primary">
-                        Chi tiết</a>
-                        </td>
+                        {% comment %} <td><p class="text-muted f-12 mb-0">{{ baucu.start_date|date:'Y-m-d H:i' }}</p></td>
+                        <td><p class="text-muted f-12 mb-0">{{ baucu.end_date|date:'Y-m-d H:i' }}</p></td> {% endcomment %}
+                        <td>
+                            {% if now > baucu.end_date %}
+                                <a href="{% url 'chitiet_baucu' baucu.id %}"><span class="badge bg-secondary">Đã kết thúc</span></a>
+                            {% elif now < baucu.start_date %}
+                                <a  href="{% url 'chitiet_baucu' baucu.id %}"><span class="badge bg-info">Chưa diễn ra</span></a>
+                            {% else %}
+                                <a href="{% url 'chitiet_baucu' baucu.id %}"><span class="badge bg-success">Đang diễn ra</span></a>
+                            {% endif %}
+
                         <td>
                           <ul class="list-inline me-auto mb-0">
                             <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="Kết quả">
@@ -106,6 +111,13 @@
                                <a href="{% url 'delete_baucu' baucu.id %}" class="avtar avtar-xs btn-link-danger delete" >
                                 <i class="ti ti-trash f-18"></i>
                               </a>
+                            </li>
+                            <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="Đào khối thủ công">
+                                <a href="{% url 'dao_block' baucu.id %}" 
+                                   class="avtar avtar-xs btn-link-warning" 
+                                   onclick="return confirm('Bạn có chắc chắn muốn ép đào khối cho cuộc bầu cử này không? Hành động này sẽ gom tất cả các phiếu đang chờ vào một khối mới ngay lập tức.')">
+                                    <span class="badge bg-secondary"><br>Đào block <br><br> </span>
+                                </a>
                             </li>
                           </ul>
                         </td>

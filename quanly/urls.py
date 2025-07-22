@@ -25,6 +25,7 @@ urlpatterns = [
     path('ketqua/<int:id>/', views.ketqua_baucu, name='ketqua_baucu'),
     path('dsphieu/<int:ballot_id>/', danhsach_phieubau, name='danhsach_phieubau'),
     path('baucu/dao_all/', dao_all_block, name='dao_all'),
+    path('baucu/dao-block/<int:id>/', dao_block , name='dao_block'),
 
 
 
