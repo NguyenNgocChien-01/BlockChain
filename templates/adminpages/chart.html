@@ -1,0 +1,67 @@
+{% extends 'adminpages/index.html' %}
+{% load static %}
+
+{% block title %}Báo cáo & Phân tích Thuật toán{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Báo Cáo Phân Tích</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'trangchu' %}">Trang chủ</a></li>
+                                    <li class="breadcrumb-item">Báo Cáo</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>So sánh Kích thước Khóa (ECC vs. RSA)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% static 'charts\crypto_performance.png' %}" 
+                             alt="Biểu đồ so sánh kích thước khóa" 
+                             class="img-fluid rounded" style="max-width: 800px;">
+                        <p class="mt-3 text-muted">
+                            Biểu đồ cho thấy ECC đạt được cùng mức độ bảo mật với kích thước khóa nhỏ hơn đáng kể so với RSA.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>So sánh Hiệu suất Cơ chế Đồng thuận</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% static 'charts\consensus_details.png' %}" 
+                             alt="Biểu đồ so sánh hiệu suất đồng thuận" 
+                             class="img-fluid rounded" style="max-width: 800px;">
+                        <p class="mt-3 text-muted">
+                            Biểu đồ minh họa Proof-of-Authority (PoA) vượt trội về tốc độ xử lý giao dịch so với Proof-of-Work (PoW).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
