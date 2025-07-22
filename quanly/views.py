@@ -360,9 +360,8 @@ def dao_block(request, id):
         ballot = get_object_or_404(Ballot, pk=id)
         
 
-        call_command('dao_block', '--ballot-id', str(id), '--force-mine')
+        call_command('dao_block', '--ballot-id', str(id))
         
-        messages.success(request, f"Đã thực hiện đào khối thành công cho cuộc bầu cử: '{ballot.title}'.")
 
     except Exception as e:
         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")

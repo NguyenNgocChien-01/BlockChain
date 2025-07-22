@@ -1,0 +1,35 @@
+{
+    "ballot_id": 11,
+    "ballot_title": "Bầu cử 100",
+    "exported_at": "2025-07-22T08:52:54.239112+00:00",
+    "chain_hash": "4ccd2219ba2d3a7418d9f2e14efa6a81d9026cb4fd1bb673d2369a25b33fd680",
+    "blocks": [
+        {
+            "index": 33,
+            "data": "Phiếu bầu cho: Chiến ",
+            "previous_hash": "0",
+            "hash": "004c2d87f931f0fc0a7bd58a6594e4bf52f53275a1bd0b09189f2249553183a5",
+            "nonce": 310,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 15:51:36 2025"
+        },
+        {
+            "index": 34,
+            "data": "No transactions",
+            "previous_hash": "004c2d87f931f0fc0a7bd58a6594e4bf52f53275a1bd0b09189f2249553183a5",
+            "hash": "001f433516821b7e3ae5c3726ea19d6a607891c77c5be002a286dc6527e8e744",
+            "nonce": 73,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 15:51:56 2025"
+        },
+        {
+            "index": 35,
+            "data": "No transactions",
+            "previous_hash": "001f433516821b7e3ae5c3726ea19d6a607891c77c5be002a286dc6527e8e744",
+            "hash": "00f67a43aaf12fb984b4cc8bcf39fce7179b808913a40305de2419c0a673c4e2",
+            "nonce": 117,
+            "difficulty": 2,
+            "timestamp": "Tue Jul 22 15:52:54 2025"
+        }
+    ]
+}
