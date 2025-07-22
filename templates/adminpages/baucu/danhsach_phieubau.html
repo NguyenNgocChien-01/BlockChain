@@ -25,9 +25,6 @@
                                 <tr>
                                     <th>ID Phiếu</th>
                                     <th>Thời Gian Bầu</th>
-                                    <th>Ứng Viên</th>
-                                    <th>Người Bầu (Username)</th>
-                                    <th>Khóa Công Khai Cử Tri</th>
                                     <th>Chữ Ký Số</th>
                                     <th>Trạng Thái Khối</th>
                                 </tr>
@@ -37,13 +34,6 @@
                                 <tr>
                                     <td>{{ vote.id }}</td>
                                     <td>{{ vote.timestamp|date:"d/m/Y H:i:s" }}</td>
-                                    <td><strong>{{ vote.candidate_name }}</strong></td>
-                                    <td>{{ vote.voter_username }}</td>
-                                    <td>
-                                        <code class="text-muted text-break" title="{{ vote.voter_public_key }}">
-                                            {{ vote.voter_public_key|slice:"0:40" }}...
-                                        </code>
-                                    </td>
                                     <td>
                                         <code class="text-muted text-break" title="{{ vote.signature }}">
                                             {{ vote.signature|slice:"0:40" }}...
