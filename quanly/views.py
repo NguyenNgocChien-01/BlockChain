@@ -5,24 +5,27 @@ from .models import *
 from django.db.models import Count
 from django.db import transaction
 from .models import Ballot, Vote
-
+from .blockchain_utils import get_blockchain_file_path
 from django.core.management import call_command
+import json
+from collections import Counter
 # Create your views here.
 def trangchu(request):
     return render(request,'adminpages/index.html')
 
 def baucu(request):
     keyword = request.GET.get('keyword', '')
-    baucus = Ballot.objects.all()
+    baucus = Ballot.objects.all().order_by('-start_date') # Sắp xếp cho hợp lý
     
     if keyword:
         baucus = baucus.filter(
             Q(title__icontains=keyword) | Q(description__icontains=keyword)
         )
-        
+            
     context = {
         'baucus': baucus,
-        'keyword': keyword, # Giữ lại keyword để hiển thị trên ô tìm kiếm
+        'keyword': keyword,
+        'now': timezone.now() # <-- THÊM DÒNG NÀY
     }
     
     return render(request, 'adminpages/baucu/baucu.html', context)
@@ -232,30 +235,70 @@ def revoke_voter_status(request, user_id):
     return redirect('ds_user')
 
 def ketqua_baucu(request, id):
+    """
+    Hiển thị kết quả bầu cử bằng cách đọc và phân tích file JSON của blockchain,
+    chỉ sau khi cuộc bầu cử đã kết thúc.
+    """
     baucu = get_object_or_404(Ballot, id=id)
 
-
+    # 1. Kiểm tra xem cuộc bầu cử đã kết thúc chưa
     if baucu.end_date > timezone.now():
-        messages.warning(request, f"Cuộc bầu cử '{baucu.title}' vẫn đang diễn ra. Kết quả chỉ có thể được xem sau khi đã kết thúc.")
-        return redirect('chitiet_baucu', id=id)
+        messages.warning(request, f"Cuộc bầu cử '{baucu.title}' vẫn đang diễn ra. Kết quả chỉ có thể xem sau khi kết thúc.")
+        return redirect('baucu')
 
+    ketqua_tu_file = []
+    tong_so_phieu = 0
+    
+    # 2. Lấy đường dẫn đến file JSON blockchain
+    filepath = get_blockchain_file_path(ballot_id=id, base_export_dir='quanly\save_blockchain')
 
-    ketqua = Vote.objects.filter(candidate__ballot=baucu)\
-        .values('candidate__name')\
-        .annotate(so_phieu=Count('id'))\
-        .order_by('-so_phieu')
+    try:
+        # 3. Đọc và phân tích file JSON để kiểm phiếu
+        with open(filepath, 'r', encoding='utf-8') as f:
+            blockchain_data = json.load(f)
 
-    tong_so_phieu = sum(item['so_phieu'] for item in ketqua)
+        vote_counts = Counter()
+        blocks = blockchain_data.get("blocks", [])
 
-    for item in ketqua:
-        if tong_so_phieu > 0:
-            item['phan_tram'] = round((item['so_phieu'] / tong_so_phieu) * 100, 2)
-        else:
-            item['phan_tram'] = 0
+        for block in blocks:
+            data_string = block.get("data", "")
+            if "Genesis Block" in data_string or "No transactions" in data_string or not data_string:
+                continue
+            
+            vote_summaries = data_string.split(';')
+            
+            for summary in vote_summaries:
+                summary = summary.strip()
+                if not summary: continue
+                try:
+                    # Tách chuỗi để lấy tên ứng viên
+                    name_part = summary.split(':')[1].split('(')[0].strip()
+                    vote_counts[name_part] += 1
+                except IndexError:
+                    pass # Bỏ qua các dòng dữ liệu không đúng định dạng
 
+        # 4. Chuẩn bị dữ liệu để hiển thị ra template
+        sorted_results = vote_counts.most_common()
+        tong_so_phieu = sum(vote_counts.values())
+        
+        for candidate_name, so_phieu in sorted_results:
+            percentage = round((so_phieu / tong_so_phieu) * 100, 2) if tong_so_phieu > 0 else 0
+            ketqua_tu_file.append({
+                'candidate__name': candidate_name,
+                'so_phieu': so_phieu,
+                'phan_tram': percentage
+            })
+
+    except FileNotFoundError:
+        messages.error(request, f" Cần phải đào ít nhất một khối để có kết quả.")
+        return redirect('baucu')
+    except Exception as e:
+        messages.error(request, f"Lỗi khi đọc file blockchain: {e}")
+        return redirect('baucu')
+    # 5. Gửi dữ liệu đến template
     context = {
         'baucu': baucu,
-        'ketqua': ketqua,
+        'ketqua': ketqua_tu_file,
         'tong_so_phieu': tong_so_phieu,
     }
 
@@ -309,5 +352,19 @@ def dao_all_block(request):
     except Exception as e:
         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
 
+
+    return redirect('baucu')
+
+def dao_block(request, id):
+    try:
+        ballot = get_object_or_404(Ballot, pk=id)
+        
+
+        call_command('dao_block', '--ballot-id', str(id), '--force-mine')
+        
+        messages.success(request, f"Đã thực hiện đào khối thành công cho cuộc bầu cử: '{ballot.title}'.")
+
+    except Exception as e:
+        messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
 
     return redirect('baucu')
