@@ -8,7 +8,13 @@
     <div class="pc-content">
         <div class="card">
             <div class="card-header">
-                <h3>{{ baucu.title }}</h3>
+              <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"> {{ baucu.title }}</h3>
+                        <a href="{% url 'my_vote' baucu.id %}" class="btn btn-info me-2">
+                            <i class="ti ti-chart-bar"></i> Xem phiếu của tôi
+                        </a>
+                </div>
+
             </div>
             <div class="card-body">
                 <div class="row mb-4">

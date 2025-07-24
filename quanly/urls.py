@@ -27,6 +27,7 @@ urlpatterns = [
     path('dsphieu/<int:ballot_id>/', danhsach_phieubau, name='danhsach_phieubau'),
     path('baucu/dao_all/', dao_all_block, name='dao_all'),
     path('baucu/dao-block/<int:id>/', dao_block , name='dao_block'),
+    path('lichsu-change/', lichsu_change, name='lichsu_change'),
 
 
 

@@ -51,10 +51,16 @@
                                     <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-success mt-auto">
                                         <i class="ti ti-vote"></i> Tham gia bỏ phiếu
                                     </a>
-                                {% else %}
+                                {% elif baucu.start_date > now %}
                                     <button class="btn btn-secondary mt-auto" disabled>
-                                        <i class="ti ti-info-circle"></i> Chưa/Đã kết thúc
+                                        <i class="ti ti-info-circle"></i> Chưa bắt đầu 
                                     </button>
+                                {% else %}
+                                
+                                    <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-info mt-auto">
+                                        <i class="ti ti-vote"></i> Đã kết thúc
+                                    </a>
+                                    
                                 {% endif %}
                             </div>
                         </div>

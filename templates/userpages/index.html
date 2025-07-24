@@ -206,28 +206,82 @@ function convertToDatetimeLocal(str) {
   return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 ;
- 
+ // Xác nhận xóa
 document.addEventListener('DOMContentLoaded', function () {
-    // Lấy tất cả các nút có class là 'delete-btn'
     const deleteButtons = document.querySelectorAll('.delete-btn');
 
-    // Lặp qua từng nút
     deleteButtons.forEach(button => {
-        // Gắn sự kiện 'click' cho mỗi nút
+
         button.addEventListener('click', function (event) {
-            // Ngăn chặn hành động chuyển trang mặc định của thẻ <a>
             event.preventDefault();
 
-            // Hiển thị hộp thoại xác nhận
             const userConfirmed = confirm("Bạn có chắc chắn muốn xóa mục này không?");
 
-            // Nếu người dùng nhấn "OK" (true)
             if (userConfirmed) {
-                // Chuyển hướng đến URL xóa trong href
                 window.location.href = this.href;
             }
-            // Nếu người dùng nhấn "Cancel", không làm gì cả.
         });
+    });
+});
+</script>
+
+<script>
+//Cảnh báo 
+document.addEventListener('DOMContentLoaded', function() {
+  const modalTriggerElement = document.querySelector('.modal-trigger-alert');
+  
+  if (modalTriggerElement) {
+    const message = modalTriggerElement.dataset.message;
+    document.getElementById('modalBodyMessage').innerText = message;
+    
+    const dangerModal = new bootstrap.Modal(document.getElementById('dangerModal'));
+    dangerModal.show();
+  }
+});
+</script>
+
+<script>
+// Lấy vị trí
+document.addEventListener('DOMContentLoaded', function() {
+    const submitBtn = document.getElementById('submitChangeBtn');
+    const form = document.getElementById('changeVoteForm');
+
+    submitBtn.addEventListener('click', function(event) {
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+
+        // Kiểm tra xem trình duyệt có hỗ trợ Geolocation không
+        if ("geolocation" in navigator) {
+            // Yêu cầu vị trí của người dùng
+            navigator.geolocation.getCurrentPosition(
+                
+                //  ĐỒNG Ý
+                function(position) {
+                    // Lấy kinh độ và vĩ độ
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Gán giá trị vào các trường ẩn trong form
+                    document.getElementById('id_latitude').value = lat;
+                    document.getElementById('id_longitude').value = lon;
+
+                    // Gửi form đi
+                    form.submit();
+                }, 
+                
+                //  TỪ CHỐI / CÓ LỖI
+                function(error) {
+                    console.warn(`Lỗi lấy vị trí: ${error.message}`);
+                    // Dù có lỗi, vẫn gửi form đi mà không có thông tin vị trí
+                    form.submit();
+                }
+            );
+        } else {
+            // Nếu trình duyệt không hỗ trợ, gửi form đi luôn
+            console.log("Trình duyệt không hỗ trợ Geolocation.");
+            form.submit();
+        }
     });
 });
 </script>

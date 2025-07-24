@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives import serialization
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.utils import timezone # Đảm bảo đã import timezone
+from django.utils import timezone 
 from django.contrib.auth import logout as auth_logout
 from django.db.models import Q
 from cryptography.fernet import Fernet
@@ -290,3 +290,97 @@ def bo_phieu(request, id):
             return redirect('chitiet_baucu_u', id=ballot.id)
 
     return redirect('chitiet_baucu_u', id=id)
+
+
+def my_vote(request, id):
+ 
+    ballot = get_object_or_404(Ballot, pk=id)
+    
+    if not hasattr(request.user, 'voter'):
+        messages.error(request, "Bạn không phải là cử tri.")
+        return redirect('chitiet_baucu_u', id=id)
+
+    try:
+        my_vote = Vote.objects.get(ballot=ballot, voter_public_key=request.user.voter.public_key)
+        is_in_block = my_vote.block is not None
+    except Vote.DoesNotExist:
+        my_vote = None
+        is_in_block = False
+
+    context = {
+        'baucu': ballot,
+        'my_vote': my_vote,
+        'is_in_block': is_in_block,
+    }
+    return render(request, 'userpages/baucu/my_vote.html', context)
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+def change_vote(request, vote_id):
+
+    vote = get_object_or_404(Vote, pk=vote_id)
+
+    # Đảm bảo chỉ chính chủ mới có thể truy cập
+    if not hasattr(request.user, 'voter') or vote.voter_public_key != request.user.voter.public_key:
+        messages.error(request, "Bạn không có quyền truy cập phiếu bầu này.")
+        return redirect('baucu_u')
+
+    if request.method == 'POST':
+        new_candidate_id = request.POST.get('candidate')
+        if not new_candidate_id:
+            messages.warning(request, "Bạn chưa chọn ứng viên mới.")
+            return redirect('change_vote', vote_id=vote.id)
+
+        new_candidate = get_object_or_404(Candidate, pk=new_candidate_id, ballot=vote.ballot)
+
+        # TRƯỜNG HỢP PHIẾU CHƯA BỊ NIÊM PHONG 
+        if vote.block is None:
+            vote.candidate = new_candidate
+            vote.save() 
+            messages.success(request, "Thay đổi phiếu bầu thành công vì phiếu chưa được niêm phong.")
+            return redirect('view_my_vote', id=vote.ballot.id)
+        
+        # 2 TRƯỜNG HỢP PHIẾU ĐÃ BỊ NIÊM PHONG 
+        else:
+            client_ip = get_client_ip(request) 
+            user_agent = request.user_agent
+            # Lấy vị trí
+            latitude_val = request.POST.get('latitude')
+            longitude_val = request.POST.get('longitude')
+            latitude = float(latitude_val) if latitude_val else None
+            longitude = float(longitude_val) if longitude_val else None
+
+            # Ghi log lại hành vi, bao gồm cả IP
+            UserTamperLog.objects.create(
+                attempted_by=request.user,
+                vote_tampered=vote,
+                original_candidate_name=vote.candidate.name,
+                new_candidate_name_attempt=new_candidate.name,
+                description=f" Thay đổi phiếu bầu đã bị niêm phong.",
+                ip_address=client_ip,
+                browser=f"{user_agent.browser.family} {user_agent.browser.version_string}",
+                os=f"{user_agent.os.family} {user_agent.os.version_string}",
+                device=f"{user_agent.device.family}",
+                latitude=latitude,  
+                longitude=longitude, 
+            )
+            
+            # Đưa ra cảnh báo nghiêm trọng
+            messages.error(
+                request, 
+                "Bạn không thể thay đổi một phiếu bầu đã được niêm phong vào blockchain. Hành vi cố gắng thay đổi của bạn đã được hệ thống ghi lại."
+                    )
+            return redirect('my_vote', id=vote.ballot.id)
+
+    candidates = Candidate.objects.filter(ballot=vote.ballot)
+    context = {
+        'vote': vote,
+        'candidates': candidates,
+    }
+    return render(request, 'userpages/baucu/change_vote.html', context)

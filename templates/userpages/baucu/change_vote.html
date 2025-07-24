@@ -1,0 +1,31 @@
+{% extends 'userpages/index.html' %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+<div class="card">
+    <div class="card-header">
+        <h4>Thay đổi Phiếu bầu</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="changeVoteForm">
+            {% csrf_token %}
+            <input type="hidden" name="latitude" id="id_latitude">
+            <input type="hidden" name="longitude" id="id_longitude">
+
+            <div class="mb-3">
+                <label for="candidate" class="form-label">Chọn lại ứng viên của bạn:</label>
+                <select name="candidate" id="candidate" class="form-select" required>
+                {% for c in candidates %}
+                    <option value="{{ c.id }}" {% if c.id == vote.candidate.id %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary" id="submitChangeBtn">Xác nhận thay đổi</button>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
+

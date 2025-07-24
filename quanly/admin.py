@@ -6,5 +6,6 @@ admin.site.register(Voter)
 admin.site.register(Vote)
 admin.site.register(Block)
 admin.site.register(Candidate)
+admin.site.register(UserTamperLog)
 
 # Register your models here.
