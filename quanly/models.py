@@ -175,5 +175,29 @@ class Vote(models.Model):
 
     def __str__(self):
         return f"Phiếu cho {self.candidate.name}"
+    
+
+
+class UserTamperLog(models.Model):
+    attempted_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Người thực hiện")
+    vote_tampered = models.ForeignKey('Vote', on_delete=models.PROTECT, verbose_name="Phiếu bầu bị tác động")
+    original_candidate_name = models.CharField(max_length=255, verbose_name="Ứng viên gốc")
+    new_candidate_name_attempt = models.CharField(max_length=255, verbose_name="Ứng viên định thay đổi thành")
+    description = models.TextField("Mô tả hành vi")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField("Địa chỉ IP", null=True, blank=True)
+    browser = models.CharField("Trình duyệt", max_length=100, null=True, blank=True)
+    os = models.CharField("Hệ điều hành", max_length=100, null=True, blank=True)
+    device = models.CharField("Thiết bị", max_length=100, null=True, blank=True)
+    latitude = models.FloatField("Vĩ độ", null=True, blank=True)
+    longitude = models.FloatField("Kinh độ", null=True, blank=True)
+
+
+    class Meta:
+        verbose_name = "Lịch Sử Sửa Phiếu"
+        verbose_name_plural = "Các Lịch Sử Sửa Phiếu"
+
+    def __str__(self):
+        return f"Cảnh báo: {self.attempted_by.username} (IP: {self.ip_address}) đã cố sửa phiếu {self.vote_tampered.id}"
 
 

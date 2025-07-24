@@ -1,0 +1,108 @@
+{% extends 'adminpages/index.html' %}
+{% load static %}
+
+{% block title %}Báo cáo & Phân tích Thuật toán{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+        <!-- TIÊU ĐỀ TRANG -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header">
+                    <div class="page-block">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Báo Cáo Phân Tích</h5>
+                                </div>
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'trangchu' %}">Trang chủ</a></li>
+                                    <li class="breadcrumb-item">Báo Cáo</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIỂU ĐỒ 1: SO SÁNH HIỆU SUẤT MẬT MÃ -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>1. So sánh Hiệu suất Mật mã (ECC vs. RSA)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% static 'charts/1_crypto_performance.png' %}" 
+                             alt="Biểu đồ so sánh hiệu suất mật mã" 
+                             class="img-fluid rounded border" style="max-width: 900px;">
+                        <p class="mt-3 text-muted">
+                            <b>Lý do chọn ECC:</b> Biểu đồ cho thấy ECC đạt được cùng mức độ bảo mật với kích thước khóa nhỏ hơn đáng kể và tốc độ tạo khóa/ký nhanh hơn, giúp tiết kiệm tài nguyên và tăng hiệu quả.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIỂU ĐỒ 2: SO SÁNH CÁC MÔ HÌNH BLOCKCHAIN -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>2. So sánh Hiệu suất các Mô hình Blockchain</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% static 'charts/2_consensus_details.png' %}" 
+                             alt="Biểu đồ so sánh các mô hình blockchain" 
+                             class="img-fluid rounded border" style="max-width: 900px;">
+                        <p class="mt-3 text-muted">
+                            <b>Lý do chọn PoA + PoW:</b> Mô hình này cung cấp sự cân bằng tốt nhất giữa tốc độ giao dịch (TPS), thời gian hoàn tất khối và mức độ tin cậy cao, phù hợp cho một hệ thống bầu cử riêng tư.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% comment %} <!-- BIỂU ĐỒ 3: PHÂN BỐ PHIẾU BẦU THEO THỜI GIAN -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>3. Phân bố Lượt Bỏ phiếu theo Ngày (Dữ liệu thực tế)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% static 'charts/3_votes_over_time.png' %}" 
+                             alt="Biểu đồ phân bố phiếu bầu theo thời gian" 
+                             class="img-fluid rounded border" style="max-width: 900px;">
+                        <p class="mt-3 text-muted">
+                            Biểu đồ này phân tích dữ liệu từ cơ sở dữ liệu, cho thấy xu hướng và hoạt động bỏ phiếu của cử tri qua các ngày diễn ra bầu cử.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIỂU ĐỒ 4: SỐ LƯỢNG PHIẾU BẦU TRONG MỖI KHỐI -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>4. Số lượng Phiếu bầu được Ghi nhận trong mỗi Khối (Dữ liệu thực tế)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{% static 'charts/4_votes_per_block.png' %}" 
+                             alt="Biểu đồ số lượng phiếu bầu trong mỗi khối" 
+                             class="img-fluid rounded border" style="max-width: 900px;">
+                        <p class="mt-3 text-muted">
+                            Biểu đồ minh họa cách các phiếu bầu được gom và niêm phong vào từng khối của blockchain, thể hiện quá trình xử lý giao dịch của hệ thống.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div> {% endcomment %}
+
+    </div>
+</div>
+{% endblock %}

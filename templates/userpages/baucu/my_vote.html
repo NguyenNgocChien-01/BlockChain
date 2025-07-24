@@ -1,0 +1,77 @@
+{% extends 'userpages/index.html' %}
+
+{% block content %}
+<div class="pc-container">
+<div class="pc-content">
+<div class="card">
+    <div class="card-header">
+        <h4>Phiếu Bầu của bạn cho: {{ baucu.title }}</h4>
+    </div>
+    <div class="card-body">
+        
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    <div class="modal-trigger-alert d-none" data-message="{{ message }}"></div>
+                {% else %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if my_vote %}
+            <p>Bạn đã bỏ phiếu cho ứng viên: <strong>{{ my_vote.candidate.name }}</strong></p>
+            <p>Thời gian: {{ my_vote.timestamp|date:"H:i, d/m/Y" }}</p>
+            
+            {% if is_in_block %}
+                <div class="alert alert-success">
+                    <h5 class="alert-heading">Phiếu đã được niêm phong!</h5>
+                    <p>Phiếu bầu của bạn đã được ghi vào khối <strong>#{{ my_vote.block.id }}</strong> và không thể thay đổi.</p>
+                    <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-warning">Vẫn thay đổi</a>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">Phiếu đang chờ xử lý</h5>
+                    <p>Phiếu bầu của bạn đang chờ được ghi vào khối tiếp theo. Bạn vẫn có thể thay đổi lựa chọn của mình.</p>
+                    <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-primary">Thay đổi phiếu bầu</a>
+                </div>
+            {% endif %}
+        {% else %}
+            <p>Bạn chưa bỏ phiếu trong cuộc bầu cử này.</p>
+        {% endif %}
+        
+        <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-secondary mt-3">
+          <i class="ti ti-arrow-left"></i>Quay lại
+          </a>
+    </div>
+</div>
+</div>
+</div>
+
+
+<div class="modal fade" id="dangerModal" tabindex="-1" aria-labelledby="dangerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-2 border-danger shadow-lg">
+
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="dangerModalLabel">
+          <i class="ti ti-alert-triangle me-2"></i>
+          CẢNH BÁO BẢO MẬT HỆ THỐNG
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body text-center py-5">
+        <i class="ti ti-shield-x text-danger" style="font-size: 6rem;"></i>
+        <h3 class="mt-3">HÀNH VI BỊ GHI NHẬN!</h3>
+        <p id="modalBodyMessage" class="lead mt-2"></p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huhu, Im Sori</button>
+      </div>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}
+

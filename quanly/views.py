@@ -363,9 +363,20 @@ def dao_block(request, id):
         
 
         call_command('dao_block', '--ballot-id', str(id))
+        messages.success(request,f"Đã lưu thành công các phiếu của {ballot.title}")
         
 
     except Exception as e:
         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
 
     return redirect('baucu')
+
+
+def lichsu_change(request):
+    logs = UserTamperLog.objects.select_related('attempted_by', 'vote_tampered__candidate').all().order_by('-timestamp')
+    context = {
+    'logs': logs,
+}
+
+    return render(request, 'adminpages/tamperlog.html', context)
+    

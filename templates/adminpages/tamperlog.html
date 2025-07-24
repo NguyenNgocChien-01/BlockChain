@@ -1,0 +1,59 @@
+{% extends 'adminpages/index.html' %}
+
+{% block title %}Lịch sử Cảnh báo Thay đổi{% endblock %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="ti ti-history me-2"></i>Lịch sử Cảnh báo Thay đổi Phiếu bầu</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Trang này ghi lại tất cả các hành vi cố gắng thay đổi thông tin phiếu bầu đã được niêm phong vào blockchain.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+    <tr>
+        <th>Thời gian</th>
+        <th>Người thực hiện</th>
+        <th>Thông tin Truy cập</th>
+        <th>ID Phiếu gốc</th>
+        <th>Nội dung thay đổi</th>
+        <th>Vị trí</th>
+    </tr>
+</thead>
+<tbody>
+    {% for log in logs %}
+    <tr>
+        <td>{{ log.timestamp|date:"H:i, d/m/Y" }}</td>
+        <td><strong>{{ log.attempted_by.username }}</strong></td>
+        <td>
+            IP: <span class="badge bg-light text-dark">{{ log.ip_address }}</span> <br>
+            Trình duyệt: <span class="text-muted">{{ log.browser }}</span> <br>
+            HĐH: <span class="text-muted">{{ log.os }}</span> <br>
+            Thiết bị: <span class="text-muted">{{ log.device }}</span>
+        </td>
+        <td>#{{ log.vote_tampered.id }}</td>
+        <td>
+            Từ: <span class="text-muted">{{ log.original_candidate_name }}</span>
+            <br>
+            Thành: <span class="text-danger fw-bold">{{ log.new_candidate_name_attempt }}</span>
+        </td>
+        <td>
+        Vĩ độ:  <span class="text-muted">{{log.latitude}}</span><br>
+        Kinh độ: <span class="text-muted">{{log.longitude}}</span>
+        </td>
+    </tr>
+    {% empty %}
+        {% endfor %}
+</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
