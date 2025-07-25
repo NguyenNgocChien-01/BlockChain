@@ -58,43 +58,44 @@ def login(request):
 def logout(request):
     auth_logout(request)
     messages.info(request, 'Bạn đã đăng xuất.')
-    return redirect('login') # Chuyển hướng về trang đăng nhậpn
-# views.py
+    return redirect('login')
+
+
 def ds_baucu(request):
 
     keyword = request.GET.get('keyword', '')
-
     current_filter = request.GET.get('filter', 'all')
 
-    # các cuộc bầu cử mà người dùng CÓ QUYỀN xem
-    base_queryset = Ballot.objects.none()
+
+    visible_ballots = Ballot.objects.filter(type='PUBLIC')
+
+    #  Nếu người dùng đã đăng nhập và là một cử tri
     if request.user.is_authenticated and hasattr(request.user, 'voter'):
         voter = request.user.voter
+        private_ballots_for_voter = Ballot.objects.filter(type='PRIVATE', eligible_voters=voter)
+        # Kết hợp cả hai queryset
+        visible_ballots = visible_ballots | private_ballots_for_voter
 
-        base_queryset = Ballot.objects.filter(
-            Q(type='PUBLIC') | Q(eligible_voters=voter)
-        ).distinct()
-
-
-    # 2. Áp dụng bộ lọc 
+    #  Áp dụng bộ lọc từ các tab
     if current_filter == 'public':
-        all_ballots = base_queryset.filter(type='PUBLIC')
+        all_ballots = visible_ballots.filter(type='PUBLIC')
     elif current_filter == 'private':
-        # Chỉ lọc trong số các cuộc bầu cử riêng tư mà họ có quyền xem
-        all_ballots = base_queryset.filter(type='PRIVATE')
+   
+        all_ballots = visible_ballots.filter(type='PRIVATE')
     else: 
-        all_ballots = base_queryset
+        all_ballots = visible_ballots
 
-    #  Áp dụng bộ lọc tìm kiếm (nếu có)
+
     if keyword:
         all_ballots = all_ballots.filter(
             Q(title__icontains=keyword) | Q(description__icontains=keyword)
         )
     
-    all_ballots = all_ballots.order_by('-start_date')
 
-    #  Phân trang
-    paginator = Paginator(all_ballots, 9) # 9 cuộc bầu cử mỗi trang
+    all_ballots = all_ballots.distinct().order_by('-start_date')
+
+
+    paginator = Paginator(all_ballots, 9)
     page = request.GET.get('page')
 
     try:
