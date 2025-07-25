@@ -7,18 +7,21 @@
         <div class="card">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Các Cuộc Bầu Cử Sắp Diễn Ra</h4>
+                    <h4 class="mb-0">Các Cuộc Bầu Cử</h4>
                     <form class="d-flex" method="get" action="{% url 'baucu_u' %}">
+                        {# Thêm trường ẩn để giữ lại bộ lọc khi tìm kiếm #}
+                        {% if request.GET.filter %}
+                        <input type="hidden" name="filter" value="{{ request.GET.filter }}">
+                        {% endif %}
                         <input id="searchInput" name="keyword" class="form-control me-2"
                                placeholder="Tìm lịch bầu cử..." type="search"
                                aria-label="Search"
                                value="{% if keyword %}{{ keyword }}{% endif %}">
-                        <button type="submit" id="searchButton" class="btn btn-primary">Tìm kiếm</button>
+                        <button type="submit" id="searchButton" class="btn btn-primary">Tìm</button>
                     </form>
                 </div>
             </div>
             <div class="card-body">
-                {% comment %} Hiển thị thông báo lỗi/thành công từ Django messages framework {% endcomment %}
                 {% if messages %}
                     <div class="mb-3">
                         {% for message in messages %}
@@ -30,23 +33,44 @@
                     </div>
                 {% endif %}
 
-                {% if error %}
-                    <div class="alert alert-danger mb-3">{{ error }}</div>
-                {% endif %}
+
+                <ul class="nav nav-tabs mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link {% if not request.GET.filter or request.GET.filter == 'all' %}active{% endif %}" 
+                           href="{% url 'baucu_u' %}?filter=all">Tất cả</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.GET.filter == 'public' %}active{% endif %}" 
+                           href="{% url 'baucu_u' %}?filter=public">Công khai</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.GET.filter == 'private' %}active{% endif %}" 
+                           href="{% url 'baucu_u' %}?filter=private">Riêng tư</a>
+                    </li>
+                </ul>
+                <!-- =============================================================== -->
 
                 <div class="row g-4">
                     {% for baucu in baucus %}
-                    <div class="col-md-6 col-lg-4 col-xl-3">
+                    <div class="col-md-6 col-lg-4">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title text-primary">{{ baucu.title }}</h5>
+                                
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title text-primary mb-0">{{ baucu.title }}</h5>
+                                    {% if baucu.type == 'PRIVATE' %}
+                                        <span class="badge bg-secondary"><i class="ti ti-lock me-1"></i>Riêng tư</span>
+                                    {% else %}
+                                        <span class="badge bg-info"><i class="ti ti-world me-1"></i>Công khai</span>
+                                    {% endif %}
+                                </div>
+
                                 <p class="card-text text-muted flex-grow-1">{{ baucu.description|truncatewords:25 }}</p>
                                 <ul class="list-unstyled text-muted small mb-3">
                                     <li><strong>Bắt đầu:</strong> {{ baucu.start_date|date:'H:i, d/m/Y' }}</li>
                                     <li><strong>Kết thúc:</strong> {{ baucu.end_date|date:'H:i, d/m/Y' }}</li>
                                 </ul>
                                 
-                                {% comment %} Kiểm tra trạng thái bầu cử dựa vào ngày hiện tại {% endcomment %}
                                 {% if baucu.start_date <= now and baucu.end_date >= now %}
                                     <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-success mt-auto">
                                         <i class="ti ti-vote"></i> Tham gia bỏ phiếu
@@ -56,11 +80,9 @@
                                         <i class="ti ti-info-circle"></i> Chưa bắt đầu 
                                     </button>
                                 {% else %}
-                                
                                     <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-info mt-auto">
-                                        <i class="ti ti-vote"></i> Đã kết thúc
+                                        <i class="ti ti-eye"></i> Xem kết quả
                                     </a>
-                                    
                                 {% endif %}
                             </div>
                         </div>
@@ -70,18 +92,17 @@
                         <div class="text-center p-5 bg-light rounded">
                             <i class="ti ti-ballot-off f-48 text-muted mb-3"></i>
                             <p class="h5 text-muted">Không tìm thấy cuộc bầu cử nào.</p>
-                            <p class="text-muted mb-0">Hãy kiểm tra lại từ khóa tìm kiếm hoặc quay lại sau.</p>
+                            <p class="text-muted mb-0">Hãy kiểm tra lại bộ lọc và từ khóa tìm kiếm của bạn.</p>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 
-                {# Thêm phân trang vào đây #}
                 {% if baucus.has_other_pages %}
                 <nav aria-label="Page navigation" class="mt-4">
                     <ul class="pagination justify-content-center">
                         {% if baucus.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ baucus.previous_page_number }}{% if keyword %}&keyword={{ keyword }}{% endif %}">Trước</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ baucus.previous_page_number }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">Trước</a></li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">Trước</span></li>
                         {% endif %}
@@ -90,12 +111,12 @@
                             {% if baucus.number == i %}
                                 <li class="page-item active"><span class="page-link">{{ i }}</span></li>
                             {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ i }}{% if keyword %}&keyword={{ keyword }}{% endif %}">{{ i }}</a></li>
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">{{ i }}</a></li>
                             {% endif %}
                         {% endfor %}
 
                         {% if baucus.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ baucus.next_page_number }}{% if keyword %}&keyword={{ keyword }}{% endif %}">Sau</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ baucus.next_page_number }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">Sau</a></li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">Sau</span></li>
                         {% endif %}

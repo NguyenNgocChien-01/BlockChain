@@ -25,17 +25,26 @@ def strip_pem_headers(pem_str: str) -> str:
 
 
 def _check_vote_eligibility(request, ballot, voter):
-    """
-    Kiểm tra các điều kiện cơ bản để người dùng có thể bỏ phiếu trong một cuộc bầu cử.
-    """
+
     now = timezone.now()
+    
+    # 1. Kiểm tra thời gian
     if not (ballot.start_date <= now and ballot.end_date >= now):
         messages.error(request, 'Cuộc bầu cử này không còn hiệu lực.')
         return redirect('chitiet_baucu_u', id=ballot.id)
+
+    # 2. Kiểm tra xem đã bỏ phiếu chưa
     if Vote.objects.filter(ballot=ballot, voter_public_key=voter.public_key).exists():
         messages.warning(request, 'Bạn đã bỏ phiếu trong cuộc bầu cử này rồi.')
         return redirect('chitiet_baucu_u', id=ballot.id)
-    return None
+        
+    # 3. Nếu là bầu cử riêng tư, kiểm tra xem cử tri có trong danh sách không
+    if ballot.type == 'PRIVATE':
+        if not ballot.eligible_voters.filter(pk=voter.pk).exists():
+            messages.error(request, 'Bạn không có quyền tham gia cuộc bầu cử riêng tư này.')
+            return redirect('baucu_u') # Chuyển về trang danh sách chung
+
+    return None # Nếu tất cả đều hợp lệ
 
 
 def _decrypt_private_key_from_strings(private_key_pem_b64: str, public_key_from_file_str: str):

@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from django.http import JsonResponse 
 import json
+from django.db.models import Count
 from cryptography.hazmat.primitives.asymmetric import padding
 
 from .user_utils import (
@@ -60,22 +61,40 @@ def logout(request):
     return redirect('login') # Chuyển hướng về trang đăng nhậpn
 # views.py
 def ds_baucu(request):
-    keyword = request.GET.get('keyword', '')
-    
-    # Bắt đầu với tất cả các cuộc bầu cử, KHÔNG CÓ BỘ LỌC THỜI GIAN NỮA
-    all_ballots = Ballot.objects.all()
 
+    keyword = request.GET.get('keyword', '')
+
+    current_filter = request.GET.get('filter', 'all')
+
+    # các cuộc bầu cử mà người dùng CÓ QUYỀN xem
+    base_queryset = Ballot.objects.none()
+    if request.user.is_authenticated and hasattr(request.user, 'voter'):
+        voter = request.user.voter
+
+        base_queryset = Ballot.objects.filter(
+            Q(type='PUBLIC') | Q(eligible_voters=voter)
+        ).distinct()
+
+
+    # 2. Áp dụng bộ lọc 
+    if current_filter == 'public':
+        all_ballots = base_queryset.filter(type='PUBLIC')
+    elif current_filter == 'private':
+        # Chỉ lọc trong số các cuộc bầu cử riêng tư mà họ có quyền xem
+        all_ballots = base_queryset.filter(type='PRIVATE')
+    else: 
+        all_ballots = base_queryset
+
+    #  Áp dụng bộ lọc tìm kiếm (nếu có)
     if keyword:
         all_ballots = all_ballots.filter(
             Q(title__icontains=keyword) | Q(description__icontains=keyword)
         )
     
-
     all_ballots = all_ballots.order_by('-start_date')
 
-    now = timezone.now() 
-
-    paginator = Paginator(all_ballots, 9) 
+    #  Phân trang
+    paginator = Paginator(all_ballots, 9) # 9 cuộc bầu cử mỗi trang
     page = request.GET.get('page')
 
     try:
@@ -88,30 +107,47 @@ def ds_baucu(request):
     context = {
         'baucus': baucus,        
         'keyword': keyword,      
-        'now': now,
+        'now': timezone.now(),
+        'current_filter': current_filter, 
     }
     
     return render(request, 'userpages/baucu/baucu.html', context)
 
 def chitiet_baucu_u(request, id):
-    """
-    Hiển thị trang chi tiết và cho phép người dùng bỏ phiếu.
-    """
+
     ballot = get_object_or_404(Ballot, pk=id)
     candidates = Candidate.objects.filter(ballot=ballot)
     
-    # Các biến kiểm tra trạng thái để truyền qua template
+    # Các biến kiểm tra trạng thái
     now = timezone.now()
     is_active = ballot.start_date <= now <= ballot.end_date
+    is_ended = now > ballot.end_date 
     has_voted = False
-    is_voter = hasattr(request.user, 'voter') # Kiểm tra xem user đã đăng ký làm cử tri chưa
+    is_voter = hasattr(request.user, 'voter')
+    winners = [] 
 
     if is_voter:
-        # Kiểm tra xem cử tri này đã bỏ phiếu trong cuộc bầu cử này chưa
         has_voted = Vote.objects.filter(
             ballot=ballot, 
             voter_public_key=request.user.voter.public_key
         ).exists()
+
+
+    if is_ended:
+        # Đếm số phiếu cho mỗi ứng viên
+        results = Vote.objects.filter(ballot=ballot)\
+            .values('candidate')\
+            .annotate(vote_count=Count('id'))\
+            .order_by('-vote_count')
+
+        # Nếu có kết quả
+        if results:
+            # Lấy số phiếu cao nhất
+            max_votes = results[0]['vote_count']
+            # Tìm tất cả các ứng viên có số phiếu bằng số phiếu cao nhất (xử lý trường hợp hòa)
+            winner_ids = [r['candidate'] for r in results if r['vote_count'] == max_votes]
+            winners = Candidate.objects.filter(id__in=winner_ids)
+
 
     context = {
         'baucu': ballot,
@@ -119,6 +155,8 @@ def chitiet_baucu_u(request, id):
         'is_active': is_active,
         'has_voted': has_voted,
         'is_voter': is_voter,
+        'is_ended': is_ended,  
+        'winners': winners,    
     }
     return render(request, 'userpages/baucu/chitiet.html', context)
 
@@ -126,7 +164,7 @@ def view_dangky_cutri(request):
     return render(request, 'userpages/dangky_cutri.html')
 
 def strip_pem_headers(pem_str):
-    """Loại bỏ BEGIN/END và khoảng trắng dư"""
+
     lines = pem_str.strip().splitlines()
     lines = [line for line in lines if not line.startswith("-----")]
     return ''.join(lines)
@@ -293,14 +331,18 @@ def bo_phieu(request, id):
 
 
 def my_vote(request, id):
- 
     ballot = get_object_or_404(Ballot, pk=id)
     
     if not hasattr(request.user, 'voter'):
         messages.error(request, "Bạn không phải là cử tri.")
         return redirect('chitiet_baucu_u', id=id)
 
+    # Lấy thời gian hiện tại
+    now = timezone.now()
+    is_ended = now > ballot.end_date
+
     try:
+        # Tìm phiếu bầu 
         my_vote = Vote.objects.get(ballot=ballot, voter_public_key=request.user.voter.public_key)
         is_in_block = my_vote.block is not None
     except Vote.DoesNotExist:
@@ -311,6 +353,7 @@ def my_vote(request, id):
         'baucu': ballot,
         'my_vote': my_vote,
         'is_in_block': is_in_block,
+        'is_ended': is_ended, 
     }
     return render(request, 'userpages/baucu/my_vote.html', context)
 
