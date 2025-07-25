@@ -387,7 +387,7 @@ def change_vote(request, vote_id):
             vote.candidate = new_candidate
             vote.save() 
             messages.success(request, "Thay đổi phiếu bầu thành công vì phiếu chưa được niêm phong.")
-            return redirect('view_my_vote', id=vote.ballot.id)
+            return redirect('my_vote', id=vote.ballot.id)
         
         # 2 TRƯỜNG HỢP PHIẾU ĐÃ BỊ NIÊM PHONG 
         else:

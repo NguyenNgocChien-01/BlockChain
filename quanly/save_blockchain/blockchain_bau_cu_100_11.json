@@ -1,8 +1,8 @@
 {
     "ballot_id": 11,
     "ballot_title": "Bầu cử 100",
-    "exported_at": "2025-07-24T13:09:21.285355+00:00",
-    "chain_hash": "67f7200857344c0b253f444178ad901e9053b3ba35346ef745998e30988c47b7",
+    "exported_at": "2025-07-25T18:39:26.664011+00:00",
+    "chain_hash": "adc6fb2857e4faaab7a5bcf1392260e6dce4b9daf1cf541d779ab2127a6cc230",
     "blocks": [
         {
             "index": 33,
@@ -111,6 +111,15 @@
             "nonce": 158,
             "difficulty": 2,
             "timestamp": "Thu Jul 24 20:09:21 2025"
+        },
+        {
+            "index": 51,
+            "data": "No transactions",
+            "previous_hash": "001785b91778d995351568cdcc2b4f18ab7036362ccedb5fd95fcd9e5517d192",
+            "hash": "0042f77fcb247580f027cc01497d9565d4fe768a4f60b783f67e6579e44d4567",
+            "nonce": 27,
+            "difficulty": 2,
+            "timestamp": "Sat Jul 26 01:39:26 2025"
         }
     ]
 }

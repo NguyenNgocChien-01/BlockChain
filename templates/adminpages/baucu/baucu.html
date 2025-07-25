@@ -47,7 +47,7 @@
               <table class="table table-hover datatable-table" id="pc-dt-simple">
                 <thead>
                   <tr>
-                    <th style="width: 3.888888888888889%;"></th>
+                    <th style="width: 2%;"></th>
                     <th style="width: 10%;">Tên</th>
                     <th style="width: 8%;">Mô tả</th>
                     {% comment %} <th style="width: 8%;">Thời gian bắt đầu</th>
@@ -116,12 +116,12 @@
                               </a>
                             </li>
                             <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="Đào khối thủ công">
-                                <a href="{% url 'dao_block' baucu.id %}" 
+                                {% comment %} <a href="{% url 'dao_block' baucu.id %}" 
                                    class="avtar avtar-xs btn-link-warning" 
                                    onclick="return confirm('Bạn có chắc chắn muốn ép đào khối cho cuộc bầu cử này không? Hành động này sẽ gom tất cả các phiếu đang chờ vào một khối mới ngay lập tức.')">
                                     <span class="badge bg-secondary"><br>Lưu phiếu<br><br> </span>
                                 </a>
-                            </li>
+                            </li> {% endcomment %}
                           </ul>
                         </td>
                       </tr>
