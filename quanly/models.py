@@ -21,11 +21,27 @@ def candidate_avatar_path(instance, filename):
 
 class Ballot(models.Model):
     """Bảng chứa thông tin về một cuộc bầu cử cụ thể."""
+    BALLOT_TYPE_CHOICES = [
+        ('PUBLIC', 'Công khai'),  # Bất kỳ ai cũng có thể tham gia
+        ('PRIVATE', 'Riêng tư'), # Chỉ những người được chọn mới có thể tham gia
+    ]
     title = models.CharField("Tiêu đề cuộc bầu cử", max_length=255)
     description = models.TextField("Mô tả", null=True, blank=True)
     start_date = models.DateTimeField("Thời gian bắt đầu")
     end_date = models.DateTimeField("Thời gian kết thúc")
 
+    type = models.CharField(
+        "Loại hình",
+        max_length=10,
+        choices=BALLOT_TYPE_CHOICES,
+        default='PUBLIC' # Mặc định là công khai
+    )
+    eligible_voters = models.ManyToManyField(
+        'Voter',
+        verbose_name="Cử tri được phép (cho bầu cử riêng tư)",
+        blank=True, 
+        related_name="private_ballots"
+    )
     class Meta:
         verbose_name = "Cuộc Bầu Cử"
         verbose_name_plural = "Các Cuộc Bầu Cử"

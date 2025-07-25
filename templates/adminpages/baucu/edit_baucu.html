@@ -1,23 +1,49 @@
-
-<form id="editbaucuForm" method="POST">
+<form id="editbaucuForm" method="POST" action=""> 
     {% csrf_token %}
-    <div class="form-group">
-        <label class="form-label" for="id_title">Tiêu đề</label>
-        <input type="text" class="form-control" id="id_tieude" name="tieude" placeholder="Tên cuộc bầu cử" required>
-    </div>
+
 
     <div class="form-group">
-        <label class="form-label" for="id_description">Mô tả</label>
-        <textarea class="form-control" id="id_mota" name="mota" rows="3" placeholder="Mô tả chi tiết về cuộc bầu cử"></textarea>
+        <label class="form-label" for="edit_id_tieude">Tiêu đề</label>
+        <input type="text" class="form-control" id="edit_id_tieude" name="tieude" required>
     </div>
+    <div class="form-group">
+        <label class="form-label" for="edit_id_mota">Mô tả</label>
+        <textarea class="form-control" id="edit_id_mota" name="mota" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="edit_id_start_date">Thời gian bắt đầu</label>
+        <input type="datetime-local" class="form-control" id="edit_id_start_date" name="start_date" required>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="edit_id_end_date">Thời gian kết thúc</label>
+        <input type="datetime-local" class="form-control" id="edit_id_end_date" name="end_date" required>
+    </div>
+    
+    <hr>
+    
 
     <div class="form-group">
-        <label class="form-label" for="id_start_date">Thời gian bắt đầu</label>
-        <input type="datetime-local" class="form-control" id="id_start_date" name="start_date" required>
+        <label class="form-label">Loại hình Bầu cử</label>
+        <div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="type" id="edit_type_public" value="PUBLIC">
+                <label class="form-check-label" for="edit_type_public">Công khai</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="type" id="edit_type_private" value="PRIVATE">
+                <label class="form-check-label" for="edit_type_private">Riêng tư</label>
+            </div>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label class="form-label" for="id_end_date">Thời gian kết thúc</label>
-        <input type="datetime-local" class="form-control" id="id_end_date" name="end_date" required>
+
+    <div class="form-group" id="edit_eligible_voters_wrapper" style="display: none;">
+        <label class="form-label" for="edit_id_eligible_voters">Chọn Cử tri được phép tham gia</label>
+        <select multiple class="form-control" id="edit_id_eligible_voters" name="eligible_voters" size="8">
+            {% for voter in voters %}
+                <option value="{{ voter.id }}">{{ voter.user.username }} ({{ voter.user.get_full_name }})</option>
+            {% endfor %}
+        </select>
+        <small class="form-text text-muted">Giữ phím Ctrl (hoặc Command trên Mac) để chọn nhiều cử tri.</small>
     </div>
 </form>

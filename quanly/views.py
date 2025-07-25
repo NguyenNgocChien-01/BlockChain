@@ -16,38 +16,56 @@ def chart(request):
     return render(request,'adminpages/chart.html')
 
 def baucu(request):
+
     keyword = request.GET.get('keyword', '')
-    baucus = Ballot.objects.all().order_by('-start_date') # Sắp xếp cho hợp lý
+    baucus = Ballot.objects.all().order_by('-start_date')
     
     if keyword:
         baucus = baucus.filter(
             Q(title__icontains=keyword) | Q(description__icontains=keyword)
         )
+    
+ 
+    voters = Voter.objects.select_related('user').all()
             
     context = {
         'baucus': baucus,
         'keyword': keyword,
-        'now': timezone.now() # <-- THÊM DÒNG NÀY
+        'now': timezone.now(),
+        'voters': voters, 
     }
     
     return render(request, 'adminpages/baucu/baucu.html', context)
 
 
 def add_baucu(request):
+
     if request.method == "POST":
+
         tieude = request.POST.get('tieude')
         mota = request.POST.get('mota')
         tgbd = request.POST.get('start_date')
         tgkt = request.POST.get('end_date')
+        
 
-        Ballot.objects.create(
+        ballot_type = request.POST.get('type', 'PUBLIC') # Mặc định là PUBLIC
+
+    
+        new_ballot = Ballot.objects.create(
             title=tieude,
             description=mota,
             start_date=tgbd,
-            end_date=tgkt
+            end_date=tgkt,
+            type=ballot_type
         )
 
-    return redirect('baucu')  # Nếu không phải POST, quay lại danh sách
+
+        if ballot_type == 'PRIVATE':
+            voter_ids = request.POST.getlist('eligible_voters')
+            if voter_ids:
+                new_ballot.eligible_voters.set(voter_ids)
+
+    return redirect('baucu')
 
 def delete_baucu(request, id):
     baucu = get_object_or_404(Ballot, id=id)
@@ -55,27 +73,47 @@ def delete_baucu(request, id):
     return redirect('baucu') 
 
 def edit_baucu(request, id):
-    baucu = get_object_or_404(Ballot,id=id)
+
+    baucu_obj = get_object_or_404(Ballot, id=id)
     if request.method == "POST":
-        baucu.title = request.POST.get('tieude')
-        baucu.description = request.POST.get('mota')
-        baucu.start_date = request.POST.get('start_date')
-        baucu.end_date = request.POST.get('end_date')
-    baucu.save()
-    return redirect('baucu') 
+        baucu_obj.title = request.POST.get('tieude')
+        baucu_obj.description = request.POST.get('mota')
+        baucu_obj.start_date = request.POST.get('start_date')
+        baucu_obj.end_date = request.POST.get('end_date')
+        
+
+        ballot_type = request.POST.get('type', 'PUBLIC')
+        baucu_obj.type = ballot_type
+        
+        baucu_obj.save() # Lưu các thay đổi cơ bản
+
+
+        if ballot_type == 'PRIVATE':
+            voter_ids = request.POST.getlist('eligible_voters')
+            baucu_obj.eligible_voters.set(voter_ids)
+        else:
+
+            baucu_obj.eligible_voters.clear()
+
+    return redirect('baucu')
 
 def chitiet_baucu(request, id):
     baucu = get_object_or_404(Ballot, id=id)
     ungcuviens = Candidate.objects.filter(ballot=baucu)
-
     now = timezone.now()
-
     is_active = baucu.start_date <= now and baucu.end_date >= now
+
+
+    eligible_voters_list = None
+    if baucu.type == 'PRIVATE':
+        eligible_voters_list = baucu.eligible_voters.select_related('user').all()
+
 
     context = {
         'baucu': baucu,
         'ungcuviens': ungcuviens,
-        'is_active': is_active, 
+        'is_active': is_active,
+        'eligible_voters_list': eligible_voters_list, # Truyền danh sách vào context
     }
     return render(request, 'adminpages/baucu/chitiet.html', context)
 

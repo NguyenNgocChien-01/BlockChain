@@ -18,30 +18,43 @@
                 {% endif %}
             {% endfor %}
         {% endif %}
+
         {% if my_vote %}
             <p>Bạn đã bỏ phiếu cho ứng viên: <strong>{{ my_vote.candidate.name }}</strong></p>
             <p>Thời gian: {{ my_vote.timestamp|date:"H:i, d/m/Y" }}</p>
             
-            {% if is_in_block %}
-                <div class="alert alert-success">
-                    <h5 class="alert-heading">Phiếu đã được niêm phong!</h5>
-                    <p>Phiếu bầu của bạn đã được ghi vào khối <strong>#{{ my_vote.block.id }}</strong> và không thể thay đổi.</p>
-                    <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-warning">Vẫn thay đổi</a>
+            <!-- =============================================================== -->
+            <!-- ================ LOGIC HIỂN THỊ TRẠNG THÁI PHIẾU =============== -->
+            <!-- =============================================================== -->
+            {% if is_ended %}
+                <div class="alert alert-secondary">
+                    <h5 class="alert-heading">Cuộc bầu cử đã kết thúc</h5>
+                    <p>Phiếu bầu của bạn đã được chốt và không thể thay đổi.</p>
                 </div>
             {% else %}
-                <div class="alert alert-info">
-                    <h5 class="alert-heading">Phiếu đang chờ xử lý</h5>
-                    <p>Phiếu bầu của bạn đang chờ được ghi vào khối tiếp theo. Bạn vẫn có thể thay đổi lựa chọn của mình.</p>
-                    <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-primary">Thay đổi phiếu bầu</a>
-                </div>
+                {% if is_in_block %}
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">Phiếu đã được niêm phong!</h5>
+                        <p>Phiếu bầu của bạn đã được ghi vào khối <strong>#{{ my_vote.block.id }}</strong> và không thể thay đổi.</p>
+                        <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-warning">Vẫn thay đổi (Mô phỏng)</a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Phiếu đang chờ xử lý</h5>
+                        <p>Phiếu bầu của bạn đang chờ được ghi vào khối tiếp theo. Bạn vẫn có thể thay đổi lựa chọn của mình.</p>
+                        <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-primary">Thay đổi phiếu bầu</a>
+                    </div>
+                {% endif %}
             {% endif %}
+            <!-- =============================================================== -->
+
         {% else %}
             <p>Bạn chưa bỏ phiếu trong cuộc bầu cử này.</p>
         {% endif %}
         
         <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-secondary mt-3">
           <i class="ti ti-arrow-left"></i>Quay lại
-          </a>
+        </a>
     </div>
 </div>
 </div>
@@ -74,4 +87,3 @@
   </div>
 </div>
 {% endblock %}
-

@@ -283,6 +283,48 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 </script>
 
+
+<script>
+// ẩn/hiện danh sách cử tri
+document.addEventListener('DOMContentLoaded', function() {
+    const publicRadio = document.getElementById('add_type_public');
+    const privateRadio = document.getElementById('add_type_private');
+    const votersWrapper = document.getElementById('add_eligible_voters_wrapper');
+
+    function toggleVotersList() {
+        if (privateRadio.checked) {
+            votersWrapper.style.display = 'block';
+        } else {
+            votersWrapper.style.display = 'none';
+        }
+    }
+
+    publicRadio.addEventListener('change', toggleVotersList);
+    privateRadio.addEventListener('change', toggleVotersList);
+});
+</script>
+
+<script>
+//  ẩn/hiện danh sách cử tri cho form SỬA
+document.addEventListener('DOMContentLoaded', function() {
+    const publicRadioEdit = document.getElementById('edit_type_public');
+    const privateRadioEdit = document.getElementById('edit_type_private');
+    const votersWrapperEdit = document.getElementById('edit_eligible_voters_wrapper');
+
+    function toggleVotersListEdit() {
+        if (privateRadioEdit.checked) {
+            votersWrapperEdit.style.display = 'block';
+        } else {
+            votersWrapperEdit.style.display = 'none';
+        }
+    }
+
+    publicRadioEdit.addEventListener('change', toggleVotersListEdit);
+    privateRadioEdit.addEventListener('change', toggleVotersListEdit);
+    
+
+});
+</script>
 </body>
 <!-- [Body] end -->
 

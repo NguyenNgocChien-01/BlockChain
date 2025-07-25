@@ -12,11 +12,16 @@
                     <h3 class="mb-0"> {{ baucu.title }}</h3>
                     
                     <div>
+
+                        {% if baucu.type == 'PRIVATE' %}
+                        <a href="#" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#eligibleVotersModal">
+                            <i class="ti ti-users"></i> Xem Danh sách Cử tri
+                        </a>
+                        {% endif %}
                         <a href="{% url 'ketqua_baucu' baucu.id %}" class="btn btn-info me-2">
                             <i class="ti ti-chart-bar"></i> Xem Kết Quả
                         </a>
 
-                        {# Chỉ hiện khi cuộc bầu cử đang hoạt động #}
                         {% if is_active %} 
                         <a href="{% url 'ketthuc_baucu' baucu.id %}" 
                            class="btn btn-danger"
@@ -44,6 +49,9 @@
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4>Danh sách ứng cử viên</h4>
+                
+
+
                     <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUngCuVienModal">
                         <i class="ti ti-plus f-18"></i> Thêm Ứng Cử Viên
                     </a>
@@ -108,6 +116,34 @@
 </div>
 
 
+<div class="modal fade" id="eligibleVotersModal" tabindex="-1" aria-labelledby="eligibleVotersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eligibleVotersModalLabel">Danh sách Cử tri được phép tham gia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if eligible_voters_list %}
+                <p>Cuộc bầu cử này là riêng tư. Chỉ những cử tri sau mới có quyền tham gia:</p>
+                <ul class="list-group">
+                    {% for voter in eligible_voters_list %}
+                        <li class="list-group-item">
+                            <strong>{{ voter.user.username }}</strong> - ({{ voter.user.get_full_name|default:"Chưa có tên" }})
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>Không có cử tri nào được chỉ định.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- =============================================================================== -->
 <div class="modal fade" id="addUngCuVienModal" tabindex="-1" aria-labelledby="addUngCuVienModalLabel" >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
