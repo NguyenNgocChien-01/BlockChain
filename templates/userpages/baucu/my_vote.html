@@ -36,13 +36,13 @@
                     <div class="alert alert-success">
                         <h5 class="alert-heading">Phiếu đã được niêm phong!</h5>
                         <p>Phiếu bầu của bạn đã được ghi vào khối <strong>#{{ my_vote.block.id }}</strong> và không thể thay đổi.</p>
-                        <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-warning">Vẫn thay đổi (Mô phỏng)</a>
+                        {% comment %} <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-warning">Vẫn thay đổi (Mô phỏng)</a> {% endcomment %}
                     </div>
                 {% else %}
                     <div class="alert alert-info">
                         <h5 class="alert-heading">Phiếu đang chờ xử lý</h5>
                         <p>Phiếu bầu của bạn đang chờ được ghi vào khối tiếp theo. Bạn vẫn có thể thay đổi lựa chọn của mình.</p>
-                        <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-primary">Thay đổi phiếu bầu</a>
+                        {% comment %} <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-primary">Thay đổi phiếu bầu</a> {% endcomment %}
                     </div>
                 {% endif %}
             {% endif %}

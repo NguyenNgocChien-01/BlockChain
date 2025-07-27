@@ -1,0 +1,71 @@
+{
+    "ballot_id": 17,
+    "ballot_title": "Bầu nhóm trưởng CT099",
+    "exported_at": "2025-07-27T10:36:40.950444+00:00",
+    "chain_hash": "47a12dc95f14ba3ec09ddd3c6ee0a78ec0130b32ea087dbde752f4ecea3f9617",
+    "blocks": [
+        {
+            "index": 55,
+            "data": "No transactions",
+            "previous_hash": "0",
+            "hash": "0026c4c4440f2d040069136b19228e941229fde5311e510389d6ffec8228ff08",
+            "nonce": 231,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 14:39:27 2025"
+        },
+        {
+            "index": 56,
+            "data": "No transactions",
+            "previous_hash": "0026c4c4440f2d040069136b19228e941229fde5311e510389d6ffec8228ff08",
+            "hash": "0096ea9de2b36db4c3e393438edb8bea095a58d4d60cc82b9c71285ab1f0fdff",
+            "nonce": 243,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 15:31:24 2025"
+        },
+        {
+            "index": 57,
+            "data": "No transactions",
+            "previous_hash": "0096ea9de2b36db4c3e393438edb8bea095a58d4d60cc82b9c71285ab1f0fdff",
+            "hash": "00a58b14715a0799073e0708ee435b1b4e5ed1653d5f3f1f18e352e7c635951f",
+            "nonce": 100,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 15:43:06 2025"
+        },
+        {
+            "index": 58,
+            "data": "No transactions",
+            "previous_hash": "00a58b14715a0799073e0708ee435b1b4e5ed1653d5f3f1f18e352e7c635951f",
+            "hash": "001950fa70f71ab8d96aef84c7c1c616a6b654d87c7c46e765940b9e917da80a",
+            "nonce": 1370,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 17:01:35 2025"
+        },
+        {
+            "index": 59,
+            "data": "No transactions",
+            "previous_hash": "001950fa70f71ab8d96aef84c7c1c616a6b654d87c7c46e765940b9e917da80a",
+            "hash": "00d51cf60d082acbd26e7946eb44a2383d3a3d73c02badd90f150cb43f7ebf4f",
+            "nonce": 336,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 17:18:09 2025"
+        },
+        {
+            "index": 62,
+            "data": "Phiếu bầu cho: Ngu Chiến ",
+            "previous_hash": "00d51cf60d082acbd26e7946eb44a2383d3a3d73c02badd90f150cb43f7ebf4f",
+            "hash": "0057bb39bbb659684228e76509199de6d42a1fb362e259ffa4fac64e4eca8cd9",
+            "nonce": 505,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 17:26:56 2025"
+        },
+        {
+            "index": 63,
+            "data": "No transactions",
+            "previous_hash": "0057bb39bbb659684228e76509199de6d42a1fb362e259ffa4fac64e4eca8cd9",
+            "hash": "001cec50309c4accb6b6e9e20dc30202edf614ca0c8ffab7ca8f8da42ae860a2",
+            "nonce": 0,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 17:36:40 2025"
+        }
+    ]
+}

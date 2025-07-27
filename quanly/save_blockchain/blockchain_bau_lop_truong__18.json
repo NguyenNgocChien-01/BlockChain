@@ -1,0 +1,26 @@
+{
+    "ballot_id": 18,
+    "ballot_title": "Bầu lớp trưởng ",
+    "exported_at": "2025-07-27T10:25:19.939548+00:00",
+    "chain_hash": "e3f1267fd60accdbcc6d4e9ecfbe6db76ee5a206640f0f6d00d2354a42715499",
+    "blocks": [
+        {
+            "index": 60,
+            "data": "Phiếu bầu cho: Trí Minh ",
+            "previous_hash": "0",
+            "hash": "001ed9c103e8e8a70041c5d33f1c2965fa13d5ac8dbbbd340bf40122ac1f3dbf",
+            "nonce": 189,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 17:24:50 2025"
+        },
+        {
+            "index": 61,
+            "data": "Phiếu bầu cho: Huong ",
+            "previous_hash": "001ed9c103e8e8a70041c5d33f1c2965fa13d5ac8dbbbd340bf40122ac1f3dbf",
+            "hash": "005d532cb6a384e8a570403957e5400b84a24dca4e9968f79d255af47f37148a",
+            "nonce": 165,
+            "difficulty": 2,
+            "timestamp": "Sun Jul 27 17:25:19 2025"
+        }
+    ]
+}

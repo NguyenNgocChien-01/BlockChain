@@ -14,8 +14,8 @@ urlpatterns = [
     path('cutri/save', dangky_cutri, name='dangky_cutri'),
     path('baucu/bo-phieu/<int:id>/', bo_phieu, name='bo_phieu'),
     path('baucu/<int:id>/my-vote/', my_vote, name='my_vote'),
-    path('baucu/change-vote/<int:vote_id>/', change_vote, name='change_vote'),
-
+#  path('baucu/change-vote/<int:vote_id>/', change_vote, name='change_vote'),
+   
 
 
 ]

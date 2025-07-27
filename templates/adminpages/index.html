@@ -40,9 +40,8 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}" id="main-style-link">
   <link rel="stylesheet" href="{% static 'css/style-preset.css' %}">
 
-  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" id="main-style-link">
+  {% comment %} <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" id="main-style-link"> {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <link rel="stylesheet" href="{% static 'css/sty.css' %}">
   <link rel="stylesheet" href="{% static 'css/style-preset.css' %}">
   <style>
   .alert {
@@ -97,7 +96,7 @@
     <div class="m-header">
       <a href="../dashboard/index.html" class="b-brand text-primary">
         <!-- ========   Change your logo from here   ============ -->
-        <img src="../assets/images/logo-dark.svg" class="img-fluid logo-lg" alt="logo">
+        {% comment %} <img src="../assets/images/logo-dark.svg" class="img-fluid logo-lg" alt="logo"> {% endcomment %}
       </a>
     </div>
     <div class="navbar-content">
@@ -167,18 +166,7 @@
       </div>
     </div>
   </footer>
-  <script src="../assets/js/script.js"></script>
-  <!-- [Page Specific JS] start -->
-  <script src="../assets/js/plugins/apexcharts.min.js"></script>
-  <script src="../assets/js/pages/dashboard-default.js"></script>
-  <!-- [Page Specific JS] end -->
-  <!-- Required Js -->
-  <script src="../assets/js/plugins/popper.min.js"></script>
-  <script src="../assets/js/plugins/simplebar.min.js"></script>
-  <script src="../assets/js/plugins/bootstrap.min.js"></script>
-  <script src="../assets/js/fonts/custom-font.js"></script>
-  <script src="../assets/js/pcoded.js"></script>
-  <script src="../assets/js/plugins/feather.min.js"></script>
+  
   
   <script>layout_change('light');</script>
   <script>change_box_container('false');</script>
