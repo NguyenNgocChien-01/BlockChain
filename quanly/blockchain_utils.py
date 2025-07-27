@@ -6,8 +6,7 @@ from django.utils import timezone
 from quanly.models import Block, Ballot # Đảm bảo đã import đúng các models này
 import unicodedata # Để xử lý ký tự có dấu
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BLOCKCHAIN_EXPORT_DIR_PER_BALLOT = os.path.join(BASE_DIR, 'save_blockchain') 
+
 
 
 

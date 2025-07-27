@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 
+from quanly.blockchain_utils import save_blockchain_to_json_with_integrity_check
+
 from quanly.models import *
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login as auth_login
@@ -20,6 +22,8 @@ import json
 from django.db.models import Count
 from cryptography.hazmat.primitives.asymmetric import padding
 
+from django.db import transaction
+from django.conf import settings
 from .user_utils import (
     strip_pem_headers,
     _check_vote_eligibility,
@@ -237,98 +241,98 @@ def _check_vote_eligibility(request, ballot, voter):
     return None 
 
 
-def bo_phieu(request, id):
-    if request.method == 'POST':
-        try:
-            ballot = get_object_or_404(Ballot, pk=id)
+# def bo_phieu(request, id):
+#     if request.method == 'POST':
+#         try:
+#             ballot = get_object_or_404(Ballot, pk=id)
             
-            if not hasattr(request.user, 'voter'):
-                messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
-                return redirect('view_dangky_cutri')
-            voter = request.user.voter
+#             if not hasattr(request.user, 'voter'):
+#                 messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
+#                 return redirect('view_dangky_cutri')
+#             voter = request.user.voter
 
-            eligibility_check_result = _check_vote_eligibility(request, ballot, voter)
-            if eligibility_check_result:
-                return eligibility_check_result
+#             eligibility_check_result = _check_vote_eligibility(request, ballot, voter)
+#             if eligibility_check_result:
+#                 return eligibility_check_result
 
-            candidate_id = request.POST.get('candidate')
-            if not candidate_id:
-                messages.error(request, 'Bạn chưa chọn ứng cử viên.')
-                return redirect('chitiet_baucu_u', id=ballot.id)
-            candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
+#             candidate_id = request.POST.get('candidate')
+#             if not candidate_id:
+#                 messages.error(request, 'Bạn chưa chọn ứng cử viên.')
+#                 return redirect('chitiet_baucu_u', id=ballot.id)
+#             candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
 
 
-            private_key = None
-            input_public_key_str = None
-            private_key_pem_b64 = None 
+#             private_key = None
+#             input_public_key_str = None
+#             private_key_pem_b64 = None 
 
-            if 'key_file' in request.FILES and request.FILES['key_file']:
-                key_file = request.FILES['key_file']
-                file_content = key_file.read().decode('utf-8')
-                key_data = json.loads(file_content)
+#             if 'key_file' in request.FILES and request.FILES['key_file']:
+#                 key_file = request.FILES['key_file']
+#                 file_content = key_file.read().decode('utf-8')
+#                 key_data = json.loads(file_content)
                 
-                private_key_pem_b64 = key_data.get('private_key_pem_b64') # Lấy private key plaintext (Base64)
-                input_public_key_str = key_data.get('public_key')
+#                 private_key_pem_b64 = key_data.get('private_key_pem_b64') # Lấy private key plaintext (Base64)
+#                 input_public_key_str = key_data.get('public_key')
 
-                if not private_key_pem_b64 or not input_public_key_str:
-                    messages.error(request, 'File khóa không hợp lệ hoặc bị thiếu thông tin.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
+#                 if not private_key_pem_b64 or not input_public_key_str:
+#                     messages.error(request, 'File khóa không hợp lệ hoặc bị thiếu thông tin.')
+#                     return redirect('chitiet_baucu_u', id=ballot.id)
 
-                if input_public_key_str != voter.public_key:
-                    messages.error(request, 'Khóa công khai trong file không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
+#                 if input_public_key_str != voter.public_key:
+#                     messages.error(request, 'Khóa công khai trong file không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
+#                     return redirect('chitiet_baucu_u', id=ballot.id)
 
-                # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
-                private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
+#                 # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
+#                 private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
 
-            elif request.POST.get('private_key_pem_b64') and request.POST.get('public_key'):
-                private_key_pem_b64 = request.POST.get('private_key_pem_b64')
-                input_public_key_str = request.POST.get('public_key')
+#             elif request.POST.get('private_key_pem_b64') and request.POST.get('public_key'):
+#                 private_key_pem_b64 = request.POST.get('private_key_pem_b64')
+#                 input_public_key_str = request.POST.get('public_key')
 
-                if not private_key_pem_b64 or not input_public_key_str: 
-                    messages.error(request, 'Vui lòng điền đầy đủ thông tin khóa bí mật và public key.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
+#                 if not private_key_pem_b64 or not input_public_key_str: 
+#                     messages.error(request, 'Vui lòng điền đầy đủ thông tin khóa bí mật và public key.')
+#                     return redirect('chitiet_baucu_u', id=ballot.id)
 
-                if input_public_key_str != voter.public_key:
-                    messages.error(request, 'Khóa công khai đã nhập không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
+#                 if input_public_key_str != voter.public_key:
+#                     messages.error(request, 'Khóa công khai đã nhập không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
+#                     return redirect('chitiet_baucu_u', id=ballot.id)
 
-                # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
-                private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
+#                 # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
+#                 private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
 
-            else:
-                messages.error(request, 'Vui lòng cung cấp khóa bí mật bằng cách tải file hoặc dán chuỗi.')
-                return redirect('chitiet_baucu_u', id=ballot.id)
+#             else:
+#                 messages.error(request, 'Vui lòng cung cấp khóa bí mật bằng cách tải file hoặc dán chuỗi.')
+#                 return redirect('chitiet_baucu_u', id=ballot.id)
             
-            if private_key is None: 
-                messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
-                return redirect('chitiet_baucu_u', id=ballot.id)
+#             if private_key is None: 
+#                 messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
+#                 return redirect('chitiet_baucu_u', id=ballot.id)
 
-            timestamp_signed_at = timezone.now().isoformat()
-            signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
-            is_verified_internally = _verify_signature_internal(voter.public_key, f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}", signed_signature_b64)
-            if not is_verified_internally:
-                messages.error(request, 'Lỗi xác minh nội bộ sau khi ký. Phiếu bầu bị từ chối.')
-                return redirect('chitiet_baucu_u', id=ballot.id)
+#             timestamp_signed_at = timezone.now().isoformat()
+#             signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
+#             is_verified_internally = _verify_signature_internal(voter.public_key, f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}", signed_signature_b64)
+#             if not is_verified_internally:
+#                 messages.error(request, 'Lỗi xác minh nội bộ sau khi ký. Phiếu bầu bị từ chối.')
+#                 return redirect('chitiet_baucu_u', id=ballot.id)
 
-            vote = Vote.objects.create(
-                ballot=ballot, candidate=candidate, voter_public_key=voter.public_key,
-                signature=signed_signature_b64, timestamp=timestamp_signed_at
-            )
-            messages.success(request, 'Bỏ phiếu thành công và đã được xác minh bằng chữ ký số!')
-            return redirect('chitiet_baucu_u', id=ballot.id)
+#             vote = Vote.objects.create(
+#                 ballot=ballot, candidate=candidate, voter_public_key=voter.public_key,
+#                 signature=signed_signature_b64, timestamp=timestamp_signed_at
+#             )
+#             messages.success(request, 'Bỏ phiếu thành công và đã được xác minh bằng chữ ký số!')
+#             return redirect('chitiet_baucu_u', id=ballot.id)
 
-        except json.JSONDecodeError:
-            messages.error(request, 'File khóa không phải là định dạng JSON hợp lệ.')
-            return redirect('chitiet_baucu_u', id=ballot.id)
-        except ValueError as e:
-            messages.error(request, str(e))
-            return redirect('chitiet_baucu_u', id=ballot.id)
-        except Exception as e:
-            messages.error(request, f'Lỗi hệ thống khi bỏ phiếu: {e}')
-            return redirect('chitiet_baucu_u', id=ballot.id)
+#         except json.JSONDecodeError:
+#             messages.error(request, 'File khóa không phải là định dạng JSON hợp lệ.')
+#             return redirect('chitiet_baucu_u', id=ballot.id)
+#         except ValueError as e:
+#             messages.error(request, str(e))
+#             return redirect('chitiet_baucu_u', id=ballot.id)
+#         except Exception as e:
+#             messages.error(request, f'Lỗi hệ thống khi bỏ phiếu: {e}')
+#             return redirect('chitiet_baucu_u', id=ballot.id)
 
-    return redirect('chitiet_baucu_u', id=id)
+#     return redirect('chitiet_baucu_u', id=id)
 
 
 def my_vote(request, id):
@@ -358,73 +362,169 @@ def my_vote(request, id):
     }
     return render(request, 'userpages/baucu/my_vote.html', context)
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+# def get_client_ip(request):
+#     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+#     if x_forwarded_for:
+#         ip = x_forwarded_for.split(',')[0]
+#     else:
+#         ip = request.META.get('REMOTE_ADDR')
+#     return ip
 
-def change_vote(request, vote_id):
+# def change_vote(request, vote_id):
 
-    vote = get_object_or_404(Vote, pk=vote_id)
+#     vote = get_object_or_404(Vote, pk=vote_id)
 
-    # Đảm bảo chỉ chính chủ mới có thể truy cập
-    if not hasattr(request.user, 'voter') or vote.voter_public_key != request.user.voter.public_key:
-        messages.error(request, "Bạn không có quyền truy cập phiếu bầu này.")
-        return redirect('baucu_u')
+#     # Đảm bảo chỉ chính chủ mới có thể truy cập
+#     if not hasattr(request.user, 'voter') or vote.voter_public_key != request.user.voter.public_key:
+#         messages.error(request, "Bạn không có quyền truy cập phiếu bầu này.")
+#         return redirect('baucu_u')
 
-    if request.method == 'POST':
-        new_candidate_id = request.POST.get('candidate')
-        if not new_candidate_id:
-            messages.warning(request, "Bạn chưa chọn ứng viên mới.")
-            return redirect('change_vote', vote_id=vote.id)
+#     if request.method == 'POST':
+#         new_candidate_id = request.POST.get('candidate')
+#         if not new_candidate_id:
+#             messages.warning(request, "Bạn chưa chọn ứng viên mới.")
+#             return redirect('change_vote', vote_id=vote.id)
 
-        new_candidate = get_object_or_404(Candidate, pk=new_candidate_id, ballot=vote.ballot)
+#         new_candidate = get_object_or_404(Candidate, pk=new_candidate_id, ballot=vote.ballot)
 
-        # TRƯỜNG HỢP PHIẾU CHƯA BỊ NIÊM PHONG 
-        if vote.block is None:
-            vote.candidate = new_candidate
-            vote.save() 
-            messages.success(request, "Thay đổi phiếu bầu thành công vì phiếu chưa được niêm phong.")
-            return redirect('my_vote', id=vote.ballot.id)
+#         # TRƯỜNG HỢP PHIẾU CHƯA BỊ NIÊM PHONG 
+#         if vote.block is None:
+#             vote.candidate = new_candidate
+#             vote.save() 
+#             messages.success(request, "Thay đổi phiếu bầu thành công vì phiếu chưa được niêm phong.")
+#             return redirect('my_vote', id=vote.ballot.id)
         
-        # 2 TRƯỜNG HỢP PHIẾU ĐÃ BỊ NIÊM PHONG 
-        else:
-            client_ip = get_client_ip(request) 
-            user_agent = request.user_agent
-            # Lấy vị trí
-            latitude_val = request.POST.get('latitude')
-            longitude_val = request.POST.get('longitude')
-            latitude = float(latitude_val) if latitude_val else None
-            longitude = float(longitude_val) if longitude_val else None
+#         # 2 TRƯỜNG HỢP PHIẾU ĐÃ BỊ NIÊM PHONG 
+#         else:
+#             client_ip = get_client_ip(request) 
+#             user_agent = request.user_agent
+#             # Lấy vị trí
+#             latitude_val = request.POST.get('latitude')
+#             longitude_val = request.POST.get('longitude')
+#             latitude = float(latitude_val) if latitude_val else None
+#             longitude = float(longitude_val) if longitude_val else None
 
-            # Ghi log lại hành vi, bao gồm cả IP
-            UserTamperLog.objects.create(
-                attempted_by=request.user,
-                vote_tampered=vote,
-                original_candidate_name=vote.candidate.name,
-                new_candidate_name_attempt=new_candidate.name,
-                description=f" Thay đổi phiếu bầu đã bị niêm phong.",
-                ip_address=client_ip,
-                browser=f"{user_agent.browser.family} {user_agent.browser.version_string}",
-                os=f"{user_agent.os.family} {user_agent.os.version_string}",
-                device=f"{user_agent.device.family}",
-                latitude=latitude,  
-                longitude=longitude, 
-            )
+#             # Ghi log lại hành vi, bao gồm cả IP
+#             UserTamperLog.objects.create(
+#                 attempted_by=request.user,
+#                 vote_tampered=vote,
+#                 original_candidate_name=vote.candidate.name,
+#                 new_candidate_name_attempt=new_candidate.name,
+#                 description=f" Thay đổi phiếu bầu đã bị niêm phong.",
+#                 ip_address=client_ip,
+#                 browser=f"{user_agent.browser.family} {user_agent.browser.version_string}",
+#                 os=f"{user_agent.os.family} {user_agent.os.version_string}",
+#                 device=f"{user_agent.device.family}",
+#                 latitude=latitude,  
+#                 longitude=longitude, 
+#             )
             
-            # Đưa ra cảnh báo nghiêm trọng
-            messages.error(
-                request, 
-                "Bạn không thể thay đổi một phiếu bầu đã được niêm phong vào blockchain. Hành vi cố gắng thay đổi của bạn đã được hệ thống ghi lại."
-                    )
-            return redirect('my_vote', id=vote.ballot.id)
+#             # Đưa ra cảnh báo nghiêm trọng
+#             messages.error(
+#                 request, 
+#                 "Bạn không thể thay đổi một phiếu bầu đã được niêm phong vào blockchain. Hành vi cố gắng thay đổi của bạn đã được hệ thống ghi lại."
+#                     )
+#             return redirect('my_vote', id=vote.ballot.id)
 
-    candidates = Candidate.objects.filter(ballot=vote.ballot)
-    context = {
-        'vote': vote,
-        'candidates': candidates,
-    }
-    return render(request, 'userpages/baucu/change_vote.html', context)
+#     candidates = Candidate.objects.filter(ballot=vote.ballot)
+#     context = {
+#         'vote': vote,
+#         'candidates': candidates,
+#     }
+#     return render(request, 'userpages/baucu/change_vote.html', context)
+
+
+def bo_phieu(request, id):
+    """
+    View xử lý việc bỏ phiếu, đào khối mới, và xuất file JSON ngay lập tức.
+    """
+    if request.method == 'POST':
+        try:
+            # Sử dụng transaction.atomic để đảm bảo tất cả các thao tác CSDL
+            # (tạo Vote, tạo Block) đều thành công hoặc thất bại cùng nhau.
+            with transaction.atomic():
+                ballot = get_object_or_404(Ballot, pk=id)
+                
+                # --- Giai đoạn 1: Xác thực quyền và dữ liệu ---
+                if not hasattr(request.user, 'voter'):
+                    messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
+                    return redirect('chitiet_baucu_u', id=id)
+                voter = request.user.voter
+                
+                eligibility = _check_vote_eligibility(request, ballot, voter)
+                if eligibility:
+                    return eligibility
+
+                candidate_id = request.POST.get('candidate')
+                if not candidate_id:
+                    messages.error(request, 'Bạn chưa chọn ứng cử viên.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+                
+                candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
+
+                # Xử lý file khóa
+                private_key = None
+                if 'key_file' in request.FILES and request.FILES['key_file']:
+                    key_file = request.FILES['key_file']
+                    key_data = json.loads(key_file.read().decode('utf-8'))
+                    private_key_pem_b64 = key_data.get('private_key_pem_b64')
+                    input_public_key_str = key_data.get('public_key')
+                    
+                    if not private_key_pem_b64 or not input_public_key_str:
+                        messages.error(request, 'File khóa không hợp lệ hoặc bị thiếu thông tin.')
+                        return redirect('chitiet_baucu_u', id=ballot.id)
+                    
+                    if input_public_key_str != voter.public_key:
+                        messages.error(request, 'Khóa công khai trong file không khớp với tài khoản của bạn.')
+                        return redirect('chitiet_baucu_u', id=ballot.id)
+                        
+                    private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
+                else:
+                    messages.error(request, 'Vui lòng tải lên file khóa của bạn.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                if private_key is None: 
+                    messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                # --- Giai đoạn 2: Ký và Xác minh ---
+                timestamp_signed_at = timezone.now().isoformat()
+                data_to_sign = f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}"
+                signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
+                
+                if not _verify_signature_internal(voter.public_key, data_to_sign, signed_signature_b64):
+                    messages.error(request, 'Lỗi xác minh chữ ký. Phiếu bầu bị từ chối.')
+                    return redirect('chitiet_baucu_u', id=ballot.id)
+
+                # --- Giai đoạn 3: Tạo Phiếu bầu, Khối mới và Đào ---
+                last_block = Block.objects.filter(ballot=ballot).order_by('-id').first()
+                new_block = Block.objects.create(
+                    ballot=ballot,
+                    previous_hash=last_block.hash if last_block else '0',
+                    difficulty=2 
+                )
+                Vote.objects.create(
+                    ballot=ballot, candidate=candidate, voter_public_key=voter.public_key,
+                    signature=signed_signature_b64, timestamp=timestamp_signed_at,
+                    block=new_block
+                )
+                new_block.mine_block()
+                
+                # --- BƯỚC 4: XUẤT FILE JSON NGAY LẬP TỨC ---
+                # Định nghĩa đường dẫn lưu file một cách chính xác
+                blockchain_export_dir = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain')
+                success, msg = save_blockchain_to_json_with_integrity_check(ballot.id, base_export_dir=blockchain_export_dir)
+                
+                if not success:
+                    print(f"Lỗi nghiêm trọng khi xuất file JSON sau khi vote: {msg}")
+                    messages.warning(request, "Bỏ phiếu thành công nhưng có lỗi khi cập nhật sổ cái. Vui lòng liên hệ quản trị viên.")
+                else:
+                    messages.success(request, 'Bỏ phiếu thành công! Phiếu của bạn đã được ghi trực tiếp vào blockchain và sổ cái đã được cập nhật.')
+
+                return redirect('chitiet_baucu_u', id=id)
+
+        except Exception as e:
+            messages.error(request, f'Đã có lỗi xảy ra: {e}')
+            return redirect('chitiet_baucu_u', id=id)
+
+    return redirect('chitiet_baucu_u', id=id)

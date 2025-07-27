@@ -81,11 +81,32 @@
                         {% endif %}
                     </div>
                 {% elif has_voted %}
+                        <div class="list-group mb-3">
+                            {% for ungcuvien in ungcuviens %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 align-items-center">
+                                    <div class="me-3">
+                                        {% if ungcuvien.avatar %}
+                                            <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60">
+                                        {% else %}
+                                            <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">{{ ungcuvien.name }}</h5>
+                                        <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
+                                    </div>
+
+                                </div>
+                            </div>
+                            {%endfor%}
                     <div class="alert alert-success text-center" role="alert">
                         <i class="ti ti-circle-check f-48 mb-3"></i>
                         <h4 class="alert-heading">Bạn đã bỏ phiếu!</h4>
                         <p>Cảm ơn bạn đã tham gia. Phiếu bầu của bạn đã được ghi nhận an toàn.</p>
+
                     </div>
+     
                 {% elif not is_active %}
                     <div class="alert alert-info text-center" role="alert">
                         <i class="ti ti-clock-off f-48 mb-3"></i>
