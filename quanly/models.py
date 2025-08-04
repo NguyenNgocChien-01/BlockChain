@@ -195,25 +195,27 @@ class Vote(models.Model):
 
 
 class UserTamperLog(models.Model):
-    attempted_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Người thực hiện")
-    vote_tampered = models.ForeignKey('Vote', on_delete=models.PROTECT, verbose_name="Phiếu bầu bị tác động")
-    original_candidate_name = models.CharField(max_length=255, verbose_name="Ứng viên gốc")
-    new_candidate_name_attempt = models.CharField(max_length=255, verbose_name="Ứng viên định thay đổi thành")
-    description = models.TextField("Mô tả hành vi")
-    timestamp = models.DateTimeField(auto_now_add=True)
-    ip_address = models.GenericIPAddressField("Địa chỉ IP", null=True, blank=True)
-    browser = models.CharField("Trình duyệt", max_length=100, null=True, blank=True)
-    os = models.CharField("Hệ điều hành", max_length=100, null=True, blank=True)
-    device = models.CharField("Thiết bị", max_length=100, null=True, blank=True)
-    latitude = models.FloatField("Vĩ độ", null=True, blank=True)
-    longitude = models.FloatField("Kinh độ", null=True, blank=True)
 
+    description = models.TextField("Mô tả chi tiết sự việc")
+    timestamp = models.DateTimeField("Thời gian phát hiện", auto_now_add=True)
+    
+    attempted_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Người thực hiện", null=True, blank=True)
+    # Từ đâu?
+    ip_address = models.GenericIPAddressField("Địa chỉ IP", null=True, blank=True)
+    # Liên quan đến cuộc bầu cử nào?
+    ballot = models.ForeignKey('Ballot', on_delete=models.PROTECT, verbose_name="Cuộc bầu cử liên quan", null=True, blank=True)
+    # Chi tiết thay đổi (ví dụ: từ ứng viên A sang B)
+    details = models.JSONField("Chi tiết thay đổi", null=True, blank=True)
+    # Bằng chứng backup (nếu có)
+    backup_file_path = models.CharField("Đường dẫn file backup", max_length=512, null=True, blank=True)
 
     class Meta:
         verbose_name = "Lịch Sử Sửa Phiếu"
         verbose_name_plural = "Các Lịch Sử Sửa Phiếu"
 
     def __str__(self):
-        return f"Cảnh báo: {self.attempted_by.username} (IP: {self.ip_address}) đã cố sửa phiếu {self.vote_tampered.id}"
+        user_info = f"bởi {self.attempted_by.username}" if self.attempted_by else "bởi Hệ thống"
+        return f"Cảnh báo lúc {self.timestamp.strftime('%d/%m/%Y %H:%M')} {user_info}"
+
 
 

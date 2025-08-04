@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, render
 
-from quanly.blockchain_utils import save_blockchain_to_json_with_integrity_check
+from quanly.blockchain_utils import *
 
 from quanly.models import *
 from django.shortcuts import render, redirect
@@ -31,6 +31,7 @@ from .user_utils import (
     _sign_vote_data,
     _verify_signature_internal
 )
+
 
 # Create your views here.
 def user(request):
@@ -241,98 +242,6 @@ def _check_vote_eligibility(request, ballot, voter):
     return None 
 
 
-# def bo_phieu(request, id):
-#     if request.method == 'POST':
-#         try:
-#             ballot = get_object_or_404(Ballot, pk=id)
-            
-#             if not hasattr(request.user, 'voter'):
-#                 messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
-#                 return redirect('view_dangky_cutri')
-#             voter = request.user.voter
-
-#             eligibility_check_result = _check_vote_eligibility(request, ballot, voter)
-#             if eligibility_check_result:
-#                 return eligibility_check_result
-
-#             candidate_id = request.POST.get('candidate')
-#             if not candidate_id:
-#                 messages.error(request, 'Bạn chưa chọn ứng cử viên.')
-#                 return redirect('chitiet_baucu_u', id=ballot.id)
-#             candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
-
-
-#             private_key = None
-#             input_public_key_str = None
-#             private_key_pem_b64 = None 
-
-#             if 'key_file' in request.FILES and request.FILES['key_file']:
-#                 key_file = request.FILES['key_file']
-#                 file_content = key_file.read().decode('utf-8')
-#                 key_data = json.loads(file_content)
-                
-#                 private_key_pem_b64 = key_data.get('private_key_pem_b64') # Lấy private key plaintext (Base64)
-#                 input_public_key_str = key_data.get('public_key')
-
-#                 if not private_key_pem_b64 or not input_public_key_str:
-#                     messages.error(request, 'File khóa không hợp lệ hoặc bị thiếu thông tin.')
-#                     return redirect('chitiet_baucu_u', id=ballot.id)
-
-#                 if input_public_key_str != voter.public_key:
-#                     messages.error(request, 'Khóa công khai trong file không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
-#                     return redirect('chitiet_baucu_u', id=ballot.id)
-
-#                 # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
-#                 private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
-
-#             elif request.POST.get('private_key_pem_b64') and request.POST.get('public_key'):
-#                 private_key_pem_b64 = request.POST.get('private_key_pem_b64')
-#                 input_public_key_str = request.POST.get('public_key')
-
-#                 if not private_key_pem_b64 or not input_public_key_str: 
-#                     messages.error(request, 'Vui lòng điền đầy đủ thông tin khóa bí mật và public key.')
-#                     return redirect('chitiet_baucu_u', id=ballot.id)
-
-#                 if input_public_key_str != voter.public_key:
-#                     messages.error(request, 'Khóa công khai đã nhập không khớp với tài khoản của bạn. Vui lòng kiểm tra lại.')
-#                     return redirect('chitiet_baucu_u', id=ballot.id)
-
-#                 # Cập nhật gọi hàm giải mã (không có mật khẩu/salt)
-#                 private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
-
-#             else:
-#                 messages.error(request, 'Vui lòng cung cấp khóa bí mật bằng cách tải file hoặc dán chuỗi.')
-#                 return redirect('chitiet_baucu_u', id=ballot.id)
-            
-#             if private_key is None: 
-#                 messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
-#                 return redirect('chitiet_baucu_u', id=ballot.id)
-
-#             timestamp_signed_at = timezone.now().isoformat()
-#             signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
-#             is_verified_internally = _verify_signature_internal(voter.public_key, f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}", signed_signature_b64)
-#             if not is_verified_internally:
-#                 messages.error(request, 'Lỗi xác minh nội bộ sau khi ký. Phiếu bầu bị từ chối.')
-#                 return redirect('chitiet_baucu_u', id=ballot.id)
-
-#             vote = Vote.objects.create(
-#                 ballot=ballot, candidate=candidate, voter_public_key=voter.public_key,
-#                 signature=signed_signature_b64, timestamp=timestamp_signed_at
-#             )
-#             messages.success(request, 'Bỏ phiếu thành công và đã được xác minh bằng chữ ký số!')
-#             return redirect('chitiet_baucu_u', id=ballot.id)
-
-#         except json.JSONDecodeError:
-#             messages.error(request, 'File khóa không phải là định dạng JSON hợp lệ.')
-#             return redirect('chitiet_baucu_u', id=ballot.id)
-#         except ValueError as e:
-#             messages.error(request, str(e))
-#             return redirect('chitiet_baucu_u', id=ballot.id)
-#         except Exception as e:
-#             messages.error(request, f'Lỗi hệ thống khi bỏ phiếu: {e}')
-#             return redirect('chitiet_baucu_u', id=ballot.id)
-
-#     return redirect('chitiet_baucu_u', id=id)
 
 
 def my_vote(request, id):
@@ -362,13 +271,13 @@ def my_vote(request, id):
     }
     return render(request, 'userpages/baucu/my_vote.html', context)
 
-# def get_client_ip(request):
-#     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-#     if x_forwarded_for:
-#         ip = x_forwarded_for.split(',')[0]
-#     else:
-#         ip = request.META.get('REMOTE_ADDR')
-#     return ip
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 # def change_vote(request, vote_id):
 
@@ -436,95 +345,120 @@ def my_vote(request, id):
 
 def bo_phieu(request, id):
     """
-    View xử lý việc bỏ phiếu, đào khối mới, và xuất file JSON ngay lập tức.
+    View xử lý việc bỏ phiếu với quy trình an ninh đầy đủ:
+    Kiểm tra -> (Nếu lỗi: Log, Phục hồi) -> Xác thực -> Ký -> Đào khối -> Cập nhật -> Backup.
     """
-    if request.method == 'POST':
-        try:
-            # Sử dụng transaction.atomic để đảm bảo tất cả các thao tác CSDL
-            # (tạo Vote, tạo Block) đều thành công hoặc thất bại cùng nhau.
-            with transaction.atomic():
-                ballot = get_object_or_404(Ballot, pk=id)
-                
-                # --- Giai đoạn 1: Xác thực quyền và dữ liệu ---
-                if not hasattr(request.user, 'voter'):
-                    messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
-                    return redirect('chitiet_baucu_u', id=id)
-                voter = request.user.voter
-                
-                eligibility = _check_vote_eligibility(request, ballot, voter)
-                if eligibility:
-                    return eligibility
+    if request.method != 'POST':
+        return redirect('chitiet_baucu_u', id=id)
 
-                candidate_id = request.POST.get('candidate')
-                if not candidate_id:
-                    messages.error(request, 'Bạn chưa chọn ứng cử viên.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
-                
-                candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
+    ballot = get_object_or_404(Ballot, pk=id)
+    blockchain_export_dir = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain')
+    file_path = get_blockchain_file_path(ballot.id, blockchain_export_dir)
 
-                # Xử lý file khóa
-                private_key = None
-                if 'key_file' in request.FILES and request.FILES['key_file']:
-                    key_file = request.FILES['key_file']
-                    key_data = json.loads(key_file.read().decode('utf-8'))
-                    private_key_pem_b64 = key_data.get('private_key_pem_b64')
-                    input_public_key_str = key_data.get('public_key')
-                    
-                    if not private_key_pem_b64 or not input_public_key_str:
-                        messages.error(request, 'File khóa không hợp lệ hoặc bị thiếu thông tin.')
-                        return redirect('chitiet_baucu_u', id=ballot.id)
-                    
-                    if input_public_key_str != voter.public_key:
-                        messages.error(request, 'Khóa công khai trong file không khớp với tài khoản của bạn.')
-                        return redirect('chitiet_baucu_u', id=ballot.id)
-                        
-                    private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
-                else:
-                    messages.error(request, 'Vui lòng tải lên file khóa của bạn.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
-
-                if private_key is None: 
-                    messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
-
-                # --- Giai đoạn 2: Ký và Xác minh ---
-                timestamp_signed_at = timezone.now().isoformat()
-                data_to_sign = f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}"
-                signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
-                
-                if not _verify_signature_internal(voter.public_key, data_to_sign, signed_signature_b64):
-                    messages.error(request, 'Lỗi xác minh chữ ký. Phiếu bầu bị từ chối.')
-                    return redirect('chitiet_baucu_u', id=ballot.id)
-
-                # --- Giai đoạn 3: Tạo Phiếu bầu, Khối mới và Đào ---
-                last_block = Block.objects.filter(ballot=ballot).order_by('-id').first()
-                new_block = Block.objects.create(
-                    ballot=ballot,
-                    previous_hash=last_block.hash if last_block else '0',
-                    difficulty=2 
-                )
-                Vote.objects.create(
-                    ballot=ballot, candidate=candidate, voter_public_key=voter.public_key,
-                    signature=signed_signature_b64, timestamp=timestamp_signed_at,
-                    block=new_block
-                )
-                new_block.mine_block()
-                
-                # --- BƯỚC 4: XUẤT FILE JSON NGAY LẬP TỨC ---
-                # Định nghĩa đường dẫn lưu file một cách chính xác
-                blockchain_export_dir = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain')
-                success, msg = save_blockchain_to_json_with_integrity_check(ballot.id, base_export_dir=blockchain_export_dir)
-                
-                if not success:
-                    print(f"Lỗi nghiêm trọng khi xuất file JSON sau khi vote: {msg}")
-                    messages.warning(request, "Bỏ phiếu thành công nhưng có lỗi khi cập nhật sổ cái. Vui lòng liên hệ quản trị viên.")
-                else:
-                    messages.success(request, 'Bỏ phiếu thành công! Phiếu của bạn đã được ghi trực tiếp vào blockchain và sổ cái đã được cập nhật.')
-
+    # --- BƯỚC 1: KIỂM TRA TÍNH TOÀN VẸN CỦA SỔ CÁI TRƯỚC KHI XỬ LÝ ---
+    if os.path.exists(file_path):
+        is_valid, verify_msg = verify_blockchain_integrity(ballot.id, blockchain_export_dir)
+        if not is_valid:
+            # 1. Backup lại file đã bị thay đổi để điều tra
+            tampered_backup_path = backup_tampered_file(ballot.id, blockchain_export_dir)
+            
+            # 2. Ghi log sự cố vào CSDL
+            log_tampering_event(
+                ballot=ballot,
+                verify_msg=verify_msg,
+                user=request.user,
+                ip_address=get_client_ip(request),
+                backup_path=tampered_backup_path
+            )
+            
+            # 3. Phục hồi từ bản sao lưu an toàn cuối cùng
+            restored = restore_from_backup(ballot.id, blockchain_export_dir)
+            if restored:
+                messages.warning(request, "CẢNH BÁO: Sổ cái đã bị thay đổi! Hệ thống đã tự động phục hồi. Giao dịch của bạn sẽ được xử lý.")
+            else:
+                messages.error(request, "LỖI BẢO MẬT: Sổ cái đã bị thay đổi và không có bản sao lưu để phục hồi. Vui lòng liên hệ quản trị viên.")
                 return redirect('chitiet_baucu_u', id=id)
 
-        except Exception as e:
-            messages.error(request, f'Đã có lỗi xảy ra: {e}')
+    # --- Nếu file an toàn hoặc đã được phục hồi, tiếp tục quy trình ---
+    try:
+        with transaction.atomic():
+            # --- Giai đoạn 2: Xác thực quyền và dữ liệu của người dùng ---
+            if not hasattr(request.user, 'voter'):
+                messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
+                return redirect('chitiet_baucu_u', id=id)
+            voter = request.user.voter
+            
+            eligibility = _check_vote_eligibility(request, ballot, voter)
+            if eligibility:
+                return eligibility
+
+            candidate_id = request.POST.get('candidate')
+            if not candidate_id:
+                messages.error(request, 'Bạn chưa chọn ứng cử viên.')
+                return redirect('chitiet_baucu_u', id=ballot.id)
+            
+            candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
+
+            # Xử lý file khóa
+            private_key = None
+            if 'key_file' in request.FILES and request.FILES['key_file']:
+                key_file = request.FILES['key_file']
+                key_data = json.loads(key_file.read().decode('utf-8'))
+                private_key_pem_b64 = key_data.get('private_key_pem_b64')
+                input_public_key_str = key_data.get('public_key')
+                
+                if not private_key_pem_b64 or not input_public_key_str or input_public_key_str != voter.public_key:
+                    messages.error(request, 'File khóa không hợp lệ hoặc không khớp với tài khoản của bạn.')
+                    return redirect('chitiet_baucu_u', id=id)
+                    
+                private_key = _decrypt_private_key_from_strings(private_key_pem_b64, input_public_key_str)
+            else:
+                messages.error(request, 'Vui lòng tải lên file khóa của bạn.')
+                return redirect('chitiet_baucu_u', id=id)
+
+            if private_key is None: 
+                messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
+                return redirect('chitiet_baucu_u', id=id)
+
+            # --- Giai đoạn 3: Ký và Xác minh chữ ký ---
+            timestamp_signed_at = timezone.now().isoformat()
+            data_to_sign = f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}"
+            signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
+            
+            if not _verify_signature_internal(voter.public_key, data_to_sign, signed_signature_b64):
+                messages.error(request, 'Lỗi xác minh chữ ký. Phiếu bầu bị từ chối.')
+                return redirect('chitiet_baucu_u', id=id)
+
+            # --- Giai đoạn 4: Đào khối và Cập nhật ---
+            last_block = Block.objects.filter(ballot=ballot).order_by('-id').first()
+            new_block = Block.objects.create(
+                ballot=ballot,
+                previous_hash=last_block.hash if last_block else '0',
+                difficulty=2 
+            )
+            Vote.objects.create(
+                ballot=ballot, candidate=candidate,
+                voter_public_key=voter.public_key,
+                signature=signed_signature_b64, timestamp=timestamp_signed_at,
+                block=new_block
+            )
+            new_block.mine_block()
+            
+            # 4.1. Ghi đè file JSON gốc với dữ liệu mới nhất từ CSDL
+            success, msg = save_blockchain_to_json_with_integrity_check(ballot.id, base_export_dir=blockchain_export_dir)
+            
+            if success:
+                # 4.2. TẠO BACKUP MỚI cho file vừa được cập nhật
+                create_backup(ballot.id, blockchain_export_dir)
+                messages.success(request, 'Bỏ phiếu thành công! Sổ cái đã được cập nhật an toàn.')
+            else:
+                print(f"Lỗi nghiêm trọng khi xuất file JSON sau khi vote: {msg}")
+                messages.warning(request, "Bỏ phiếu thành công nhưng có lỗi khi cập nhật sổ cái. Vui lòng liên hệ quản trị viên.")
+
             return redirect('chitiet_baucu_u', id=id)
+
+    except Exception as e:
+        messages.error(request, f'Đã có lỗi xảy ra: {e}')
+        return redirect('chitiet_baucu_u', id=id)
 
     return redirect('chitiet_baucu_u', id=id)
