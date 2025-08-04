@@ -69,7 +69,7 @@ def add_baucu(request):
 
 def delete_baucu(request, id):
     baucu = get_object_or_404(Ballot, id=id)
-    # baucu.delete()
+    baucu.delete()
     return redirect('baucu') 
 
 def edit_baucu(request, id):
@@ -100,6 +100,7 @@ def edit_baucu(request, id):
 def chitiet_baucu(request, id):
     baucu = get_object_or_404(Ballot, id=id)
     ungcuviens = Candidate.objects.filter(ballot=baucu)
+    # ungcuviens_khac = Candidate.objects.exclude(ballot=baucu)
     now = timezone.now()
     is_active = baucu.start_date <= now and baucu.end_date >= now
 
@@ -113,7 +114,8 @@ def chitiet_baucu(request, id):
         'baucu': baucu,
         'ungcuviens': ungcuviens,
         'is_active': is_active,
-        'eligible_voters_list': eligible_voters_list, # Truyền danh sách vào context
+        'eligible_voters_list': eligible_voters_list,
+        # 'ungcuviens_khac':ungcuviens_khac
     }
     return render(request, 'adminpages/baucu/chitiet.html', context)
 
@@ -330,7 +332,7 @@ def ketqua_baucu(request, id):
             })
 
     except FileNotFoundError:
-        messages.error(request, f" Cần phải đào ít nhất một khối để có kết quả.")
+        messages.error(request, f" Không có phiếu bầu nào hết ")
         return redirect('baucu')
     except Exception as e:
         messages.error(request, f"Lỗi khi đọc file blockchain: {e}")
@@ -380,41 +382,42 @@ def danhsach_phieubau(request, ballot_id):
     return render(request, 'adminpages/baucu/danhsach_phieubau.html', context)
 
 
-def dao_all_block(request):
+# def dao_all_block(request):
 
 
-    try:
+#     try:
        
-        call_command('dao_block', '--force-mine','--force-restore')
+#         call_command('dao_block', '--force-mine','--force-restore')
         
-        messages.success(request, "Đã thực hiện đào khối thành công cho TẤT CẢ các cuộc bầu cử có phiếu chờ.")
+#         messages.success(request, "Đã thực hiện đào khối thành công cho TẤT CẢ các cuộc bầu cử có phiếu chờ.")
 
-    except Exception as e:
-        messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
+#     except Exception as e:
+#         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
 
 
-    return redirect('baucu')
+#     return redirect('baucu')
 
-def dao_block(request, id):
-    try:
-        ballot = get_object_or_404(Ballot, pk=id)
-        
-
-        call_command('dao_block', '--ballot-id', str(id))
-        messages.success(request,f"Đã lưu thành công các phiếu của {ballot.title}")
+# def dao_block(request, id):
+#     try:
+#         ballot = get_object_or_404(Ballot, pk=id)
         
 
-    except Exception as e:
-        messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
+#         call_command('dao_block', '--ballot-id', str(id))
+#         messages.success(request,f"Đã lưu thành công các phiếu của {ballot.title}")
+        
 
-    return redirect('baucu')
+#     except Exception as e:
+#         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
+
+#     return redirect('baucu')
 
 
 def lichsu_change(request):
-    logs = UserTamperLog.objects.select_related('attempted_by', 'vote_tampered__candidate').all().order_by('-timestamp')
+    logs = UserTamperLog.objects.all().order_by('-timestamp')
     context = {
     'logs': logs,
 }
 
     return render(request, 'adminpages/tamperlog.html', context)
     
+

@@ -73,16 +73,33 @@
 <!-- [Head] end -->
 <!-- [Body] Start -->
 
-{% if messages %}
-  <ul class="messages" style="list-style-type:none; padding:0; position: fixed; top: 20px; right: 20px; z-index: 9999;">
-    {% for message in messages %}
-      <li class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message  }} <br>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </li>
-    {% endfor %}
-  </ul>
-{% endif %}
+<div class="modal fade" id="customMessageModal" tabindex="-1" aria-labelledby="customMessageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header" id="customMessageModalHeader">
+        <h5 class="modal-title" id="customMessageModalLabel">
+            <!-- Tiêu đề và icon sẽ được thay đổi bằng JavaScript -->
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body fs-5" id="customMessageModalBody">
+               {% if messages %}
+        <div id="message-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+          {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+</div>
   <!-- [ Pre-loader ] start -->
 <div class="loader-bg">
   <div class="loader-track">
@@ -159,9 +176,9 @@
           >
         </div>
         <div class="col-auto my-1">
-          <ul class="list-inline footer-link mb-0">
+          {% comment %} <ul class="list-inline footer-link mb-0">
             <li class="list-inline-item"><a href="../index.html">Home</a></li>
-          </ul>
+          </ul> {% endcomment %}
         </div>
       </div>
     </div>
@@ -313,6 +330,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageContainer = document.getElementById('message-container');
+    if (messageContainer) {
+        // Tìm thông báo đầu tiên để hiển thị
+        const alertToShow = messageContainer.querySelector('.alert');
+        
+        if (alertToShow) {
+            // Lấy các element của modal
+            const customModalElement = document.getElementById('customMessageModal');
+            const customModal = new bootstrap.Modal(customModalElement);
+            const modalTitle = document.getElementById('customMessageModalLabel');
+            const modalHeader = document.getElementById('customMessageModalHeader');
+            const modalBody = document.getElementById('customMessageModalBody');
+            
+            // Lấy nội dung của thông báo
+            const messageText = alertToShow.childNodes[0].textContent.trim();
+            
+            // Mặc định là thông báo thông tin
+            let titleHTML = '<i class="ti ti-info-circle me-2 text-info"></i> Thông báo';
+            let headerClass = 'modal-header';
+
+            // Kiểm tra loại thông báo để tùy chỉnh modal
+            if (alertToShow.classList.contains('alert-danger')) {
+                titleHTML = '<i class="ti ti-alert-circle me-2 text-danger"></i> Đã có lỗi xảy ra';
+                headerClass = 'modal-header bg-light-danger';
+            } else if (alertToShow.classList.contains('alert-success')) {
+                titleHTML = '<i class="ti ti-circle-check me-2 text-success"></i> Thành công!';
+                headerClass = 'modal-header bg-light-success';
+            } else if (alertToShow.classList.contains('alert-warning')) {
+                titleHTML = '<i class="ti ti-alert-triangle me-2 text-warning"></i> Cảnh báo';
+                headerClass = 'modal-header bg-light-warning';
+            }
+
+            // Cập nhật nội dung và giao diện cho modal
+            if (modalTitle) modalTitle.innerHTML = titleHTML;
+            if (modalHeader) modalHeader.className = headerClass;
+            if (modalBody) modalBody.textContent = messageText;
+            
+            // Hiển thị modal
+            customModal.show();
+
+            // Ẩn đi khu vực thông báo nhỏ ban đầu
+            messageContainer.style.display = 'none';
+        }
+    }
+});
+</script>
+
 </body>
 <!-- [Body] end -->
 

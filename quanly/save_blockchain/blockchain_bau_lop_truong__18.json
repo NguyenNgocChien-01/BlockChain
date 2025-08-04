@@ -1,26 +1,17 @@
 {
     "ballot_id": 18,
     "ballot_title": "Bầu lớp trưởng ",
-    "exported_at": "2025-07-27T10:25:19.939548+00:00",
-    "chain_hash": "e3f1267fd60accdbcc6d4e9ecfbe6db76ee5a206640f0f6d00d2354a42715499",
+    "exported_at": "2025-08-04T13:09:57.103623+00:00",
+    "chain_hash": "196fec4c5f249550a596726894c6fbc763e29872060c2fcd8975de02508d6952",
     "blocks": [
         {
-            "index": 60,
-            "data": "Phiếu bầu cho: Trí Minh ",
-            "previous_hash": "0",
-            "hash": "001ed9c103e8e8a70041c5d33f1c2965fa13d5ac8dbbbd340bf40122ac1f3dbf",
-            "nonce": 189,
-            "difficulty": 2,
-            "timestamp": "Sun Jul 27 17:24:50 2025"
-        },
-        {
-            "index": 61,
+            "index": 87,
             "data": "Phiếu bầu cho: Huong ",
-            "previous_hash": "001ed9c103e8e8a70041c5d33f1c2965fa13d5ac8dbbbd340bf40122ac1f3dbf",
-            "hash": "005d532cb6a384e8a570403957e5400b84a24dca4e9968f79d255af47f37148a",
-            "nonce": 165,
+            "previous_hash": "0",
+            "hash": "00e4054b1d84013f6a92c28bd1d81fe8bf633f617523b8caa5c8d97b18db71f5",
+            "nonce": 3,
             "difficulty": 2,
-            "timestamp": "Sun Jul 27 17:25:19 2025"
+            "timestamp": "Mon Aug 04 20:09:57 2025"
         }
     ]
 }

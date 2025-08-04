@@ -1,55 +1,70 @@
 {% extends 'adminpages/index.html' %}
 
-{% block title %}Lịch sử Cảnh báo Thay đổi{% endblock %}
+{% block title %}Lịch sử Cảnh báo An ninh{% endblock %}
 
 {% block content %}
 <div class="pc-container">
     <div class="pc-content">
         <div class="card">
             <div class="card-header">
-                <h3><i class="ti ti-history me-2"></i>Lịch sử Cảnh báo Thay đổi Phiếu bầu</h3>
+                <h3><i class="ti ti-shield-alert me-2"></i>Lịch sử Cảnh báo An ninh Hệ thống</h3>
             </div>
             <div class="card-body">
                 <p class="text-muted">
-                    Trang này ghi lại tất cả các hành vi cố gắng thay đổi thông tin phiếu bầu đã được niêm phong vào blockchain.
+                    Trang này ghi lại tất cả các sự kiện bất thường được phát hiện, chẳng hạn như việc file blockchain bị thay đổi.
                 </p>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
-    <tr>
-        <th>Thời gian</th>
-        <th>Người thực hiện</th>
-        <th>Thông tin Truy cập</th>
-        <th>ID Phiếu gốc</th>
-        <th>Nội dung thay đổi</th>
-        <th>Vị trí</th>
-    </tr>
-</thead>
-<tbody>
-    {% for log in logs %}
-    <tr>
-        <td>{{ log.timestamp|date:"H:i, d/m/Y" }}</td>
-        <td><strong>{{ log.attempted_by.username }}</strong></td>
-        <td>
-            IP: <span class="badge bg-light text-dark">{{ log.ip_address }}</span> <br>
-            Trình duyệt: <span class="text-muted">{{ log.browser }}</span> <br>
-            HĐH: <span class="text-muted">{{ log.os }}</span> <br>
-            Thiết bị: <span class="text-muted">{{ log.device }}</span>
-        </td>
-        <td>#{{ log.vote_tampered.id }}</td>
-        <td>
-            Từ: <span class="text-muted">{{ log.original_candidate_name }}</span>
-            <br>
-            Thành: <span class="text-danger fw-bold">{{ log.new_candidate_name_attempt }}</span>
-        </td>
-        <td>
-        Vĩ độ:  <span class="text-muted">{{log.latitude}}</span><br>
-        Kinh độ: <span class="text-muted">{{log.longitude}}</span>
-        </td>
-    </tr>
-    {% empty %}
-        {% endfor %}
-</tbody>
+                            <tr>
+                                <th>Thời gian Phát hiện</th>
+                                <th>Mô tả Sự việc</th>
+                                <th>Người dùng & Truy cập</th>
+                                <th>Cuộc bầu cử Liên quan</th>
+                                {% comment %} <th>Bằng chứng (Backup)</th> {% endcomment %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr class="table-danger"> {# Dùng màu nền để nhấn mạnh mức độ nghiêm trọng #}
+                                <td>{{ log.timestamp|date:"H:i, d/m/Y" }}</td>
+                                <td>
+                                    {% comment %} <strong class="text-danger">Lỗi Toàn vẹn File</strong><br> {% endcomment %}
+                                    <small>{{ log.description }}</small>
+                                </td>
+                                <td>
+                                    {% if log.attempted_by %}
+                                        Người dùng: <strong>{{ log.attempted_by.username }}</strong> <br>
+                                    {% endif %}
+                                    IP: <span class="badge bg-dark text-white">{{ log.ip_address }}</span>
+                                </td>
+                                <td>
+                                    {% if log.ballot %}
+                                        {{ log.ballot.title }} (ID: {{ log.ballot.id }})
+                                    {% else %}
+                                        Không xác định
+                                    {% endif %}
+                                </td>
+                                {% comment %} <td>
+                                    {% if log.backup_file_path %}
+                                        <span class="badge bg-secondary">Đã sao lưu</span>
+                                        <br>
+                                        <small class="text-muted">{{ log.backup_file_path|truncatechars:30 }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Không có</span>
+                                    {% endif %}
+                                </td> {% endcomment %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="ti ti-circle-check-filled f-48 text-success"></i>
+                                    <h5 class="mt-3">Hệ thống an toàn</h5>
+                                    <p>Chưa có cảnh báo an ninh nào được ghi nhận.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </div>
