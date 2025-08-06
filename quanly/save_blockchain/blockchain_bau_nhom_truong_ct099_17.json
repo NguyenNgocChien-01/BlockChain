@@ -1,62 +1,26 @@
 {
     "ballot_id": 17,
     "ballot_title": "Bầu nhóm trưởng CT099",
-    "exported_at": "2025-08-04T12:25:37.260310+00:00",
-    "chain_hash": "c282c162f590ee7b2c0c294bb106ad1b64909c2bca8ff8c288aa77b6adf664f3",
+    "exported_at": "2025-08-05T06:07:14.903844+00:00",
+    "chain_hash": "de48e0702483c58beb3ee05f17de19bc049f085c984bd852f6e4ece3e2eb344a",
     "blocks": [
         {
-            "index": 81,
-            "data": "Phiếu bầu cho: Huỳnh Nhật Kha ",
+            "index": 96,
+            "data": "Phiếu 9: Huỳnh Nhật Kha, Trí Minh, Gia Khanh",
             "previous_hash": "0",
-            "hash": "00c8c8a56a59276068084bf3b15fb231eaef34a5244304bf205e5e690ec8ec5f",
-            "nonce": 69,
+            "hash": "00516a16f18862f2d00c235d57a9215625e0f9b693e55b182f467834dbe2db4b",
+            "nonce": 544,
             "difficulty": 2,
-            "timestamp": "Mon Aug 04 18:58:36 2025"
+            "timestamp": "Tue Aug 05 12:59:03 2025"
         },
         {
-            "index": 82,
-            "data": "Phiếu bầu cho: Huỳnh Nhật Kha ",
-            "previous_hash": "00c8c8a56a59276068084bf3b15fb231eaef34a5244304bf205e5e690ec8ec5f",
-            "hash": "00faf39476ff50b587ce214cdd7f311a08d50d545258e4c67ab8d4524c3f9719",
-            "nonce": 90,
+            "index": 97,
+            "data": "Phiếu 10: Nguyễn Ngọc Chiến",
+            "previous_hash": "00516a16f18862f2d00c235d57a9215625e0f9b693e55b182f467834dbe2db4b",
+            "hash": "00828bf38de8526bd0be66b368ecd341a6fb9f7e8ab2e530cb25d9e262223645",
+            "nonce": 136,
             "difficulty": 2,
-            "timestamp": "Mon Aug 04 19:00:55 2025"
-        },
-        {
-            "index": 83,
-            "data": "Phiếu bầu cho: Nguyễn Ngọc Chiến ",
-            "previous_hash": "00faf39476ff50b587ce214cdd7f311a08d50d545258e4c67ab8d4524c3f9719",
-            "hash": "008356c6d39b0037ccebc2833d12c29372fd88799eaeba116c0ae199f7cffe59",
-            "nonce": 391,
-            "difficulty": 2,
-            "timestamp": "Mon Aug 04 19:05:53 2025"
-        },
-        {
-            "index": 84,
-            "data": "Phiếu bầu cho: Huỳnh Nhật Kha ",
-            "previous_hash": "008356c6d39b0037ccebc2833d12c29372fd88799eaeba116c0ae199f7cffe59",
-            "hash": "009bd71ec4288ba067e854592567df7ae5de194b2abbcc2a2a1dbf889faf0d3e",
-            "nonce": 421,
-            "difficulty": 2,
-            "timestamp": "Mon Aug 04 19:13:54 2025"
-        },
-        {
-            "index": 85,
-            "data": "No transactions",
-            "previous_hash": "009bd71ec4288ba067e854592567df7ae5de194b2abbcc2a2a1dbf889faf0d3e",
-            "hash": "00c04eb09b82d357c913a3baf8b40c922a99ff1f3f32d5f14afc28191d3b281d",
-            "nonce": 56,
-            "difficulty": 2,
-            "timestamp": "Mon Aug 04 19:16:43 2025"
-        },
-        {
-            "index": 86,
-            "data": "Phiếu bầu cho: Huỳnh Nhật Kha ",
-            "previous_hash": "00c04eb09b82d357c913a3baf8b40c922a99ff1f3f32d5f14afc28191d3b281d",
-            "hash": "005a8961d75075cd3420db405f05d9c3740217a03e6bfdc05de38a713577120f",
-            "nonce": 259,
-            "difficulty": 2,
-            "timestamp": "Mon Aug 04 19:25:37 2025"
+            "timestamp": "Tue Aug 05 13:07:14 2025"
         }
     ]
 }

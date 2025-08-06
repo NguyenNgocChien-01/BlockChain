@@ -74,14 +74,14 @@ def _decrypt_private_key_from_strings(private_key_pem_b64: str, public_key_from_
     return private_key
 
 
-def _sign_vote_data(private_key, ballot_id: int, candidate_id: int, voter_public_key: str, timestamp_signed_at: str) -> str:
-    """Ký dữ liệu phiếu bầu bằng private key."""
-    data_to_be_signed_raw = f"{ballot_id}-{candidate_id}-{voter_public_key}-{timestamp_signed_at}"
-    data_to_be_signed_hash = hashlib.sha256(data_to_be_signed_raw.encode('utf-8')).digest()
-    # signature = private_key.sign(
-    #     data_to_be_signed_hash, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
-    # )
-        # Thay vì dùng padding.PSS của RSA, chúng ta dùng ec.ECDSA
+def _sign_vote_data(private_key, data_to_sign_raw: str) -> str:
+    """
+    Ký một chuỗi dữ liệu thô (đã được chuẩn hóa).
+    Hàm này giờ đây linh hoạt hơn, không phụ thuộc vào các thành phần riêng lẻ.
+    """
+    data_to_be_signed_hash = hashlib.sha256(data_to_sign_raw.encode('utf-8')).digest()
+    
+    # Giả sử bạn đang dùng ECC
     signature = private_key.sign(
         data_to_be_signed_hash,
         ec.ECDSA(hashes.SHA256()) 
@@ -89,18 +89,17 @@ def _sign_vote_data(private_key, ballot_id: int, candidate_id: int, voter_public
     return urlsafe_b64encode(signature).decode('utf-8')
 
 
-def _verify_signature_internal(public_key_str: str, data_to_be_signed_raw: str, signature_b64: str) -> bool:
-    """Xác minh chữ ký số bằng public key."""
+def _verify_signature_internal(public_key_str: str, data_to_sign_raw: str, signature_b64: str) -> bool:
+    """
+    Xác minh chữ ký của một chuỗi dữ liệu thô.
+    """
     try:
         signature_bytes = urlsafe_b64decode(signature_b64.encode('utf-8'))
-        data_to_be_signed_hash = hashlib.sha256(data_to_be_signed_raw.encode('utf-8')).digest()
-        public_pem_with_headers = f"-----BEGIN PUBLIC KEY-----\n{public_key_str}\n-----END PUBLIC KEY-----\n" # Đảm bảo có xuống dòng cuối
+        data_to_be_signed_hash = hashlib.sha256(data_to_sign_raw.encode('utf-8')).digest()
+        
+        public_pem_with_headers = f"-----BEGIN PUBLIC KEY-----\n{public_key_str}\n-----END PUBLIC KEY-----\n"
         public_key = serialization.load_pem_public_key(public_pem_with_headers.encode('utf-8'), backend=default_backend())
-        # RSA
-        # public_key.verify(
-        #     signature_bytes, data_to_be_signed_hash, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
-        # )
-        #  ec.ECDSA để xác minh
+        
         public_key.verify(
             signature_bytes,
             data_to_be_signed_hash,
@@ -108,5 +107,5 @@ def _verify_signature_internal(public_key_str: str, data_to_be_signed_raw: str, 
         )
         return True
     except Exception as e:
-        print(f"Lỗi xác minh chữ ký: {e}")
+        # print(f"Lỗi xác minh chữ ký: {e}") # Bật lại để gỡ lỗi nếu cần
         return False

@@ -40,7 +40,11 @@ def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir
     blockchain_file_path = get_blockchain_file_path(ballot_id, base_export_dir)
     try:
         ballot_obj = Ballot.objects.get(id=ballot_id)
-        blockchain_blocks = Block.objects.filter(ballot=ballot_obj).order_by('id').prefetch_related('votes__candidate')
+        
+        # --- SỬA LỖI Ở ĐÂY ---
+        # Thay 'votes__candidate' thành 'votes__candidates' để khớp với ManyToManyField
+        blockchain_blocks = Block.objects.filter(ballot=ballot_obj).order_by('id').prefetch_related('votes__candidates')
+        # --- KẾT THÚC SỬA LỖI ---
 
         if not blockchain_blocks.exists():
             return True, f"Không có khối nào cho '{ballot_obj.title}'. Bỏ qua."
@@ -63,6 +67,7 @@ def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir
         return True, f"Đã lưu thành công file: {os.path.basename(blockchain_file_path)}"
     except Exception as e:
         return False, f"Lỗi khi lưu file JSON: {e}"
+
 
 def verify_blockchain_integrity(ballot_id: int, base_export_dir: str) -> tuple[bool, str]:
     """Kiểm tra tính toàn vẹn của file blockchain JSON."""

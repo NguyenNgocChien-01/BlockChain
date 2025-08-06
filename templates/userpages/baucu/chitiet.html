@@ -131,7 +131,12 @@
                                         <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
                                     </div>
                                     <div class="ms-auto">
-                                        <input type="radio" class="form-check-input" name="candidate" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}" required>
+                                        <!-- === THAY ĐỔI TỪ RADIO SANG CHECKBOX === -->
+                                        <input type="checkbox" 
+                                            class="form-check-input" 
+                                            name="candidates"  {# Đổi tên thành số nhiều #}
+                                            id="uc{{ ungcuvien.id }}" 
+                                            value="{{ ungcuvien.id }}">
                                     </div>
                                 </div>
                             </div>
