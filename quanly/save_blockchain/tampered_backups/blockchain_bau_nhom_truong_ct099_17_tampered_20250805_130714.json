@@ -1,0 +1,17 @@
+{
+    "ballot_id": 17,
+    "ballot_title": "Bầu nhóm trưởng CT099",
+    "exported_at": "2025-08-05T05:59:03.839663+00:00",
+    "chain_hash": "7972246a44737cc39342c8bef62890687b7cffbf869a52f0d5742762925a86dd",
+    "blocks": [
+        {
+            "index": 96,
+            "data": "Phiếu 9: Huỳnh Nhật Kha",
+            "previous_hash": "0",
+            "hash": "00516a16f18862f2d00c235d57a9215625e0f9b693e55b182f467834dbe2db4b",
+            "nonce": 544,
+            "difficulty": 2,
+            "timestamp": "Tue Aug 05 12:59:03 2025"
+        }
+    ]
+}
