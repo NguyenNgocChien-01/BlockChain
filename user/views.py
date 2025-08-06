@@ -245,19 +245,22 @@ def _check_vote_eligibility(request, ballot, voter):
 
 
 def my_vote(request, id):
+
     ballot = get_object_or_404(Ballot, pk=id)
     
     if not hasattr(request.user, 'voter'):
         messages.error(request, "Bạn không phải là cử tri.")
         return redirect('chitiet_baucu_u', id=id)
 
-    # Lấy thời gian hiện tại
     now = timezone.now()
     is_ended = now > ballot.end_date
 
     try:
-        # Tìm phiếu bầu 
-        my_vote = Vote.objects.get(ballot=ballot, voter_public_key=request.user.voter.public_key)
+
+        my_vote = Vote.objects.prefetch_related('candidates').get(
+            ballot=ballot, 
+            voter_public_key=request.user.voter.public_key
+        )
         is_in_block = my_vote.block is not None
     except Vote.DoesNotExist:
         my_vote = None
@@ -344,34 +347,36 @@ def get_client_ip(request):
 
 
 def bo_phieu(request, id):
-    """
-    View xử lý việc bỏ phiếu với quy trình an ninh đầy đủ:
-    Kiểm tra -> (Nếu lỗi: Log, Phục hồi) -> Xác thực -> Ký -> Đào khối -> Cập nhật -> Backup.
-    """
+
     if request.method != 'POST':
         return redirect('chitiet_baucu_u', id=id)
 
     ballot = get_object_or_404(Ballot, pk=id)
+    
     blockchain_export_dir = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain')
     file_path = get_blockchain_file_path(ballot.id, blockchain_export_dir)
-
-    # --- BƯỚC 1: KIỂM TRA TÍNH TOÀN VẸN CỦA SỔ CÁI TRƯỚC KHI XỬ LÝ ---
+        
+    is_db_valid, db_verify_msg = verify_db_blockchain_integrity(ballot.id)
+    if not is_db_valid:
+        # lỗi bảo mật nghiêm trọng, cần ghi log và dừng lại ngay lập tức
+        log_tampering_event(
+            ballot=ballot,
+            verify_msg=f"LỖI CSDL: {db_verify_msg}",
+            user=request.user,
+            ip_address=get_client_ip(request)
+        )
+        messages.error(request, "LỖI BẢO MẬT NGHIÊM TRỌNG: Dữ liệu blockchain trong cơ sở dữ liệu đã bị thay đổi! Vui lòng thử lại sau. Quản trị viên đã được thông báo.")
+        return redirect('chitiet_baucu_u', id=id)
+    
+    # ---  KIỂM TRA TÍNH TOÀN VẸN CỦA SỔ CÁI TRƯỚC KHI XỬ LÝ ---
     if os.path.exists(file_path):
         is_valid, verify_msg = verify_blockchain_integrity(ballot.id, blockchain_export_dir)
         if not is_valid:
-            # 1. Backup lại file đã bị thay đổi để điều tra
             tampered_backup_path = backup_tampered_file(ballot.id, blockchain_export_dir)
-            
-            # 2. Ghi log sự cố vào CSDL
             log_tampering_event(
-                ballot=ballot,
-                verify_msg=verify_msg,
-                user=request.user,
-                ip_address=get_client_ip(request),
-                backup_path=tampered_backup_path
+                ballot=ballot, verify_msg=verify_msg, user=request.user,
+                ip_address=get_client_ip(request), backup_path=tampered_backup_path
             )
-            
-            # 3. Phục hồi từ bản sao lưu an toàn cuối cùng
             restored = restore_from_backup(ballot.id, blockchain_export_dir)
             if restored:
                 messages.warning(request, "CẢNH BÁO: Sổ cái đã bị thay đổi! Hệ thống đã tự động phục hồi. Giao dịch của bạn sẽ được xử lý.")
@@ -379,10 +384,9 @@ def bo_phieu(request, id):
                 messages.error(request, "LỖI BẢO MẬT: Sổ cái đã bị thay đổi và không có bản sao lưu để phục hồi. Vui lòng liên hệ quản trị viên.")
                 return redirect('chitiet_baucu_u', id=id)
 
-    # --- Nếu file an toàn hoặc đã được phục hồi, tiếp tục quy trình ---
     try:
         with transaction.atomic():
-            # --- Giai đoạn 2: Xác thực quyền và dữ liệu của người dùng ---
+            # Xác thực quyền và dữ liệu của người dùng ---
             if not hasattr(request.user, 'voter'):
                 messages.error(request, 'Bạn cần đăng ký làm cử tri để bỏ phiếu.')
                 return redirect('chitiet_baucu_u', id=id)
@@ -392,12 +396,20 @@ def bo_phieu(request, id):
             if eligibility:
                 return eligibility
 
-            candidate_id = request.POST.get('candidate')
-            if not candidate_id:
-                messages.error(request, 'Bạn chưa chọn ứng cử viên.')
+            # --- Lấy và kiểm tra số lượng lựa chọn ---
+            candidate_ids = request.POST.getlist('candidates')
+            if not candidate_ids:
+                messages.error(request, 'Bạn chưa chọn ứng cử viên nào.')
+                return redirect('chitiet_baucu_u', id=ballot.id)
+
+            if len(candidate_ids) > ballot.max_choices:
+                messages.error(request, f"Bạn chỉ được phép chọn tối đa {ballot.max_choices} ứng cử viên.")
                 return redirect('chitiet_baucu_u', id=ballot.id)
             
-            candidate = get_object_or_404(Candidate, pk=candidate_id, ballot=ballot)
+            candidates = Candidate.objects.filter(pk__in=candidate_ids, ballot=ballot)
+            if len(candidates) != len(candidate_ids):
+                messages.error(request, 'Lựa chọn ứng cử viên không hợp lệ.')
+                return redirect('chitiet_baucu_u', id=ballot.id)
 
             # Xử lý file khóa
             private_key = None
@@ -420,40 +432,49 @@ def bo_phieu(request, id):
                 messages.error(request, 'Không thể tải khóa bí mật. Vui lòng kiểm tra lại dữ liệu khóa.')
                 return redirect('chitiet_baucu_u', id=id)
 
-            # --- Giai đoạn 3: Ký và Xác minh chữ ký ---
+            # - Ký và Xác minh chữ ký ---
             timestamp_signed_at = timezone.now().isoformat()
-            data_to_sign = f"{ballot.id}-{candidate.id}-{voter.public_key}-{timestamp_signed_at}"
-            signed_signature_b64 = _sign_vote_data(private_key, ballot.id, candidate.id, voter.public_key, timestamp_signed_at)
+            sorted_ids_str = ",".join(sorted(candidate_ids))
+            data_to_sign = f"{ballot.id}-{sorted_ids_str}-{voter.public_key}-{timestamp_signed_at}"
+            
+           
+            signed_signature_b64 = _sign_vote_data(private_key, data_to_sign)
             
             if not _verify_signature_internal(voter.public_key, data_to_sign, signed_signature_b64):
                 messages.error(request, 'Lỗi xác minh chữ ký. Phiếu bầu bị từ chối.')
                 return redirect('chitiet_baucu_u', id=id)
 
-            # --- Giai đoạn 4: Đào khối và Cập nhật ---
+            # --- Backup, Đào khối và Cập nhật ---
+            create_backup(ballot.id, blockchain_export_dir)
+
             last_block = Block.objects.filter(ballot=ballot).order_by('-id').first()
             new_block = Block.objects.create(
                 ballot=ballot,
                 previous_hash=last_block.hash if last_block else '0',
                 difficulty=2 
             )
-            Vote.objects.create(
-                ballot=ballot, candidate=candidate,
-                voter_public_key=voter.public_key,
+            
+            # Tạo đối tượng Vote và gán nhiều ứng cử viên
+            vote_obj = Vote.objects.create(
+                ballot=ballot, voter_public_key=voter.public_key,
                 signature=signed_signature_b64, timestamp=timestamp_signed_at,
                 block=new_block
             )
+            vote_obj.candidates.set(candidate_ids)
+
             new_block.mine_block()
             
-            # 4.1. Ghi đè file JSON gốc với dữ liệu mới nhất từ CSDL
             success, msg = save_blockchain_to_json_with_integrity_check(ballot.id, base_export_dir=blockchain_export_dir)
             
             if success:
-                # 4.2. TẠO BACKUP MỚI cho file vừa được cập nhật
                 create_backup(ballot.id, blockchain_export_dir)
                 messages.success(request, 'Bỏ phiếu thành công! Sổ cái đã được cập nhật an toàn.')
             else:
-                print(f"Lỗi nghiêm trọng khi xuất file JSON sau khi vote: {msg}")
-                messages.warning(request, "Bỏ phiếu thành công nhưng có lỗi khi cập nhật sổ cái. Vui lòng liên hệ quản trị viên.")
+                   # In ra lỗi chi tiết để chẩn đoán
+                print(f"--- LỖI GHI FILE JSON ---")
+                print(f"Lỗi chi tiết: {msg}")
+                print(f"-------------------------")
+                messages.warning(request, "Bỏ phiếu thành công nhưng có lỗi khi cập nhật sổ cái.")
 
             return redirect('chitiet_baucu_u', id=id)
 

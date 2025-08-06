@@ -29,6 +29,7 @@ class Ballot(models.Model):
     description = models.TextField("Mô tả", null=True, blank=True)
     start_date = models.DateTimeField("Thời gian bắt đầu")
     end_date = models.DateTimeField("Thời gian kết thúc")
+    max_choices = models.PositiveIntegerField(default=1)
 
     type = models.CharField(
         "Loại hình",
@@ -110,8 +111,10 @@ class Block(models.Model):
         
         summaries = []
         for v in votes:
-            # Bạn có thể điều chỉnh cách hiển thị dữ liệu phiếu bầu trong trường "data"
-            summaries.append(f"Phiếu bầu cho: {v.candidate.name} ")
+            # Lấy tên của tất cả các ứng viên trong phiếu bầu
+            candidate_names = ", ".join([c.name for c in v.candidates.all()])
+            summaries.append(f"Phiếu {v.id}: {candidate_names}")
+            
         return "; ".join(summaries)
     
     def to_json_serializable(self):
@@ -170,7 +173,7 @@ class Block(models.Model):
 class Vote(models.Model):
     """Bảng đại diện cho mỗi phiếu bầu, hoạt động như một giao dịch (transaction)."""
     ballot = models.ForeignKey(Ballot, on_delete=models.CASCADE, verbose_name="Cuộc bầu cử")
-    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, verbose_name="Ứng viên")
+    candidates = models.ManyToManyField(Candidate, verbose_name="Các ứng viên đã bầu")
     block = models.ForeignKey(
         Block, 
         on_delete=models.PROTECT, 
@@ -190,7 +193,8 @@ class Vote(models.Model):
         verbose_name_plural = "Các Phiếu Bầu (Votes)"
 
     def __str__(self):
-        return f"Phiếu cho {self.candidate.name}"
+        candidate_names = ", ".join([c.name for c in self.candidates.all()])
+        return f"Phiếu cho: {candidate_names}"
     
 
 

@@ -20,7 +20,12 @@
         {% endif %}
 
         {% if my_vote %}
-            <p>Bạn đã bỏ phiếu cho ứng viên: <strong>{{ my_vote.candidate.name }}</strong></p>
+            <p>Bạn đã bỏ phiếu cho các ứng viên:</p>
+            <ul class="list-group mb-3">
+                {% for candidate in my_vote.candidates.all %}
+                    <li class="list-group-item"><strong>{{ candidate.name }}</strong></li>
+                {% endfor %}
+            </ul>
             <p>Thời gian: {{ my_vote.timestamp|date:"H:i, d/m/Y" }}</p>
             
             <!-- =============================================================== -->

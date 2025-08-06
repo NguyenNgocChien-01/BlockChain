@@ -18,25 +18,53 @@ def chart(request):
 def baucu(request):
 
     keyword = request.GET.get('keyword', '')
-    baucus = Ballot.objects.all().order_by('-start_date')
+    status_filter = request.GET.get('status_filter', 'all')
+    type_filter = request.GET.get('type_filter', 'all')
     
+    now = timezone.now()
+    all_ballots = Ballot.objects.all()
+
+    total_ballots = all_ballots.count()
+    ongoing_ballots = all_ballots.filter(start_date__lte=now, end_date__gte=now).count()
+    upcoming_ballots = all_ballots.filter(start_date__gt=now).count()
+    ended_ballots = all_ballots.filter(end_date__lt=now).count()
+
+   
+    if status_filter == 'ongoing':
+        all_ballots = all_ballots.filter(start_date__lte=now, end_date__gte=now)
+    elif status_filter == 'upcoming':
+        all_ballots = all_ballots.filter(start_date__gt=now)
+    elif status_filter == 'ended':
+        all_ballots = all_ballots.filter(end_date__lt=now)
+
+    if type_filter == 'public':
+        all_ballots = all_ballots.filter(type='PUBLIC')
+    elif type_filter == 'private':
+        all_ballots = all_ballots.filter(type='PRIVATE')
+
     if keyword:
-        baucus = baucus.filter(
+        all_ballots = all_ballots.filter(
             Q(title__icontains=keyword) | Q(description__icontains=keyword)
         )
     
- 
+    all_ballots = all_ballots.order_by('-start_date')
+    
     voters = Voter.objects.select_related('user').all()
             
     context = {
-        'baucus': baucus,
+        'baucus': all_ballots,
         'keyword': keyword,
-        'now': timezone.now(),
-        'voters': voters, 
+        'now': now,
+        'voters': voters,
+        'status_filter': status_filter, 
+        'type_filter': type_filter,
+        'total_ballots': total_ballots,
+        'ongoing_ballots': ongoing_ballots,
+        'upcoming_ballots': upcoming_ballots,
+        'ended_ballots': ended_ballots,
     }
     
     return render(request, 'adminpages/baucu/baucu.html', context)
-
 
 def add_baucu(request):
 
@@ -46,9 +74,10 @@ def add_baucu(request):
         mota = request.POST.get('mota')
         tgbd = request.POST.get('start_date')
         tgkt = request.POST.get('end_date')
+        maxchoice = request.POST.get('max_choice', 1)
         
 
-        ballot_type = request.POST.get('type', 'PUBLIC') # Mặc định là PUBLIC
+        ballot_type = request.POST.get('type', 'PUBLIC')
 
     
         new_ballot = Ballot.objects.create(
@@ -56,7 +85,8 @@ def add_baucu(request):
             description=mota,
             start_date=tgbd,
             end_date=tgkt,
-            type=ballot_type
+            type=ballot_type,
+            max_choices=maxchoice
         )
 
 
@@ -80,12 +110,12 @@ def edit_baucu(request, id):
         baucu_obj.description = request.POST.get('mota')
         baucu_obj.start_date = request.POST.get('start_date')
         baucu_obj.end_date = request.POST.get('end_date')
+        baucu_obj.max_choices = request.POST.get('max_choices',1) 
         
-
         ballot_type = request.POST.get('type', 'PUBLIC')
         baucu_obj.type = ballot_type
         
-        baucu_obj.save() # Lưu các thay đổi cơ bản
+        baucu_obj.save() 
 
 
         if ballot_type == 'PRIVATE':
@@ -314,8 +344,13 @@ def ketqua_baucu(request, id):
                 if not summary: continue
                 try:
                     # Tách chuỗi để lấy tên ứng viên
+                    # Logic này sẽ lấy tất cả tên ứng viên trong một phiếu, ví dụ: "A, B"
                     name_part = summary.split(':')[1].split('(')[0].strip()
-                    vote_counts[name_part] += 1
+                    # Tách các tên nếu có nhiều lựa chọn trong một phiếu
+                    candidate_names = [name.strip() for name in name_part.split(',')]
+                    for name in candidate_names:
+                        if name:
+                            vote_counts[name] += 1
                 except IndexError:
                     pass # Bỏ qua các dòng dữ liệu không đúng định dạng
 
@@ -332,11 +367,12 @@ def ketqua_baucu(request, id):
             })
 
     except FileNotFoundError:
-        messages.error(request, f" Không có phiếu bầu nào hết ")
+        messages.error(request, f"Không có phiếu bầu nào hết")
         return redirect('baucu')
     except Exception as e:
         messages.error(request, f"Lỗi khi đọc file blockchain: {e}")
         return redirect('baucu')
+        
     # 5. Gửi dữ liệu đến template
     context = {
         'baucu': baucu,
