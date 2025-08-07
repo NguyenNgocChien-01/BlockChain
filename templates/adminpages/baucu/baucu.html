@@ -181,9 +181,9 @@
                               </a>
                             </li>
                             <li class="list-inline-item align-bottom  " data-bs-toggle="tooltip" aria-label="Delete">
-                               {% comment %} <a href="{% url 'delete_baucu' baucu.id %}" class="avtar avtar-xs btn-link-danger delete" >
+                     <a href="{% url 'delete_baucu' baucu.id %}" class="avtar avtar-xs btn-link-danger delete" >
                                 <i class="ti ti-trash f-18"></i>
-                              </a> {% endcomment %}
+                              </a> 
                             </li>
                             <li class="list-inline-item align-bottom" data-bs-toggle="tooltip" aria-label="Đào khối thủ công">
                                 {% comment %} <a href="{% url 'dao_block' baucu.id %}" 
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const voterIdsString = button.dataset.voters;
             const max = button.dataset.max;
 
-            editForm.action = `edit/${id}/`; 
+            editForm.action = `baucu/edit/${id}/`; 
             editTitleInput.value = tieude;
             editStartDateInput.value = tgbd;
             editEndDateInput.value = tgkt;

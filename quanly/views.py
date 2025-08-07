@@ -1,15 +1,24 @@
-from django.contrib import messages 
-from django.shortcuts import get_object_or_404, redirect, render
-from django.db.models import Q
-from .models import *
-from django.db.models import Count
-from django.db import transaction
-from .models import Ballot, Vote
-from .blockchain_utils import get_blockchain_file_path
-from django.core.management import call_command
+import os
 import json
 from collections import Counter
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.db.models import Q, Count
+from django.utils import timezone
+from django.core.management import call_command
+from django.conf import settings
+
+from quanly.crypto_utils import generate_threshold_keys
+from .models import Ballot, Candidate, Vote, Voter, User, UserTamperLog
+from quanly.blockchain_core import Blockchain, VoteTransaction
+from quanly.blockchain_utils import get_blockchain_file_path # Chỉ dùng hàm này
+from collections import Counter
+import re
+from django.db import transaction
 # Create your views here.
+from django.core.mail import send_mail
+
+BLOCKCHAIN_EXPORT_DIR = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain')
 def trangchu(request):
     return render(request,'adminpages/index.html')
 def chart(request):
@@ -50,6 +59,7 @@ def baucu(request):
     all_ballots = all_ballots.order_by('-start_date')
     
     voters = Voter.objects.select_related('user').all()
+    potential_council_members = User.objects.filter(is_staff=True)
             
     context = {
         'baucus': all_ballots,
@@ -62,45 +72,118 @@ def baucu(request):
         'ongoing_ballots': ongoing_ballots,
         'upcoming_ballots': upcoming_ballots,
         'ended_ballots': ended_ballots,
+        'potential_council_members': potential_council_members,
     }
     
     return render(request, 'adminpages/baucu/baucu.html', context)
 
+from django.utils.dateparse import parse_datetime
 def add_baucu(request):
-
     if request.method == "POST":
-
         tieude = request.POST.get('tieude')
         mota = request.POST.get('mota')
         tgbd = request.POST.get('start_date')
         tgkt = request.POST.get('end_date')
-        maxchoice = request.POST.get('max_choice', 1)
-        
-
+        max_choices = request.POST.get('max_choices', 1)
         ballot_type = request.POST.get('type', 'PUBLIC')
+        
+        use_security_settings = 'toggleSecuritySettings' in request.POST
 
-    
-        new_ballot = Ballot.objects.create(
-            title=tieude,
-            description=mota,
-            start_date=tgbd,
-            end_date=tgkt,
-            type=ballot_type,
-            max_choices=maxchoice
-        )
+        try:
+            # --- BƯỚC 1: Xử lý trước khi tạo Ballot ---
+            if use_security_settings:
+                council_members_ids = request.POST.getlist('council_members')
+                threshold_value = request.POST.get('threshold')
 
+                if not threshold_value or int(threshold_value) > len(council_members_ids):
+                    raise ValueError('Ngưỡng giải mã không hợp lệ hoặc lớn hơn số lượng thành viên hội đồng.')
+                
+                pk_json, sk_shares_json = generate_threshold_keys(
+                    num_members=len(council_members_ids), 
+                    threshold=int(threshold_value)
+                )
+                
+                council_members_qs = User.objects.filter(id__in=council_members_ids)
+                
+                # Sẽ gửi email và phân phối khóa ở cuối
+            else:
+                pk_json = None
+                sk_shares_json = None
+                council_members_qs = User.objects.none() # Empty queryset
 
-        if ballot_type == 'PRIVATE':
-            voter_ids = request.POST.getlist('eligible_voters')
-            if voter_ids:
-                new_ballot.eligible_voters.set(voter_ids)
+            # --- BƯỚC 2: Tạo Ballot trong transaction.atomic() ---
+            with transaction.atomic():
+                new_ballot = Ballot.objects.create(
+                    title=tieude,
+                    description=mota,
+                    start_date=tgbd,
+                    end_date=tgkt,
+                    type=ballot_type,
+                    max_choices=max_choices,
+                    # Lưu khóa công khai và ngưỡng vào Ballot model
+                    council_public_key=pk_json,
+                    threshold=int(threshold_value) if use_security_settings else 0
+                )
+                
+                # Gán các thành viên vào mối quan hệ ManyToMany
+                if use_security_settings:
+                    new_ballot.council_members.set(council_members_qs)
 
+                if ballot_type == 'PRIVATE':
+                    voter_ids = request.POST.getlist('eligible_voters')
+                    if voter_ids:
+                        new_ballot.eligible_voters.set(voter_ids)
+
+            # --- BƯỚC 3: GỬI EMAIL SAU KHI TRANSACTION ĐÃ THÀNH CÔNG ---
+            if use_security_settings:
+                for member, key_share in zip(council_members_qs, sk_shares_json):
+                    subject = f"Mảnh khóa Giải mã cho cuộc bầu cử '{new_ballot.title}'"
+                    message = f"""
+Xin chào {member.username},
+
+Bạn đã được chỉ định làm thành viên của Hội đồng Kiểm phiếu cho cuộc bầu cử: '{new_ballot.title}'.
+Mảnh khóa bí mật của bạn là: {key_share}
+
+Bạn sẽ cần mảnh khóa này để tham gia giải mã phiếu bầu khi cuộc bầu cử kết thúc. Vui lòng lưu trữ nó ở nơi an toàn và tuyệt đối không chia sẻ với bất kỳ ai khác.
+
+Trân trọng,
+Hệ thống Bầu cử
+"""
+                    if member.email:
+                        try:
+                            send_mail(subject, message, settings.EMAIL_HOST_USER, [member.email], fail_silently=False)
+                            print(f"Đã gửi mảnh khóa đến {member.email}")
+                        except Exception as e:
+                            print(f"Lỗi khi gửi email đến {member.email}: {e}")
+                            messages.warning(request, f"Lỗi gửi email đến thành viên '{member.username}'. Vui lòng liên hệ và phân phối thủ công.")
+
+            messages.success(request, 'Thêm cuộc bầu cử thành công!')
+        except ValueError as e:
+            messages.error(request, f'Lỗi xác thực: {e}')
+        except Exception as e:
+            messages.error(request, f'Lỗi khi thêm cuộc bầu cử: {e}')
+            
     return redirect('baucu')
 
+
 def delete_baucu(request, id):
+
     baucu = get_object_or_404(Ballot, id=id)
-    baucu.delete()
-    return redirect('baucu') 
+
+    num_votes = Vote.objects.filter(ballot=baucu).count()
+
+    if num_votes > 0:
+
+        messages.error(request, f"Không thể xóa cuộc bầu cử '{baucu.title}' vì đã có {num_votes} phiếu bầu được ghi nhận.")
+        return redirect('baucu')
+    
+    try:
+        baucu.delete()
+        messages.success(request, f"Đã xóa cuộc bầu cử '{baucu.title}' thành công.")
+    except Exception as e:
+        messages.error(request, f"Lỗi khi xóa cuộc bầu cử: {e}")
+    
+    return redirect('baucu')
 
 def edit_baucu(request, id):
 
@@ -139,12 +222,13 @@ def chitiet_baucu(request, id):
     if baucu.type == 'PRIVATE':
         eligible_voters_list = baucu.eligible_voters.select_related('user').all()
 
-
+    potential_council_members = User.objects.filter(is_staff=True)
     context = {
         'baucu': baucu,
         'ungcuviens': ungcuviens,
         'is_active': is_active,
         'eligible_voters_list': eligible_voters_list,
+        'potential_council_members': potential_council_members,
         # 'ungcuviens_khac':ungcuviens_khac
     }
     return render(request, 'adminpages/baucu/chitiet.html', context)
@@ -238,24 +322,40 @@ def ds_user(request):
 
 
 def add_user(request):
-
     if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        first_name = request.POST.get('firstname', '').strip()
+        last_name = request.POST.get('lastname', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
 
-        username = request.POST.get('username')
-        first_name = request.POST.get('firstname')
-        last_name = request.POST.get('lastname')
-        email = request.POST.get('email')
-        password = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-
-        if password != password2:
+        # Kiểm tra các trường không được để trống
+        if not all([username, first_name, last_name, email, password, password2]):
+            messages.error(request, 'Vui lòng điền vào các trường còn trống.')
             return redirect('add_user')
 
+        # Kiểm tra tên đăng nhập chỉ chứa chữ và số
+        if not re.match(r'^[A-Za-z0-9]+$', username):
+            messages.error(request, 'Tên đăng nhập chỉ chứa ký tự chữ và số.')
+            return redirect('add_user')
+
+        # Kiểm tra độ dài mật khẩu
+        if len(password) <= 10:
+            messages.error(request, 'Mật khẩu phải có độ dài hơn 10 ký tự.')
+            return redirect('add_user')
+
+        # Kiểm tra xác nhận mật khẩu
+        if password != password2:
+            messages.error(request, 'Mật khẩu xác nhận không khớp.')
+            return redirect('add_user')
+
+        # Kiểm tra username đã tồn tại chưa
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Tên đăng nhập này đã tồn tại!')
             return redirect('add_user')
 
-
+        # Tạo người dùng mới
         user = User.objects.create_user(
             username=username,
             password=password,
@@ -263,12 +363,10 @@ def add_user(request):
             first_name=first_name,
             last_name=last_name
         )
-        
 
         messages.success(request, f'Tạo người dùng "{username}" thành công!')
-        return redirect('ds_user') # Chuyển hướng về trang danh sách
+        return redirect('ds_user')  # Chuyển hướng về danh sách người dùng
 
-        
     return redirect('ds_user')
 
 
@@ -306,154 +404,77 @@ def revoke_voter_status(request, user_id):
         
     return redirect('ds_user')
 
+
 def ketqua_baucu(request, id):
-    """
-    Hiển thị kết quả bầu cử bằng cách đọc và phân tích file JSON của blockchain,
-    chỉ sau khi cuộc bầu cử đã kết thúc.
-    """
+    """Hiển thị kết quả bằng cách đọc file JSON, chỉ sau khi cuộc bầu cử kết thúc."""
     baucu = get_object_or_404(Ballot, id=id)
-
-    # 1. Kiểm tra xem cuộc bầu cử đã kết thúc chưa
     if baucu.end_date > timezone.now():
-        messages.warning(request, f"Cuộc bầu cử '{baucu.title}' vẫn đang diễn ra. Kết quả chỉ có thể xem sau khi kết thúc.")
-        return redirect('baucu')
+        messages.warning(request, "Kết quả chỉ có thể xem sau khi cuộc bầu cử kết thúc.")
+        return redirect('chitiet_baucu', id=id)
 
+    filepath = get_blockchain_file_path(ballot_id=id, base_export_dir=BLOCKCHAIN_EXPORT_DIR)
     ketqua_tu_file = []
     tong_so_phieu = 0
-    
-    # 2. Lấy đường dẫn đến file JSON blockchain
-    filepath = get_blockchain_file_path(ballot_id=id, base_export_dir='quanly\save_blockchain')
 
     try:
-        # 3. Đọc và phân tích file JSON để kiểm phiếu
         with open(filepath, 'r', encoding='utf-8') as f:
-            blockchain_data = json.load(f)
-
+            data = json.load(f)
+        
         vote_counts = Counter()
-        blocks = blockchain_data.get("blocks", [])
-
-        for block in blocks:
+        for block in data.get("blocks", []):
             data_string = block.get("data", "")
-            if "Genesis Block" in data_string or "No transactions" in data_string or not data_string:
-                continue
+            if "Genesis" in data_string or "No transactions" in data_string: continue
             
-            vote_summaries = data_string.split(';')
-            
-            for summary in vote_summaries:
-                summary = summary.strip()
-                if not summary: continue
+            for summary in data_string.split(';'):
                 try:
-                    # Tách chuỗi để lấy tên ứng viên
-                    # Logic này sẽ lấy tất cả tên ứng viên trong một phiếu, ví dụ: "A, B"
-                    name_part = summary.split(':')[1].split('(')[0].strip()
-                    # Tách các tên nếu có nhiều lựa chọn trong một phiếu
+                    name_part = summary.split(':')[1].strip()
                     candidate_names = [name.strip() for name in name_part.split(',')]
                     for name in candidate_names:
-                        if name:
-                            vote_counts[name] += 1
-                except IndexError:
-                    pass # Bỏ qua các dòng dữ liệu không đúng định dạng
-
-        # 4. Chuẩn bị dữ liệu để hiển thị ra template
+                        if name: vote_counts[name] += 1
+                except IndexError: continue
+        
         sorted_results = vote_counts.most_common()
         tong_so_phieu = sum(vote_counts.values())
-        
-        for candidate_name, so_phieu in sorted_results:
-            percentage = round((so_phieu / tong_so_phieu) * 100, 2) if tong_so_phieu > 0 else 0
+        for name, count in sorted_results:
             ketqua_tu_file.append({
-                'candidate__name': candidate_name,
-                'so_phieu': so_phieu,
-                'phan_tram': percentage
+                'candidate__name': name,
+                'so_phieu': count,
+                'phan_tram': round((count / tong_so_phieu) * 100, 2) if tong_so_phieu > 0 else 0
             })
 
     except FileNotFoundError:
-        messages.error(request, f"Không có phiếu bầu nào hết")
-        return redirect('baucu')
+        messages.error(request, "Chưa có sổ cái blockchain cho cuộc bầu cử này. Cần phải có ít nhất một phiếu bầu.")
     except Exception as e:
-        messages.error(request, f"Lỗi khi đọc file blockchain: {e}")
-        return redirect('baucu')
+        messages.error(request, f"Lỗi khi đọc sổ cái: {e}")
         
-    # 5. Gửi dữ liệu đến template
     context = {
         'baucu': baucu,
         'ketqua': ketqua_tu_file,
         'tong_so_phieu': tong_so_phieu,
     }
-
     return render(request, 'adminpages/baucu/ketqua.html', context)
 
 def danhsach_phieubau(request, ballot_id):
-
+    """Hiển thị danh sách chi tiết các phiếu bầu từ CSDL."""
     ballot = get_object_or_404(Ballot, id=ballot_id)
-    
-   
-
-    votes = Vote.objects.filter(ballot=ballot).order_by('timestamp') # Sắp xếp theo thời gian bỏ phiếu
-
+    votes = Vote.objects.filter(ballot=ballot).prefetch_related('candidates').order_by('timestamp')
     vote_details = []
     for vote in votes:
-        voter_username = "Không xác định" # Mặc định
-        try:
-            voter_obj = Voter.objects.get(public_key=vote.voter_public_key)
-            voter_username = voter_obj.user.username
-        except Voter.DoesNotExist:
-            pass 
-
+        voter_username = Voter.objects.filter(public_key=vote.voter_public_key).first().user.username or "Không xác định"
         vote_details.append({
             'id': vote.id,
-            'candidate_name': vote.candidate.name,
-            'voter_public_key': vote.voter_public_key,
-            'voter_username': voter_username, # Thêm username vào đây
+            'candidate_names': ", ".join([c.name for c in vote.candidates.all()]), # Sửa lỗi
+            'voter_username': voter_username,
             'signature': vote.signature,
             'timestamp': vote.timestamp,
             'block_id': vote.block.id if vote.block else 'Chưa vào khối'
         })
-    
-    context = {
-        'ballot': ballot,
-        'vote_details': vote_details, # Dữ liệu đã xử lý để hiển thị
-    }
-    
-
+    context = {'ballot': ballot, 'vote_details': vote_details}
     return render(request, 'adminpages/baucu/danhsach_phieubau.html', context)
 
 
-# def dao_all_block(request):
-
-
-#     try:
-       
-#         call_command('dao_block', '--force-mine','--force-restore')
-        
-#         messages.success(request, "Đã thực hiện đào khối thành công cho TẤT CẢ các cuộc bầu cử có phiếu chờ.")
-
-#     except Exception as e:
-#         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
-
-
-#     return redirect('baucu')
-
-# def dao_block(request, id):
-#     try:
-#         ballot = get_object_or_404(Ballot, pk=id)
-        
-
-#         call_command('dao_block', '--ballot-id', str(id))
-#         messages.success(request,f"Đã lưu thành công các phiếu của {ballot.title}")
-        
-
-#     except Exception as e:
-#         messages.error(request, f"Đã có lỗi xảy ra trong quá trình đào khối: {e}")
-
-#     return redirect('baucu')
-
-
 def lichsu_change(request):
-    logs = UserTamperLog.objects.all().order_by('-timestamp')
-    context = {
-    'logs': logs,
-}
-
+    """Hiển thị lịch sử các cảnh báo an ninh."""
+    context = {'logs': UserTamperLog.objects.all().order_by('-timestamp')}
     return render(request, 'adminpages/tamperlog.html', context)
-    
 

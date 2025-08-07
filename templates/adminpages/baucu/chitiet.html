@@ -17,6 +17,14 @@
                         <a href="#" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#eligibleVotersModal">
                             <i class="ti ti-users"></i> Xem Danh sách Cử tri
                         </a>
+                    
+                        {% endif %}
+                        {% if baucu.council_members.all %}
+                        <a href="#" class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#councilMembersModal">
+                            <i class="ti ti-crown"></i> Xem Hội đồng
+                        </a>
+                        {%else%}
+                        ko o
                         {% endif %}
                         <a href="{% url 'ketqua_baucu' baucu.id %}" class="btn btn-info me-2">
                             <i class="ti ti-chart-bar"></i> Xem Kết Quả
@@ -163,7 +171,35 @@
     </div>
 </div>
 
-
+<!-- MODAL: DANH SÁCH HỘI ĐỒNG KIỂM PHIẾU -->
+<div class="modal fade" id="councilMembersModal" tabindex="-1" aria-labelledby="councilMembersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="councilMembersModalLabel">Hội đồng Kiểm phiếu (Ngưỡng: {{ baucu.threshold }})</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if baucu.council_members.all %}
+                <p>Các thành viên sau đây chịu trách nhiệm giải mã phiếu bầu:</p>
+                <ul class="list-group">
+                    {% for member in baucu.council_members.all %}
+                        <li class="list-group-item">
+                            <strong>{{ member.username }}</strong> - ({{ member.get_full_name|default:"Chưa có tên" }})
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="mt-3">Số lượng tối thiểu cần thiết để giải mã: <strong>{{ baucu.threshold }}</strong></p>
+                {% else %}
+                <p>Cuộc bầu cử này không yêu cầu hội đồng kiểm phiếu.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="editUngCuVienModal" tabindex="-1" aria-labelledby="editUngCuVienModalLabel" >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

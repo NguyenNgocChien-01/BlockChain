@@ -21,11 +21,11 @@
 
         {% if my_vote %}
             <p>Bạn đã bỏ phiếu cho các ứng viên:</p>
-            <ul class="list-group mb-3">
+            {% comment %} <ul class="list-group mb-3">
                 {% for candidate in my_vote.candidates.all %}
                     <li class="list-group-item"><strong>{{ candidate.name }}</strong></li>
                 {% endfor %}
-            </ul>
+            </ul> {% endcomment %}
             <p>Thời gian: {{ my_vote.timestamp|date:"H:i, d/m/Y" }}</p>
             
             <!-- =============================================================== -->
@@ -36,20 +36,6 @@
                     <h5 class="alert-heading">Cuộc bầu cử đã kết thúc</h5>
                     <p>Phiếu bầu của bạn đã được chốt và không thể thay đổi.</p>
                 </div>
-            {% else %}
-                {% if is_in_block %}
-                    <div class="alert alert-success">
-                        <h5 class="alert-heading">Phiếu đã được niêm phong!</h5>
-                        <p>Phiếu bầu của bạn đã được ghi vào khối <strong>#{{ my_vote.block.id }}</strong> và không thể thay đổi.</p>
-                        {% comment %} <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-warning">Vẫn thay đổi (Mô phỏng)</a> {% endcomment %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        <h5 class="alert-heading">Phiếu đang chờ xử lý</h5>
-                        <p>Phiếu bầu của bạn đang chờ được ghi vào khối tiếp theo. Bạn vẫn có thể thay đổi lựa chọn của mình.</p>
-                        {% comment %} <a href="{% url 'change_vote' my_vote.id %}" class="btn btn-primary">Thay đổi phiếu bầu</a> {% endcomment %}
-                    </div>
-                {% endif %}
             {% endif %}
             <!-- =============================================================== -->
 
