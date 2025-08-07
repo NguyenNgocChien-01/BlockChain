@@ -16,26 +16,12 @@ BEGIN
     SELECT RAISE(ABORT, 'Hành động XÓA không được phép trên bảng này để đảm bảo tính bất biến.');
 END;
 
--- Triggers cho bảng quanly_block
-CREATE TRIGGER check_block_immutability_update
-BEFORE UPDATE ON quanly_block
-BEGIN
-    SELECT RAISE(ABORT, 'Hành động SỬA không được phép trên bảng này để đảm bảo tính bất biến.');
-END;
-
-CREATE TRIGGER check_block_immutability_delete
-BEFORE DELETE ON quanly_block
-BEGIN
-    SELECT RAISE(ABORT, 'Hành động XÓA không được phép trên bảng này để đảm bảo tính bất biến.');
-END;
 """
 
 # SQL để xóa các trigger (cần cho việc rollback)
 DROP_TRIGGERS_SQL = """
 DROP TRIGGER IF EXISTS check_vote_immutability_update;
 DROP TRIGGER IF EXISTS check_vote_immutability_delete;
-DROP TRIGGER IF EXISTS check_block_immutability_update;
-DROP TRIGGER IF EXISTS check_block_immutability_delete;
 """
 
 

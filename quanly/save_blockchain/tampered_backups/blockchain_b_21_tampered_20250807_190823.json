@@ -1,0 +1,58 @@
+{
+    "ballot_id": 21,
+    "ballot_title": "B",
+    "exported_at": "2025-08-07T15:53:53.568863+07:00",
+    "blocks": [
+        {
+            "index": 0,
+            "timestamp": "2025-08-07T15:48:04.977336+07:00",
+            "transactions": [
+                {
+                    "vote_id": 14,
+                    "candidate_names": "",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERKIuWAvL6JWX59JEyH4swfd9YOuBnjxnw7YnxDN5AtAKd2LXdzth5BgEg1uXurnl4l5U/XpG8kceAxCpPbYFgg==",
+                    "signature": "MEYCIQC2D1EffO1OUhphOFLfv1Xvg-Pt_N1H1I5aXCB66TJjrwIhAO7td2JkPOHBk3bHalhIa4eKdg6oUcen7BPiJ28GQxar",
+                    "timestamp": "2025-08-07T15:48:04.977336+07:00"
+                }
+            ],
+            "previous_hash": "0",
+            "difficulty": 2,
+            "nonce": 8,
+            "hash": "00d208fe9106f12fca02dd85731023515f8ced1adcf48237aabd984e3f14e14d"
+        },
+        {
+            "index": 1,
+            "timestamp": "2025-08-07T15:49:46.507251+07:00",
+            "transactions": [
+                {
+                    "vote_id": 15,
+                    "candidate_names": "a, b",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEd373oEQM+Px+5EUcGF2uOtJo3JKOMrJIiOZWwty1LofbhPTaWe4b5rFecEMmHulZ+Awnn0D22dfbE+Rws1vzRQ==",
+                    "signature": "MEYCIQDSgiJERuu-OPj6qUVPrp43Oz_2KV0M8E73lXZQuYlY6QIhAMgcg_jADhVmZ89WCTOYccUgwAWJ5sDrs0kJDIVKWCz8",
+                    "timestamp": "2025-08-07T15:49:46.507251+07:00"
+                }
+            ],
+            "previous_hash": "00d208fe9106f12fca02dd85731023515f8ced1adcf48237aabd984e3f14e14d",
+            "difficulty": 2,
+            "nonce": 106,
+            "hash": "00398615f5278d05d5bb82d54f1a04c079824f903d2bae0402d9564d2d290bab"
+        },
+        {
+            "index": 2,
+            "timestamp": "2025-08-07T15:53:53.566167+07:00",
+            "transactions": [
+                {
+                    "vote_id": 16,
+                    "candidate_names": "c",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEE/yw7A+Ou8dTuspRPRDdYcpq5GNkhfZI5ri2JfNJrkTn90+77OMe7blEGwOXd6OtbMYX4k4OdQyG1AubM0b6LQ==",
+                    "signature": "MEYCIQC2sOkzYbreQUgrwmdU_cfVzQyOQNoziwqvnuTbOvaGuQIhAPTabfhe6_oCKLYiUSsaIcIii3wFI5IUP71EjC8ojPef",
+                    "timestamp": "2025-08-07T15:53:53.566167+07:00"
+                }
+            ],
+            "previous_hash": "00398615f5278d05d5bb82d54f1a04c079824f903d2bae0402d9564d2d290bab",
+            "difficulty": 2,
+            "nonce": 658,
+            "hash": "00c55d53a2205c0b98b13e0bb0b5372ab070af81801d367f89f152cfebdcb835"
+        }
+    ]
+}

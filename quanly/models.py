@@ -19,8 +19,8 @@ def candidate_avatar_path(instance, filename):
     # Trả về đường dẫn hoàn chỉnh
     return os.path.join('avatars', new_filename)
 
+
 class Ballot(models.Model):
-    """Bảng chứa thông tin về một cuộc bầu cử cụ thể."""
     BALLOT_TYPE_CHOICES = [
         ('PUBLIC', 'Công khai'),  # Bất kỳ ai cũng có thể tham gia
         ('PRIVATE', 'Riêng tư'), # Chỉ những người được chọn mới có thể tham gia
@@ -42,7 +42,26 @@ class Ballot(models.Model):
         verbose_name="Cử tri được phép (cho bầu cử riêng tư)",
         blank=True, 
         related_name="private_ballots"
+        )
+    council_members = models.ManyToManyField(
+        User, 
+        verbose_name="Thành viên Hội đồng Kiểm phiếu",
+        related_name="councils", 
+        blank=True
     )
+    threshold = models.IntegerField(
+        "Ngưỡng giải mã",
+        default=2,
+        help_text="Số lượng thành viên tối thiểu cần thiết để giải mã phiếu bầu."
+    )
+
+    council_public_key = models.TextField(
+        "Khóa Công khai Hội đồng", 
+        null=True, 
+        blank=True
+    )
+
+    
     class Meta:
         verbose_name = "Cuộc Bầu Cử"
         verbose_name_plural = "Các Cuộc Bầu Cử"
@@ -84,105 +103,13 @@ class Voter(models.Model):
     def __str__(self):
         return self.user.username
 
-class Block(models.Model):
-    # CÁC TRƯỜNG LƯU TRỮ DỮ LIỆU
-    ballot = models.ForeignKey('Ballot', on_delete=models.CASCADE, verbose_name="Cuộc bầu cử")
-    previous_hash = models.CharField("Hash Khối Trước", max_length=64, null=True, blank=True)
-    timestamp = models.DateTimeField("Dấu thời gian", default=timezone.now)
-    difficulty = models.IntegerField("Độ khó")
-    nonce = models.BigIntegerField("Nonce", default=0) # Dùng BigIntegerField cho nonce lớn
-    hash = models.CharField("Hash", max_length=64, unique=True, null=True, blank=True)
 
-    class Meta:
-        verbose_name = "Khối"
-        verbose_name_plural = "Các Khối"
-        ordering = ['-id'] # Sắp xếp theo ID giảm dần (mới nhất lên đầu)
-
-    # CÁC PHƯƠNG THỨC LOGIC
-    def get_vote_data_summary(self):
-        """
-        Trả về một chuỗi tóm tắt dữ liệu phiếu bầu để đưa vào trường 'data' của JSON.
-        Hoặc bạn có thể trả về một danh sách các dictionary đầy đủ hơn nếu muốn.
-        Ví dụ này sẽ trả về một chuỗi để khớp với ví dụ "Giao dich A: 10VND"
-        """
-        votes = self.votes.all().order_by('id')
-        if not votes:
-            return "No transactions"
-        
-        summaries = []
-        for v in votes:
-            # Lấy tên của tất cả các ứng viên trong phiếu bầu
-            candidate_names = ", ".join([c.name for c in v.candidates.all()])
-            summaries.append(f"Phiếu {v.id}: {candidate_names}")
-            
-        return "; ".join(summaries)
-    
-    def to_json_serializable(self):
-        """
-        Chuyển đổi Block thành dictionary có thể serialize thành JSON,
-        phù hợp với cấu trúc file log bạn mong muốn.
-        """
-        return {
-            "index": self.id, # Dùng id của Django model làm index
-            "data": self.get_vote_data_summary() if self.id != 1 else "Genesis Block", # "Genesis Block" cho block đầu tiên
-            "previous_hash": self.previous_hash if self.previous_hash else "0", # "0" cho Genesis
-            "hash": self.hash,
-            "nonce": self.nonce,
-            "difficulty": self.difficulty,
-           "timestamp": localtime(self.timestamp).strftime("%a %b %d %H:%M:%S %Y"),
-            # "chain_hash" không phải thuộc tính của Block riêng lẻ, sẽ được tính cho toàn bộ file
-        }
-
-    def calculate_hash(self):
-        """Tính toán hash dựa trên toàn bộ các thuộc tính của khối."""
-        vote_data = self.get_vote_data_summary() 
-        # Dùng self.id thay cho index
-        value = f"{self.id}{self.timestamp}{vote_data}{self.previous_hash}{self.difficulty}{self.nonce}"
-        return hashlib.sha256(value.encode()).hexdigest()
-
-    def mine_block(self):
-        """
-        Thực hiện cơ chế Proof of Work để tìm ra hash hợp lệ và lưu vào database.
-        """
-        print(f"Bắt đầu đào block #{self.id} với độ khó {self.difficulty}...")
-        prefix_str = '0' * self.difficulty
-        start_time = time.time()
-
-        while True:
-            hash_value = self.calculate_hash()
-            if hash_value.startswith(prefix_str):
-                end_time = time.time()
-                
-                # Cập nhật hash và nonce cho đối tượng model
-                self.hash = hash_value
-                
-                # Quan trọng: Lưu lại các thay đổi vào database
-                self.save()
-                
-                print(f"✅ Đào thành công block #{self.id}!")
-                print(f"   Hash: {self.hash}")
-                print(f"   Nonce: {self.nonce}")
-                print(f"   Thời gian đào: {end_time - start_time:.4f} giây\n")
-                return self.hash
-            else:
-                self.nonce += 1
-    
-    def __str__(self):
-            return f"Block #{self.id} - Ballot: {self.ballot.title}"
 
 class Vote(models.Model):
     """Bảng đại diện cho mỗi phiếu bầu, hoạt động như một giao dịch (transaction)."""
     ballot = models.ForeignKey(Ballot, on_delete=models.CASCADE, verbose_name="Cuộc bầu cử")
-    candidates = models.ManyToManyField(Candidate, verbose_name="Các ứng viên đã bầu")
-    block = models.ForeignKey(
-        Block, 
-        on_delete=models.PROTECT, 
-        null=True, 
-        blank=True, 
-        verbose_name="Thuộc khối",
-        related_name='votes' # Thêm dòng này
-    )
-    
+    # candidates = models.ManyToManyField(Candidate, verbose_name="Các ứng viên đã bầu")
+    encrypted_vote_data = models.TextField("Dữ liệu phiếu bầu đã mã hóa")
     # Dữ liệu mã hóa để đảm bảo tính toàn vẹn và xác thực
     voter_public_key = models.TextField("Khóa công khai của cử tri")
     signature = models.TextField("Chữ ký số")

@@ -3,7 +3,6 @@ import json
 import os
 from django.conf import settings
 from django.utils import timezone
-from quanly.models import Block, Ballot 
 import unicodedata 
 import difflib
 import re
@@ -11,17 +10,8 @@ import shutil
 from .models import *
 
 
-def calculate_file_checksum(filepath: str) -> str:
-    hasher = hashlib.sha256()
-    with open(filepath, 'rb') as f:
-        while True:
-            chunk = f.read(4096)
-            if not chunk:
-                break
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
 def get_blockchain_file_path(ballot_id: int, base_export_dir: str) -> str:
+    """Trả về đường dẫn tới file JSON blockchain chính."""
     os.makedirs(base_export_dir, exist_ok=True)
     try:
         ballot_obj = Ballot.objects.get(id=ballot_id)
@@ -35,32 +25,27 @@ def get_blockchain_file_path(ballot_id: int, base_export_dir: str) -> str:
     file_name = f"blockchain_{safe_title}_{ballot_id}.json"
     return os.path.join(base_export_dir, file_name)
 
-def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir: str) -> tuple[bool, str]:
-    """Xuất toàn bộ blockchain ra file JSON và niêm phong bằng chain_hash."""
-    blockchain_file_path = get_blockchain_file_path(ballot_id, base_export_dir)
+def save_blockchain_to_json(ballot, blocks_data_list: list, base_export_dir: str) -> tuple[bool, str]:
+    """
+    Hàm mới: Lưu một danh sách các khối (dictionaries) ra file JSON.
+    Hàm này không còn truy vấn CSDL.
+    """
+    blockchain_file_path = get_blockchain_file_path(ballot.id, base_export_dir)
     try:
-        ballot_obj = Ballot.objects.get(id=ballot_id)
-        
-        # --- SỬA LỖI Ở ĐÂY ---
-        # Thay 'votes__candidate' thành 'votes__candidates' để khớp với ManyToManyField
-        blockchain_blocks = Block.objects.filter(ballot=ballot_obj).order_by('id').prefetch_related('votes__candidates')
-        # --- KẾT THÚC SỬA LỖI ---
-
-        if not blockchain_blocks.exists():
-            return True, f"Không có khối nào cho '{ballot_obj.title}'. Bỏ qua."
-
-        blockchain_data_list = [block.to_json_serializable() for block in blockchain_blocks]
-        full_blocks_json_string = json.dumps(blockchain_data_list, indent=4, ensure_ascii=False, sort_keys=True)
+        # 1. Tính toán chain_hash từ dữ liệu được truyền vào
+        full_blocks_json_string = json.dumps(blocks_data_list, indent=4, ensure_ascii=False, sort_keys=True)
         chain_hash = hashlib.sha256(full_blocks_json_string.encode('utf-8')).hexdigest()
 
+        # 2. Tạo cấu trúc dữ liệu xuất cuối cùng
         full_export_data = {
-            "ballot_id": ballot_obj.id,
-            "ballot_title": ballot_obj.title,
+            "ballot_id": ballot.id,
+            "ballot_title": ballot.title,
             "exported_at": timezone.now().isoformat(),
             "chain_hash": chain_hash, 
-            "blocks": blockchain_data_list
+            "blocks": blocks_data_list
         }
 
+        # 3. Ghi toàn bộ dữ liệu vào file JSON
         with open(blockchain_file_path, 'w', encoding='utf-8') as f:
             json.dump(full_export_data, f, indent=4, ensure_ascii=False)
         
@@ -68,9 +53,11 @@ def save_blockchain_to_json_with_integrity_check(ballot_id: int, base_export_dir
     except Exception as e:
         return False, f"Lỗi khi lưu file JSON: {e}"
 
-
 def verify_blockchain_integrity(ballot_id: int, base_export_dir: str) -> tuple[bool, str]:
-    """Kiểm tra tính toàn vẹn của file blockchain JSON."""
+    """
+    Kiểm tra tính toàn vẹn của file blockchain JSON.
+    Hàm này không cần thay đổi vì nó vốn đã làm việc với file.
+    """
     blockchain_file_path = get_blockchain_file_path(ballot_id, base_export_dir)
     if not os.path.exists(blockchain_file_path):
         return True, "File blockchain chưa tồn tại, không cần kiểm tra."
@@ -94,39 +81,6 @@ def verify_blockchain_integrity(ballot_id: int, base_export_dir: str) -> tuple[b
             return False, "Blockchain đã bị sửa đổi! Chain_hash không khớp."
     except Exception as e:
         return False, f"Lỗi khi xác minh file: {e}"
-
-def verify_db_blockchain_integrity(ballot_id: int) -> tuple[bool, str]:
-    """
-    Xác minh tính toàn vẹn của chuỗi khối TRỰC TIẾP TỪ CƠ SỞ DỮ LIỆU.
-    Hàm này kiểm tra hai điều:
-    1. Liên kết chuỗi (previous_hash) có đúng không.
-    2. Nội dung của mỗi khối (hash) có bị thay đổi không.
-    """
-    try:
-        blocks = Block.objects.filter(ballot_id=ballot_id).order_by('id')
-        
-        if not blocks.exists():
-            return True, "Chưa có khối nào trong CSDL, không cần kiểm tra."
-
-        last_hash = "0"
-        for block in blocks:
-            # 1. Kiểm tra liên kết chuỗi
-            if block.previous_hash != last_hash:
-                return False, f"LỖI LIÊN KẾT CHUỖI: Khối #{block.id} có previous_hash không khớp! Chuỗi đã bị phá vỡ."
-            
-            # 2. Kiểm tra nội dung khối
-            # Tái tạo lại hash của khối từ dữ liệu hiện tại
-            # Hàm calculate_hash() được gọi từ chính đối tượng model
-            recalculated_hash = block.calculate_hash()
-            if block.hash != recalculated_hash:
-                return False, f"LỖI NỘI DUNG KHỐI: Hash của Khối #{block.id} không khớp với nội dung của nó! Dữ liệu (phiếu bầu) có thể đã bị thay đổi."
-            
-            # Cập nhật hash cho vòng lặp tiếp theo
-            last_hash = block.hash
-            
-        return True, "Chuỗi khối trong CSDL đảm bảo toàn vẹn."
-    except Exception as e:
-        return False, f"Lỗi không xác định khi xác minh CSDL: {e}"
 
 
 def get_backup_file_path(ballot_id: int, base_export_dir: str) -> str:

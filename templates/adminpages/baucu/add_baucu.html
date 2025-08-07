@@ -1,43 +1,53 @@
+<style>
+/* CSS tùy chỉnh cho modal, đảm bảo nó có đủ chiều rộng cho form */
+#addbaucuModal .modal-dialog {
+    max-width: 800px;
+}
+/* Thêm một chút padding cho select để trông gọn gàng hơn */
+#add_council_members, #add_id_eligible_voters {
+    padding: 0.5rem;
+}
+</style>
 <form id="addbaucuForm" method="POST" action="{% url 'add_baucu' %}">
     {% csrf_token %}
 
     <!-- HÀNG 1: TIÊU ĐỀ VÀ MÔ TẢ -->
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label class="form-label" for="id_tieude">Tiêu đề</label>
         <input type="text" class="form-control" id="id_tieude" name="tieude" placeholder="Tên cuộc bầu cử" required>
     </div>
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label class="form-label" for="id_mota">Mô tả</label>
-        <textarea class="form-control" id="id_mota" name="mota" rows="3" placeholder="Mô tả chi tiết về cuộc bầu cử"></textarea>
+        <textarea class="form-control" id="id_mota" name="mota" rows="3" placeholder="Mô tả chi tiết"></textarea>
     </div>
 
     <!-- HÀNG 2: THỜI GIAN -->
     <div class="row">
         <div class="col-md-6">
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label class="form-label" for="id_start_date">Thời gian bắt đầu</label>
                 <input type="datetime-local" class="form-control" id="id_start_date" name="start_date" required>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label class="form-label" for="id_end_date">Thời gian kết thúc</label>
                 <input type="datetime-local" class="form-control" id="id_end_date" name="end_date" required>
             </div>
         </div>
     </div>
     
-    <!-- HÀNG 3: CÀI ĐẶT NÂNG CAO -->
-    <div class="row align-items-end">
+    <!-- HÀNG 3: CÀI ĐẶT BẦU CỬ -->
+    <div class="row">
         <div class="col-md-6">
-             <div class="form-group">
-                <label class="form-label" for="id_max_choices">Được bầu tối đa</label>
+            <div class="form-group mb-3">
+                <label class="form-label" for="id_max_choices">Số lượng lựa chọn tối đa</label>
                 <input type="number" class="form-control" id="id_max_choices" name="max_choices" value="1" min="1" required>
-                <small class="form-text text-muted">Số lượng ứng viên tối đa một cử tri có thể chọn.</small>
+                <small class="form-text text-muted">Số lượng ứng viên tối đa một cử tri có thể bầu.</small>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label class="form-label">Loại hình Bầu cử</label>
                 <div>
                     <div class="form-check form-check-inline">
@@ -54,13 +64,97 @@
     </div>
     
     <!-- DANH SÁCH CỬ TRI RIÊNG TƯ -->
-    <div class="form-group" id="add_eligible_voters_wrapper" style="display: none;">
+    <div class="form-group mb-3" id="add_eligible_voters_wrapper" style="display: none;">
         <label class="form-label" for="add_id_eligible_voters">Chọn Cử tri được phép tham gia</label>
-        <select multiple class="form-control" id="add_id_eligible_voters" name="eligible_voters" size="8">
+        <select multiple class="form-control" id="add_id_eligible_voters" name="eligible_voters" size="5">
             {% for voter in voters %}
-                <option value="{{ voter.id }}">{{ voter.user.username }} ({{ voter.user.get_full_name }})</option>
+                <option value="{{ voter.id }}">{{ voter.user.username }}</option>
             {% endfor %}
         </select>
-        <small class="form-text text-muted">Giữ phím Ctrl (hoặc Command trên Mac) để chọn nhiều cử tri.</small>
+        <small class="form-text text-muted">Giữ phím Ctrl để chọn nhiều cử tri.</small>
+    </div>
+
+    <hr>
+    
+    <!-- THÊM NÚT CHUYỂN ĐỔI AN NINH -->
+    <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="toggleSecuritySettings" name="toggleSecuritySettings" checked>
+        <label class="form-check-label" for="toggleSecuritySettings">Sử dụng Cài đặt An ninh & Kiểm phiếu nâng cao</label>
+        <small class="form-text text-muted d-block">
+            Sử dụng kỹ thuật mật mã ngưỡng để đảm bảo tính công bằng và chống thông đồng khi kiểm phiếu.
+        </small>
+    </div>
+    
+    <!-- KHỐI CÀI ĐẶT AN NINH (SẼ ĐƯỢC ẨN/HIỆN) -->
+    <div id="securitySettingsSection">
+        <h5>Cài đặt An ninh & Kiểm phiếu</h5>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group mb-3">
+                    <label class="form-label" for="add_council_members">Chọn Thành viên Hội đồng Kiểm phiếu</label>
+                    <select multiple class="form-control" id="add_council_members" name="council_members" size="5" required>
+                        {% for member in potential_council_members %}
+                            <option value="{{ member.id }}">{{ member.username }} ({{ member.get_full_name }})</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Chọn các thành viên có uy tín để tham gia giải mã phiếu bầu.</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label class="form-label" for="add_threshold">Ngưỡng giải mã</label>
+                    <input type="number" class="form-control" id="add_threshold" name="threshold" value="2" min="2" required>
+                    <small class="form-text text-muted">Số lượng thành viên tối thiểu cần thiết để giải mã phiếu bầu. Phải nhỏ hơn hoặc bằng số lượng thành viên hội đồng.</small>
+                </div>
+            </div>
+        </div>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const publicRadio = document.getElementById('add_type_public');
+    const privateRadio = document.getElementById('add_type_private');
+    const votersWrapper = document.getElementById('add_eligible_voters_wrapper');
+    
+    const toggleSecurity = document.getElementById('toggleSecuritySettings');
+    const securitySection = document.getElementById('securitySettingsSection');
+    const councilSelect = document.getElementById('add_council_members');
+    const thresholdInput = document.getElementById('add_threshold');
+
+    function toggleVotersList() {
+        if (privateRadio.checked) {
+            votersWrapper.style.display = 'block';
+            votersWrapper.querySelector('select').setAttribute('required', 'required'); // Bắt buộc chọn cử tri cho bầu cử riêng tư
+        } else {
+            votersWrapper.style.display = 'none';
+            votersWrapper.querySelector('select').removeAttribute('required');
+        }
+    }
+    
+    function toggleSecuritySettings() {
+        if (toggleSecurity.checked) {
+            securitySection.style.display = 'block';
+            councilSelect.setAttribute('required', 'required');
+            thresholdInput.setAttribute('required', 'required');
+            // Cài đặt giá trị mặc định cho threshold nếu cần
+            if (parseInt(thresholdInput.value, 10) < 2) {
+                 thresholdInput.value = 2;
+            }
+        } else {
+            securitySection.style.display = 'none';
+            councilSelect.removeAttribute('required');
+            thresholdInput.removeAttribute('required');
+        }
+    }
+
+    // Lắng nghe sự kiện thay đổi
+    publicRadio.addEventListener('change', toggleVotersList);
+    privateRadio.addEventListener('change', toggleVotersList);
+    toggleSecurity.addEventListener('change', toggleSecuritySettings);
+    
+    // Thiết lập trạng thái ban đầu khi tải trang
+    toggleVotersList();
+    toggleSecuritySettings();
+});
+</script>
