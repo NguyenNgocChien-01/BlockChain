@@ -1,12 +1,12 @@
 {
     "ballot_id": 55,
     "ballot_title": "Bầu cử Chủ tịch nước",
-    "tally_completed_at": "2025-08-08T21:00:51.571004+07:00",
+    "tally_completed_at": "2025-08-08T21:48:16.995352+07:00",
     "results_hash": "45fffa0f3d11552d74113e53d7410ba4b255fcc472265069cf469a774c535689",
     "results": [
         {
             "name": "A",
-            "count": 0
+            "count": 2
         },
         {
             "name": "D",

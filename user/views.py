@@ -403,6 +403,12 @@ def bo_phieu(request, id):
             raise ValueError(error_msg)
 
         candidate_ids = request.POST.getlist('candidates')
+            # --- BƯỚC THÊM ĐỂ DEBUG ---
+        print("Dữ liệu nhận được từ form:", request.POST)
+        print("Files nhận được:", request.FILES)
+        
+        candidate_ids = request.POST.getlist('candidates')
+        print("ID ứng cử viên nhận được:", candidate_ids)
         if not candidate_ids:
             raise ValueError('Bạn chưa chọn ứng cử viên nào.')
         if len(candidate_ids) > ballot.max_choices:

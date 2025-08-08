@@ -1,8 +1,8 @@
 {
     "ballot_id": 52,
     "ballot_title": "Bầu Lớp Trưởng",
-    "exported_at": "2025-08-08T13:44:18.276602+07:00",
-    "chain_hash": "f1148783eec5e4bb99ba4bcd6430394ba392e900e006c57efba9209485f7d278",
+    "exported_at": "2025-08-08T21:31:33.447817+07:00",
+    "chain_hash": "92878c3e3674f4e0523ab77c3f1a8aa6524ce287d63466e55cb510d1b5448a68",
     "blocks": [
         {
             "index": 0,
@@ -71,6 +71,23 @@
             "difficulty": 2,
             "nonce": 273,
             "hash": "00c828d23ebb03ad7db9a6406f4fbe8b354827a8f1845557e6c5ba17f7a7f464"
+        },
+        {
+            "index": 4,
+            "timestamp": "2025-08-08T21:31:33.434256+07:00",
+            "transactions": [
+                {
+                    "vote_id": 42,
+                    "encrypted_vote": "Pxjs8lPOsKe5lPhC3U4tFx9bK6EMSZsdf3-NL3xlavXX6pLqyynR_GsGCQgXb_1BCP_xNb5MQZmW9VdZaplXJ0jG5B_9224qePuIxCRGZr4o40PV4AYRUHVDGd_EPpwazWglZUyG8iEZrCpBEA8qmQxUU-7TeyhzW23hp8lPJWGLZ6jT2e2jnCvEIK67fIdzKZ2lvyFcrGhy_TdN2lwHra2WnZtiaZNM74dowsHG50RI7h-xqviZZZdFt2How0K0wgtEidIVzySnWdZ-hi9zvD6dfDAdiITxmYY0g_C8J0lZNLC6aOvzMBG5ue_WDHHHLXcztf1tHLqroF4ZLn8r3Q==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEoQHIa0P1z/wfEhGD41WnQUrq/23GVhArjQ8VtvwPi5O91WVHqebVq2mVVqV4r8rrnhPJvEp6PxY7Yy4JbxmhIw==",
+                    "signature": "MEUCIFZ7c5g6olwlY_5r6jXIyWAeidqoAC6JJnIcG_fVgMoBAiEAy1sggKuCQwk7taxbzSjMnsUlQ08xAqZ971y-PYR936U=",
+                    "timestamp": "2025-08-08T14:31:33.417027+00:00"
+                }
+            ],
+            "previous_hash": "00c828d23ebb03ad7db9a6406f4fbe8b354827a8f1845557e6c5ba17f7a7f464",
+            "difficulty": 2,
+            "nonce": 967,
+            "hash": "0023971e875ef23fab25b3a4b46dd6890028ee22cbb81fe532a541e92a470921"
         }
     ]
 }

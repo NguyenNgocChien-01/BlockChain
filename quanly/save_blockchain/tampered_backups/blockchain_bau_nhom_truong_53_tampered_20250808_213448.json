@@ -1,8 +1,8 @@
 {
     "ballot_id": 53,
     "ballot_title": "BẦU NHÓM TRƯỞNG",
-    "exported_at": "2025-08-08T21:34:48.343980+07:00",
-    "chain_hash": "a19f1194aa5aab1a7fed9949d382ff290e6dcf197530b74723ef0930c7a61796",
+    "exported_at": "2025-08-08T21:32:08.483649+07:00",
+    "chain_hash": "87e8aa6101b794162d51aeeafe112829bcef8c9ee12f6385e498d2b924646e24",
     "blocks": [
         {
             "index": 0,
@@ -10,7 +10,7 @@
             "transactions": [
                 {
                     "vote_id": 39,
-                    "encrypted_vote": "WY2B-z7kRYrqwzZOsMdx7TJeU0k7nXELyfJgLKBSOlZDgPrGWCfGRzN-CBeoBx7QvU6OtlnxBleLF4y-Pui3cjtjIlcIAnXqH5wHy4EdXSduxZLd4BVOc9LuD5XQBfoxwAOQyu7zcJl4f_NmDAKXnwHkzzFIrrPqLRGq24qLrMsAq2_UdXiQiplf5y6Jdj2fLqP06jA0FkAlgz8Q9hS3zv1i3BU9PDIGBHrkaGIPyfjYWwpFQBT-YR6B8z5XDoE-Cd4-hJwH9JG81xhlvMSnh2MKjdjpRj3dVu0InWvrw44dxJnxfS3pzswrH1cmnFLIJISwvotEXgFXFeRepUDIxg==",
+                    "encrypted_vote": "WY2B-z7kRYrqwzZOsMdgGWCfGRzN-CBeoBx7QvU6OtlnxBleLF4y-Pui3cjtjIlcIAnXqH5wHy4EdXSduxZLd4BVOc9LuD5XQBfoxwAOQyu7zcJl4f_NmDAKXnwHkzzFIrrPqLRGq24qLrMsAq2_UdXiQiplf5y6Jdj2fLqP06jA0FkAlgz8Q9hS3zv1i3BU9PDIGBHrkaGIPyfjYWwpFQBT-YR6B8z5XDoE-Cd4-hJwH9JG81xhlvMSnh2MKjdjpRj3dVu0InWvrw44dxJnxfS3pzswrH1cmnFLIJISwvotEXgFXFeRepUDIxg==",
                     "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDL8kHlUlb8eWrt9IRRw6kolxtd/XGOy5iZ2YhiX6S3xGbYeVT6oJnjYwJh7X4djS5l2iGz4M8DJPoyelLfS7RQ==",
                     "signature": "MEUCIGbT7_7HgckL5wegmUawl2Ae6qIueL7FtJI845ZE3lcEAiEA4s8HcdeJ4LPsS-jpTBrMB2ObLD_2MAjGw_FQ1dJNb2I=",
                     "timestamp": "2025-08-08T07:06:30.118738+00:00"
@@ -37,23 +37,6 @@
             "difficulty": 2,
             "nonce": 646,
             "hash": "00e8c3e2fadcfeb89f0480103f474c5a11aaf5ae98c934d76ac7d69ef68af292"
-        },
-        {
-            "index": 2,
-            "timestamp": "2025-08-08T21:34:48.343980+07:00",
-            "transactions": [
-                {
-                    "vote_id": 44,
-                    "encrypted_vote": "fs3PjcZ4IackjPkLZ-TsOFMhgTldvafOvybXDdzHEA_g-mIHbk7Os60sqYwKRSqhPnCU76oA5QpPA_atJ9KYac82rl9c0EAL-Q4LXuwZjvCXEyA2d-6xVmgS5hTELFBZ2xsBsIojRfzAnjbrZxkHQztm2iNFkm2b4TITi_KIHgt3Xztnbdxi2aSZwK42Ze37-zngUdPEWr8Tokj-KIXprEC4dO27pJlqRvtOWDuoIjUt1V5R9KvwCEtZ4DW_0Twc54DKTfeY0hbd8D-A_G7hvStTPEF5A0DZ27rs8kZn-_mw8VD2AQsAbPDKkv1baQ1Yl1GupMnwAM1rhDsQxOMtBg==",
-                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEoQHIa0P1z/wfEhGD41WnQUrq/23GVhArjQ8VtvwPi5O91WVHqebVq2mVVqV4r8rrnhPJvEp6PxY7Yy4JbxmhIw==",
-                    "signature": "MEQCIDjgBHs85WHDH5jS5RxjDkRz4Am5cWo9EszCYnzJc9aWAiBWTppDf9PcDuCJuKvkpCVCgeCy1NWRRYt2JaPlNQIPAQ==",
-                    "timestamp": "2025-08-08T14:34:48.327596+00:00"
-                }
-            ],
-            "previous_hash": "00e8c3e2fadcfeb89f0480103f474c5a11aaf5ae98c934d76ac7d69ef68af292",
-            "difficulty": 2,
-            "nonce": 94,
-            "hash": "00a7f5230c4d18acc46d0bd7917ad565179dcb74ba119b5cf80efb1354db1e6d"
         }
     ]
 }

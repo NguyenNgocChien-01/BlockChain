@@ -1,3 +1,5 @@
+
+
 {% extends 'userpages/index.html' %}
 {% load static %}
 
@@ -59,7 +61,7 @@
                             </div>
                             <div class="ms-auto">
                                 {% if is_active and request.user.is_authenticated and is_voter and not has_voted %}
-                                    <input type="checkbox" class="form-check-input" name="candidates" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}">
+                                    <input type="checkbox" class="form-check-input candidate-checkbox" name="candidates" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}">
                                 {% endif %}
                             </div>
                         </div>
@@ -71,7 +73,6 @@
                     {% endfor %}
                 </div>
 
-                {# LOGIC HIỂN THỊ THÔNG BÁO #}
                 {% if not request.user.is_authenticated %}
                     <div class="alert alert-warning text-center" role="alert">
                         <i class="ti ti-user-x f-48 mb-3"></i>
@@ -84,52 +85,22 @@
                         <h4 class="alert-heading">Chưa phải là Cử tri!</h4>
                         <p>Tài khoản của bạn chưa được đăng ký làm cử tri. Vui lòng <a href="{% url 'view_dangky_cutri' %}" class="alert-link">đăng ký làm cử tri</a> để có thể tham gia bỏ phiếu.</p>
                     </div>
-
-                {% elif is_ended %}
-                    {# Kiểm tra nếu đã có kết quả để hiển thị #}
-                    {% if winners %}
-                    <div class="alert alert-light text-center border-primary shadow-sm py-4 rounded">
-                        <i class="ti ti-trophy text-warning" style="font-size: 4rem;"></i>
-                        <h4 class="alert-heading mt-2">CUỘC BẦU CỬ ĐÃ KẾT THÚC!</h4>
-                        <hr>
-                        {% if winners|length > 1 %}
-                            <p class="lead">Kết quả hòa giữa các ứng viên:</p>
-                            {% for winner in winners %}
-                                <h3 class="fw-bold d-inline-block me-3">{{ winner.name }}</h3>
-                            {% endfor %}
-                        {% else %}
-                            {% with winner=winners.0 %}
-                            <p class="lead">Người thắng cuộc là:</p>
-                            {% if winner.avatar %}
-                                <img src="{{ winner.avatar.url }}" class="rounded-circle my-3 shadow" alt="{{ winner.name }}" width="120" height="120" style="object-fit: cover;">
-                            {% endif %}
-                            <h2 class="fw-bold text-primary">{{ winner.name }}</h2>
-                            {% endwith %}
-                        {% endif %}
-                    </div>
-                    {% elif is_pending_tally %}
-                    <div class="alert alert-info text-center" role="alert">
-                        <i class="ti ti-hourglass-empty f-48 mb-3"></i>
-                        <h4 class="alert-heading">Đang chờ kiểm phiếu</h4>
-                        <p>Cuộc bầu cử đã kết thúc. Kết quả đang được Hội đồng Kiểm phiếu xử lý và sẽ được công bố sớm. Vui lòng quay lại sau.</p>
-                    </div>
-                    {% else %}
-                        <div class="alert alert-secondary text-center" role="alert">
-                            <i class="ti ti-info-circle f-48 mb-3"></i>
-                            <h4 class="alert-heading">Cuộc bầu cử đã kết thúc</h4>
-                            <p>Không có phiếu bầu nào được ghi nhận trong cuộc bầu cử này.</p>
-                        </div>
-                    {% endif %}
-                        {% elif has_voted %}
+                {% elif has_voted %}
                     <div class="alert alert-success text-center" role="alert">
                         <i class="ti ti-circle-check f-48 mb-3"></i>
                         <h4 class="alert-heading">Bạn đã bỏ phiếu!</h4>
                         <p>Cảm ơn bạn đã tham gia. Phiếu bầu của bạn đã được ghi nhận an toàn.</p>
                     </div>
+                {% elif is_ended %}
+                    <div class="alert alert-info text-center" role="alert">
+                        <i class="ti ti-flag-off f-48 mb-3"></i>
+                        <h4 class="alert-heading">Cuộc bầu cử đã kết thúc.</h4>
+                        <p>Kết quả đã được chốt và sẽ được công bố công khai.</p>
+                    </div>
                 {% elif not is_active %}
                     <div class="alert alert-info text-center" role="alert">
                         <i class="ti ti-clock-off f-48 mb-3"></i>
-                        <h4 class="alert-heading">Cuộc bầu cử chưa diễn ra hoặc đã kết thúc.</h4>
+                        <h4 class="alert-heading">Cuộc bầu cử chưa diễn ra.</h4>
                         <p>Vui lòng quay lại trong khoảng thời gian bỏ phiếu đã được thông báo.</p>
                     </div>
                 {% else %}
@@ -142,14 +113,12 @@
                                 <label class="form-check-label" for="toggleKeyInputMethod">Sử dụng Tải File (tắt để dán chuỗi)</label>
                             </div>
 
-                            {# PHẦN TẢI FILE #}
                             <div id="fileInputSection" class="mb-3">
                                 <label for="keyFile" class="form-label">Tải lên thông tin của bạn</label>
                                 <input type="file" class="form-control" id="keyFile" name="key_file" accept=".json" required>
                                 <div class="form-text">Đây là file bạn đã tải xuống khi đăng ký cử tri.</div>
                             </div>
 
-                            {# PHẦN DÁN CHUỖI #}
                             <div id="stringInputSection" class="mb-3" style="display: none;">
                                 <p class="text-muted">Dán các chuỗi khóa từ file JSON của bạn:</p>
                                 <div class="mb-3">
@@ -231,4 +200,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
 {% endblock %}
