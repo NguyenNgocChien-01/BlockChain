@@ -1,0 +1,42 @@
+{
+    "ballot_id": 55,
+    "ballot_title": "Bầu cử Chủ tịch nước",
+    "exported_at": "2025-08-08T15:39:33.755603+07:00",
+    "chain_hash": "2f73ff052f6b42285c6fe604cd6299087a35b2b3616b9c66b0236f80c67fc192",
+    "blocks": [
+        {
+            "index": 0,
+            "timestamp": "2025-08-08T15:37:36.514303+07:00",
+            "transactions": [
+                {
+                    "vote_id": 40,
+                    "encrypted_vote": "mr8vP5ostjZSQonLw6sVJr1d6TzRKDMb6MTbLUqVH0b5_0jzA7coEEWNh-28gHHMPN-7m2uwlcZK6d3nfHZCfbA6PbTUW8w1-jhKtL7EiToOZYO1z9YmGgHuWFytG8RK1UurhnBbjLG-uuKwM8D7gvIY7TDXnSqiuq0K_Ar_ai96CGu6Kq4xFhwQ82_-HfE4bt7T_LqNEOzCpSx-DVMyEwF2iQADzge5DdyljbHJ5MYeedFBIQTK_UqcQO3N3mDW4aVCLrQ0qt8sdwHQZtLgw0lkBrtTUaNvi5O16ZVk6p_jvKE5E7t8n0jwl6vZ3AE-4MtBRA3i051yIAnAfDjhlg==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtA0cBKIZEhqzXrRUDXxm0GL3A9+InWGjcnugvXeJ6r8qcgabpPPRy0NnGkzDcRKgCZJ/U23a+dvuMmvMBWCYvg==",
+                    "signature": "MEQCIAcWcgxk_tMKcZLs8iPp-kbOC0aJdWD9NXEU5yn6N3QwAiAbC8Egauu8wqInxe_JD4eN68norybRPiykg-9zWMpWQQ==",
+                    "timestamp": "2025-08-08T08:37:36.508365+00:00"
+                }
+            ],
+            "previous_hash": "0",
+            "difficulty": 2,
+            "nonce": 134,
+            "hash": "000e898819c419eb31bc532849a37f6096c89b6e985c866cf37faa0775b218d1"
+        },
+        {
+            "index": 1,
+            "timestamp": "2025-08-08T15:39:33.753562+07:00",
+            "transactions": [
+                {
+                    "vote_id": 41,
+                    "encrypted_vote": "nDeIUTyrJXtyaM91nrfL07OjEiTgGqUi3neBFuWU_uO2JTGFt9ou_x_9rqG5jtrzzCbIT2qlIkswAt4rfrpeQ3RGiwGhiH28Makgo5FmQ2g0NDFho-dNYx0EFIrG8Iq4ZfE_l1psq1UC7ps12e7cxMFIOMVzXGWsy81W_BI0yf3_LbdJBO_8gqrEllPXC6F5jxL7yBphWI03MnNFBZJqd1csLPSNpH7uI62ad_K5wLwVlDz2PGXMbN1UfBmTyOwi4aZFw-m_V3pP0Ww45bHkxnaLFxxvxEML9DpYCeqxO2TKNj4t5gePcujuQmd20yRqxQzWoGzHZgI2pLIny3OmLA==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgZVnv1X6J3QkXtiaBjBBfc8vBk1mpZiIHqb2cDHzn5JDz8c/YcxOxDptMOyfwg6oPubhPQsUFDkHDQcFWWk+fA==",
+                    "signature": "MEQCIHnUGdx0LIKUbsYFldfhSJTfiB-U_PXtFDlpVRPvkJsaAiBAeHnS6JdzuHo-RFjJyIbhmJ9PMTZtcsKqOg_lRg6gdg==",
+                    "timestamp": "2025-08-08T08:39:33.746705+00:00"
+                }
+            ],
+            "previous_hash": "000e898819c419eb31bc532849a37f6096c89b6e985c866cf37faa0775b218d1",
+            "difficulty": 2,
+            "nonce": 66,
+            "hash": "0022eb96bf236c6cfada532e84ef48036c0ad28301f58c9a2d07dd20ed886e84"
+        }
+    ]
+}

@@ -116,10 +116,11 @@ def ds_baucu(request):
     
     return render(request, 'userpages/baucu/baucu.html', context)
 
+
 def chitiet_baucu_u(request, id):
     """
     Hiển thị trang chi tiết. Nếu cuộc bầu cử đã kết thúc,
-    sẽ đọc và hiển thị kết quả từ file JSON đã giải mã.
+    sẽ tự động kiểm tra và hiển thị kết quả nếu có.
     """
     ballot = get_object_or_404(Ballot, pk=id)
     candidates = Candidate.objects.filter(ballot=ballot)
@@ -133,6 +134,7 @@ def chitiet_baucu_u(request, id):
     # Các biến mới để xử lý kết quả
     election_results = None
     is_pending_tally = False
+    winners = []
 
     if is_voter:
         has_voted = Vote.objects.filter(
@@ -140,26 +142,32 @@ def chitiet_baucu_u(request, id):
             voter_public_key=request.user.voter.public_key
         ).exists()
 
-    # Chỉ xử lý kết quả khi cuộc bầu cử đã kết thúc
     if is_ended:
-        # --- LOGIC MỚI: TỰ ĐỘNG KIỂM TRA SỰ TỒN TẠI CỦA FILE KẾT QUẢ ---
-        # Xây dựng đường dẫn đến file kết quả
         original_path = get_blockchain_file_path(ballot_id=id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
         base, ext = os.path.splitext(os.path.basename(original_path))
         decrypted_filename = f"{base}_decrypted_results.json"
         filepath = os.path.join(BLOCKCHAIN_EXPORT_DIR_RESULT, decrypted_filename)
 
-        # Nếu file kết quả đã tồn tại, đọc nó
         if os.path.exists(filepath):
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
                     results_data = json.load(f)
                 election_results = results_data.get('results', [])
+
+                if election_results:
+                    max_votes = max(item['count'] for item in election_results)
+                    
+                    # --- SỬA LỖI Ở ĐÂY: Dùng .strip() để loại bỏ khoảng trắng thừa ---
+                    winner_names = [
+                        item['name'].strip() for item in election_results if item['count'] == max_votes
+                    ]
+                    # --- KẾT THÚC SỬA LỖI ---
+                    
+                    winners = Candidate.objects.filter(ballot=ballot, name__in=winner_names)
+
             except Exception:
-                # Nếu file tồn tại nhưng bị lỗi, coi như vẫn đang chờ
                 is_pending_tally = True
         else:
-            # Nếu file chưa tồn tại, nghĩa là đang chờ kiểm phiếu
             is_pending_tally = True
 
     context = {
@@ -169,10 +177,14 @@ def chitiet_baucu_u(request, id):
         'has_voted': has_voted,
         'is_voter': is_voter,
         'is_ended': is_ended,   
-        'election_results': election_results, # Truyền kết quả
-        'is_pending_tally': is_pending_tally, # Truyền trạng thái chờ
+        'election_results': election_results,
+        'is_pending_tally': is_pending_tally,
+        'winners': winners,
     }
     return render(request, 'userpages/baucu/chitiet.html', context)
+
+
+
 def view_dangky_cutri(request):
     return render(request, 'userpages/dangky_cutri.html')
 

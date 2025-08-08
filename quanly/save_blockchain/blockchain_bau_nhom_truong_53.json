@@ -1,0 +1,25 @@
+{
+    "ballot_id": 53,
+    "ballot_title": "BẦU NHÓM TRƯỞNG",
+    "exported_at": "2025-08-08T14:06:30.131992+07:00",
+    "chain_hash": "b81f038ba198a07409594ba17eb81b93e9ca2f10e587a18fcc6385fbfb0c0b0f",
+    "blocks": [
+        {
+            "index": 0,
+            "timestamp": "2025-08-08T14:06:30.130981+07:00",
+            "transactions": [
+                {
+                    "vote_id": 39,
+                    "encrypted_vote": "WY2B-z7kRYrqwzZOsMdx7TJeU0k7nXELyfJgLKBSOlZDgPrGWCfGRzN-CBeoBx7QvU6OtlnxBleLF4y-Pui3cjtjIlcIAnXqH5wHy4EdXSduxZLd4BVOc9LuD5XQBfoxwAOQyu7zcJl4f_NmDAKXnwHkzzFIrrPqLRGq24qLrMsAq2_UdXiQiplf5y6Jdj2fLqP06jA0FkAlgz8Q9hS3zv1i3BU9PDIGBHrkaGIPyfjYWwpFQBT-YR6B8z5XDoE-Cd4-hJwH9JG81xhlvMSnh2MKjdjpRj3dVu0InWvrw44dxJnxfS3pzswrH1cmnFLIJISwvotEXgFXFeRepUDIxg==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDL8kHlUlb8eWrt9IRRw6kolxtd/XGOy5iZ2YhiX6S3xGbYeVT6oJnjYwJh7X4djS5l2iGz4M8DJPoyelLfS7RQ==",
+                    "signature": "MEUCIGbT7_7HgckL5wegmUawl2Ae6qIueL7FtJI845ZE3lcEAiEA4s8HcdeJ4LPsS-jpTBrMB2ObLD_2MAjGw_FQ1dJNb2I=",
+                    "timestamp": "2025-08-08T07:06:30.118738+00:00"
+                }
+            ],
+            "previous_hash": "0",
+            "difficulty": 2,
+            "nonce": 2,
+            "hash": "00c8d86613f369741515202a04c8264c55aa9f94139d1e24496aa1faca1d6fac"
+        }
+    ]
+}

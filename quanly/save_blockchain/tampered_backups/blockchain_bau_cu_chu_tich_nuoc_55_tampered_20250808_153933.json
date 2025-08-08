@@ -1,0 +1,25 @@
+{
+    "ballot_id": 55,
+    "ballot_title": "Bầu cử Chủ tịch nước",
+    "exported_at": "2025-08-08T15:37:36.515307+07:00",
+    "chain_hash": "c7c2ad692e0ffc8b76a510cc738e9d618a762e6d43c62a51c610f89bb0afe2fc",
+    "blocks": [
+        {
+            "index": 0,
+            "timestamp": "2025-08-08T15:37:36.514303+07:00",
+            "transactions": [
+                {
+                    "vote_id": 40,
+                    "encrypted_vote": "mr8vP5o0jzA7coEEWNh-28gHHMPN-7m2uwlcZK6d3nfHZCfbA6PbTUW8w1-jhKtL7EiToOZYO1z9YmGgHuWFytG8RK1UurhnBbjLG-uuKwM8D7gvIY7TDXnSqiuq0K_Ar_ai96CGu6Kq4xFhwQ82_-HfE4bt7T_LqNEOzCpSx-DVMyEwF2iQADzge5DdyljbHJ5MYeedFBIQTK_UqcQO3N3mDW4aVCLrQ0qt8sdwHQZtLgw0lkBrtTUaNvi5O16ZVk6p_jvKE5E7t8n0jwl6vZ3AE-4MtBRA3i051yIAnAfDjhlg==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtA0cBKIZEhqzXrRUDXxm0GL3A9+InWGjcnugvXeJ6r8qcgabpPPRy0NnGkzDcRKgCZJ/U23a+dvuMmvMBWCYvg==",
+                    "signature": "MEQCIAcWcgxk_tMKcZLs8iPp-kbOC0aJdWD9NXEU5yn6N3QwAiAbC8Egauu8wqInxe_JD4eN68norybRPiykg-9zWMpWQQ==",
+                    "timestamp": "2025-08-08T08:37:36.508365+00:00"
+                }
+            ],
+            "previous_hash": "0",
+            "difficulty": 2,
+            "nonce": 134,
+            "hash": "000e898819c419eb31bc532849a37f6096c89b6e985c866cf37faa0775b218d1"
+        }
+    ]
+}

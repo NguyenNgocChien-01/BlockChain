@@ -11,7 +11,7 @@ from django.core.mail import EmailMessage
 from quanly.crypto_utils import generate_threshold_keys, combine_shares_and_decrypt
 from .models import *
 from quanly.blockchain_core import Blockchain, VoteTransaction
-from quanly.blockchain_utils import get_blockchain_file_path , save_decrypted_blockchain_to_json
+from quanly.blockchain_utils import *
 from collections import Counter
 import re
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -489,36 +489,168 @@ def lichsu_change(request):
     context = {'logs': UserTamperLog.objects.all().order_by('-timestamp')}
     return render(request, 'adminpages/tamperlog.html', context)
 
+# def tally_ceremony_view(request, ballot_id):
+#     """
+#     View xử lý toàn bộ quy trình kiểm phiếu:
+#     1. Thu thập các mảnh khóa từ thành viên Hội đồng.
+#     2. Lưu trữ các mảnh khóa an toàn vào CSDL.
+#     3. Khi đủ ngưỡng, thực hiện giải mã, kiểm phiếu và công khai hóa kết quả.
+#     """
+#     ballot = get_object_or_404(Ballot, pk=ballot_id)
+    
+#     # --- KIỂM TRA ĐIỀU KIỆN TIÊN QUYẾT ---
+#     if ballot.end_date > timezone.now():
+#         messages.error(request, "Không thể kiểm phiếu khi cuộc bầu cử vẫn đang diễn ra.")
+#         return redirect('chitiet_baucu', id=ballot_id)
+
+#     # Lấy các mảnh khóa đã nộp từ CSDL
+#     submitted_shares_qs = SubmittedKeyShare.objects.filter(ballot=ballot)
+#     submitted_member_ids = set(submitted_shares_qs.values_list('council_member_id', flat=True))
+
+#     # --- XỬ LÝ CÁC HÀNH ĐỘNG POST ---
+#     if request.method == 'POST':
+#         # Xử lý khi một thành viên hội đồng nộp mảnh khóa
+#         if 'submit_share' in request.POST:
+#             return handle_submit_share(request, ballot)
+        
+#         # Xử lý khi bấm nút "Giải mã và Kiểm phiếu"
+#         elif 'tally_votes' in request.POST:
+#             return handle_tally_votes(request, ballot, submitted_shares_qs)
+
+#     # --- HIỂN THỊ TRANG (GET REQUEST) ---
+#     # Lấy danh sách thành viên hội đồng và trạng thái nộp khóa của họ
+#     council_members = ballot.council_members.all()
+#     members_status = []
+#     for member in council_members:
+#         members_status.append({
+#             'user': member,
+#             'has_submitted': member.id in submitted_member_ids
+#         })
+
+#     context = {
+#         'ballot': ballot,
+#         'members_status': members_status,
+#         'submitted_count': len(submitted_member_ids),
+#         'threshold': ballot.threshold,
+#         'can_tally': len(submitted_member_ids) >= ballot.threshold
+#     }
+#     return render(request, 'adminpages/baucu/tally_ceremony.html', context)
+
+
+
+# def handle_submit_share(request, ballot):
+#     """Hàm phụ: Xử lý logic khi một thành viên nộp mảnh khóa."""
+#     if not ballot.council_members.filter(pk=request.user.pk).exists():
+#         messages.error(request, "Bạn không phải là thành viên của Hội đồng Kiểm phiếu này.")
+#         return redirect('tally_ceremony', ballot_id=ballot.id)
+
+#     key_share_file = request.FILES.get('key_share_file')
+#     if key_share_file:
+#         try:
+#             key_share = key_share_file.read().decode('utf-8').strip()
+#             # Lưu mảnh khóa vào CSDL, tự động cập nhật nếu đã tồn tại
+#             SubmittedKeyShare.objects.update_or_create(
+#                 ballot=ballot,
+#                 council_member=request.user,
+#                 defaults={'key_share': key_share}
+#             )
+#             messages.success(request, "Đã nhận thành công mảnh khóa của bạn.")
+#         except Exception as e:
+#             messages.error(request, f"Lỗi khi đọc file mảnh khóa: {e}")
+#     else:
+#         messages.error(request, "Vui lòng tải lên file mảnh khóa.")
+    
+#     return redirect('tally_ceremony', ballot_id=ballot.id)
+
+
+
+# def handle_tally_votes(request, ballot, submitted_shares_qs):
+#     """Hàm phụ: Xử lý logic giải mã và kiểm phiếu."""
+#     key_shares_from_db = list(submitted_shares_qs.values_list('key_share', flat=True))
+#     unique_key_shares_list = list(set(key_shares_from_db))
+
+#     if len(unique_key_shares_list) < ballot.threshold:
+#         messages.error(request, f"Chưa đủ số lượng mảnh khóa HỢP LỆ để giải mã.")
+#         return redirect('tally_ceremony', ballot_id=ballot.id)
+
+#     try:
+#         all_votes = Vote.objects.filter(ballot=ballot)
+#         vote_counts = Counter()
+#         decrypted_votes_map = {} # Lưu lại kết quả giải mã để dùng sau
+
+#         # --- GIAI ĐOẠN 1: GIẢI MÃ VÀ KIỂM ĐẾM ---
+#         for vote in all_votes:
+#             decrypted_ids = combine_shares_and_decrypt(unique_key_shares_list, vote.encrypted_vote_data)
+#             decrypted_votes_map[vote.id] = decrypted_ids
+#             for candidate_id in decrypted_ids:
+#                 vote_counts[candidate_id] += 1
+        
+#         # --- GIAI ĐOẠN 2: HOÀN TẤT VÀ CÔNG KHAI HÓA (CẬP NHẬT CSDL) ---
+#         with transaction.atomic():
+#             # Cập nhật CSDL với kết quả đã giải mã
+#             for vote_id, candidate_ids in decrypted_votes_map.items():
+#                 vote_obj = Vote.objects.get(pk=vote_id)
+#                 # Giả định model Vote có trường ManyToManyField tên là 'candidates'
+#                 if hasattr(vote_obj, 'candidates'):
+#                     vote_obj.candidates.set(candidate_ids)
+
+#         # (Tùy chọn) Tạo file JSON cuối cùng đã được giải mã
+    
+
+#         # --- GIAI ĐOẠN 3: HIỂN THỊ KẾT QUẢ ---
+#         results = []
+#         # Lấy danh sách ID của tất cả các ứng viên đã nhận được phiếu bầu
+#         voted_candidate_ids = list(vote_counts.keys())
+#         # Truy vấn CSDL một lần duy nhất để lấy tên của các ứng viên này
+#         candidates_info = {c.id: c.name for c in Candidate.objects.filter(id__in=voted_candidate_ids)}
+
+        
+#         for candidate_id, count in vote_counts.items():
+#             candidate_name = Candidate.objects.get(id=candidate_id).name
+#             results.append({
+#                 'name': candidates_info.get(candidate_id, f" {candidate_name }"),
+#                 'count': count
+#             })
+        
+#         sorted_results = sorted(results, key=lambda x: x['count'], reverse=True)
+        
+#         save_decrypted_blockchain_to_json(ballot, sorted_results, BLOCKCHAIN_EXPORT_DIR_RESULT )
+#         # Xóa các mảnh khóa đã nộp sau khi hoàn tất để tăng bảo mật
+#         # submitted_shares_qs.delete()
+
+#         messages.success(request, "Kiểm phiếu và giải mã hoàn tất! Kết quả đã được công khai hóa.")
+#         return render(request, 'adminpages/baucu/ketqua.html', {
+#             'ballot': ballot,
+#             'results': sorted_results
+#         })
+
+#     except Exception as e:
+#         messages.error(request, f"Lỗi nghiêm trọng khi giải mã: {e}")
+#         return redirect('tally_ceremony', ballot_id=ballot.id)
+
+
 def tally_ceremony_view(request, ballot_id):
     """
-    View xử lý toàn bộ quy trình kiểm phiếu:
-    1. Thu thập các mảnh khóa từ thành viên Hội đồng.
-    2. Lưu trữ các mảnh khóa an toàn vào CSDL.
-    3. Khi đủ ngưỡng, thực hiện giải mã, kiểm phiếu và công khai hóa kết quả.
+    View chính xử lý toàn bộ quy trình "Lễ Kiểm phiếu".
     """
     ballot = get_object_or_404(Ballot, pk=ballot_id)
     
-    # --- KIỂM TRA ĐIỀU KIỆN TIÊN QUYẾT ---
+    # Điều kiện tiên quyết: Cuộc bầu cử phải kết thúc
     if ballot.end_date > timezone.now():
         messages.error(request, "Không thể kiểm phiếu khi cuộc bầu cử vẫn đang diễn ra.")
         return redirect('chitiet_baucu', id=ballot_id)
 
-    # Lấy các mảnh khóa đã nộp từ CSDL
     submitted_shares_qs = SubmittedKeyShare.objects.filter(ballot=ballot)
     submitted_member_ids = set(submitted_shares_qs.values_list('council_member_id', flat=True))
 
-    # --- XỬ LÝ CÁC HÀNH ĐỘNG POST ---
+    # Xử lý các hành động POST
     if request.method == 'POST':
-        # Xử lý khi một thành viên hội đồng nộp mảnh khóa
         if 'submit_share' in request.POST:
             return handle_submit_share(request, ballot)
-        
-        # Xử lý khi bấm nút "Giải mã và Kiểm phiếu"
         elif 'tally_votes' in request.POST:
             return handle_tally_votes(request, ballot, submitted_shares_qs)
 
-    # --- HIỂN THỊ TRANG (GET REQUEST) ---
-    # Lấy danh sách thành viên hội đồng và trạng thái nộp khóa của họ
+    # Hiển thị trang (GET request)
     council_members = ballot.council_members.all()
     members_status = []
     for member in council_members:
@@ -537,7 +669,6 @@ def tally_ceremony_view(request, ballot_id):
     return render(request, 'adminpages/baucu/tally_ceremony.html', context)
 
 
-
 def handle_submit_share(request, ballot):
     """Hàm phụ: Xử lý logic khi một thành viên nộp mảnh khóa."""
     if not ballot.council_members.filter(pk=request.user.pk).exists():
@@ -548,7 +679,6 @@ def handle_submit_share(request, ballot):
     if key_share_file:
         try:
             key_share = key_share_file.read().decode('utf-8').strip()
-            # Lưu mảnh khóa vào CSDL, tự động cập nhật nếu đã tồn tại
             SubmittedKeyShare.objects.update_or_create(
                 ballot=ballot,
                 council_member=request.user,
@@ -563,9 +693,8 @@ def handle_submit_share(request, ballot):
     return redirect('tally_ceremony', ballot_id=ballot.id)
 
 
-
 def handle_tally_votes(request, ballot, submitted_shares_qs):
-    """Hàm phụ: Xử lý logic giải mã và kiểm phiếu."""
+    """Hàm phụ: Xử lý logic giải mã, kiểm phiếu, và công khai hóa kết quả."""
     key_shares_from_db = list(submitted_shares_qs.values_list('key_share', flat=True))
     unique_key_shares_list = list(set(key_shares_from_db))
 
@@ -576,7 +705,7 @@ def handle_tally_votes(request, ballot, submitted_shares_qs):
     try:
         all_votes = Vote.objects.filter(ballot=ballot)
         vote_counts = Counter()
-        decrypted_votes_map = {} # Lưu lại kết quả giải mã để dùng sau
+        decrypted_votes_map = {}
 
         # --- GIAI ĐOẠN 1: GIẢI MÃ VÀ KIỂM ĐẾM ---
         for vote in all_votes:
@@ -585,41 +714,39 @@ def handle_tally_votes(request, ballot, submitted_shares_qs):
             for candidate_id in decrypted_ids:
                 vote_counts[candidate_id] += 1
         
-        # --- GIAI ĐOẠN 2: HOÀN TẤT VÀ CÔNG KHAI HÓA (CẬP NHẬT CSDL) ---
+        # --- GIAI ĐOẠN 2: HOÀN TẤT VÀ CÔNG KHAI HÓA ---
         with transaction.atomic():
-            # Cập nhật CSDL với kết quả đã giải mã
             for vote_id, candidate_ids in decrypted_votes_map.items():
                 vote_obj = Vote.objects.get(pk=vote_id)
-                # Giả định model Vote có trường ManyToManyField tên là 'candidates'
                 if hasattr(vote_obj, 'candidates'):
                     vote_obj.candidates.set(candidate_ids)
+            
+            # Đánh dấu cuộc bầu cử đã được kiểm phiếu
+            ballot.is_tallied = True
+            ballot.save()
 
-        # (Tùy chọn) Tạo file JSON cuối cùng đã được giải mã
-    
-
-        # --- GIAI ĐOẠN 3: HIỂN THỊ KẾT QUẢ ---
+        # --- GIAI ĐOẠN 3: CHUẨN BỊ DỮ LIỆU ĐỂ HIỂN THỊ VÀ LƯU FILE ---
         results = []
-        # Lấy danh sách ID của tất cả các ứng viên đã nhận được phiếu bầu
         voted_candidate_ids = list(vote_counts.keys())
-        # Truy vấn CSDL một lần duy nhất để lấy tên của các ứng viên này
         candidates_info = {c.id: c.name for c in Candidate.objects.filter(id__in=voted_candidate_ids)}
-
         
         for candidate_id, count in vote_counts.items():
-            candidate_name = Candidate.objects.get(id=candidate_id).name
             results.append({
-                'name': candidates_info.get(candidate_id, f" {candidate_name }"),
+                'name': candidates_info.get(candidate_id, f"ID không xác định: {candidate_id}"),
                 'count': count
             })
         
         sorted_results = sorted(results, key=lambda x: x['count'], reverse=True)
         
-        save_decrypted_blockchain_to_json(ballot, sorted_results, BLOCKCHAIN_EXPORT_DIR_RESULT )
+        # Lưu kết quả đã giải mã ra file JSON công khai
+        save_decrypted_blockchain_to_json(ballot, sorted_results, BLOCKCHAIN_EXPORT_DIR_RESULT)
+        create_backup_for_results(ballot.id, BLOCKCHAIN_EXPORT_DIR_RESULT)
+        
         # Xóa các mảnh khóa đã nộp sau khi hoàn tất để tăng bảo mật
         # submitted_shares_qs.delete()
 
         messages.success(request, "Kiểm phiếu và giải mã hoàn tất! Kết quả đã được công khai hóa.")
-        return render(request, 'adminpages/baucu/ketqua.html', {
+        return render(request, 'adminpages/baucu/tally_results.html', {
             'ballot': ballot,
             'results': sorted_results
         })
