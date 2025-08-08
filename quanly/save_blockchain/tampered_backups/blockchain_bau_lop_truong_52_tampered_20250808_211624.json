@@ -1,0 +1,76 @@
+{
+    "ballot_id": 52,
+    "ballot_title": "Bầu Lớp Trưởng",
+    "exported_at": "2025-08-08T13:44:18.276602+07:00",
+    "chain_hash": "f1148783eec5e4bb99ba4bcd6430394ba392e900e006c57efba9209485f7d278",
+    "blocks": [
+        {
+            "index": 0,
+            "timestamp": "2025-08-08T13:39:43.404777+07:00",
+            "transactions": [
+                {
+                    "vote_id": 35,
+                    "encrypted_vote": "oFc-e_92kdXjdV9-pi4cx0K-vnF_HA99bJ6lytd1mlo5UiLR044j0HSO0oI5vdVG0qWPUhX9SeLdA8C7ZCz6YkQdVfN6UDNLwdcFaO0VEXwzC3Xw9O83k-QGtMTYW9gmj4EF7JxwT9jqoo7PryiP4JoGXhAaFFg9b_IgGzxssf2hnFSZvIzkpfBfL7FkuMtmAgxZHsBYslhEQHrjE-DNKDUDNBNXF1-1xSxthwne04-4w_TTaEYgudQYD-h85dSy6haSseDS-zPTfd1NUp2yrC82u2f5uUQmx3_iVy54-KkDqxYBK_k1F8hTBhh8dysli8eg==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtA0cBKIZEhqzXrRUDXxm0GL3A9+InWGjcnugvXeJ6r8qcgabpPPRy0NnGkzDcRKgCZJ/U23a+dvuMmvMBWCYvg==",
+                    "signature": "MEUCIEjN6MHiEomohDBuWcaJ7sR3F8zzVXi0f79hJ2DF_HP4AiEAsJ6bSKGf0kdhAT6P8q2-s2rbV42PfTghFSnOt82trPI=",
+                    "timestamp": "2025-08-08T06:39:43.388533+00:00"
+                }
+            ],
+            "previous_hash": "0",
+            "difficulty": 2,
+            "nonce": 217,
+            "hash": "00d2786f0223316859dad7cfa51711a21febd493c23d1707c6963086667deeaa"
+        },
+        {
+            "index": 1,
+            "timestamp": "2025-08-08T13:43:08.491206+07:00",
+            "transactions": [
+                {
+                    "vote_id": 36,
+                    "encrypted_vote": "SWu8guFCXBzF5GKXlyHXu0NAgN6mGoTs1AqatfcZ8ebjQ9461asFDHgwVklB6P0sY2KRAf6_2QbErLYutzZYplUPKk_WX78ybCc_m8nLd4URNdkNsx2sG-dQ_epx-WEAZS6kIh9oDuwOgZeOYne8cNFUY-Bxm8VABUh71CqruTA1Q8437fsHuzaBam4hCj4TskSK1CRGXcFuqlyHxawiK6B3daBDdF_NW3qTDY75bPNJL5RLbqFgb6obPR4ndNgR1GxgouXiPHPbubKexoXyIHoZVJ_YZdvqZiI0aN3ANhl1yXnrENALYxpaJcWMlmWz8UKApNuUjmF0ZP6-lRLJ3Q==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgZVnv1X6J3QkXtiaBjBBfc8vBk1mpZiIHqb2cDHzn5JDz8c/YcxOxDptMOyfwg6oPubhPQsUFDkHDQcFWWk+fA==",
+                    "signature": "MEUCIC5fOr4gfMXJL8WOomnfg27j-QSvgA8Xkp2a71VtqGSVAiEAww50aKj7e3p4od3ALJzCsJxS7fmXd-ZWVZCV_2Cdyxk=",
+                    "timestamp": "2025-08-08T06:43:08.477579+00:00"
+                }
+            ],
+            "previous_hash": "00d2786f0223316859dad7cfa51711a21febd493c23d1707c6963086667deeaa",
+            "difficulty": 2,
+            "nonce": 38,
+            "hash": "00fdb41c1f12a870d260839e09bdb2f597764dbf20a7530ac8227abe3b87a7a4"
+        },
+        {
+            "index": 2,
+            "timestamp": "2025-08-08T13:43:42.961840+07:00",
+            "transactions": [
+                {
+                    "vote_id": 37,
+                    "encrypted_vote": "FNzg5RHOPxxIdoIWcwijOwq8DubxxDathlE21QKRBP5fTVW_LTmISElh5n3nKF1tj8-_kwqr7OK6Lu7IYt39cMqO7fB3GyGBq7Q3h_CU-nHvQOfpeEKCzlS4XSbjXIvunlJaHXi9G3tsWVskRdM88IQuP5sqsUsNm13McZKNkuyt8jvrPOu-m70UKsf7A82rp7JOSSD523iZ4xnq0gXcREmz6SieMF35cmwoKrfX5PlDzo6K1iNgyeIe5sFonKaNqWayJ_OnnO797rzv2dStUogzDvf02AahR-DvK1RyGvbAMQFx9kETASWRpz0uc55RwTcJxOQ1kQXTA5bPU2FTqQ==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAES7FnRjmHEhtn724bkEp2+SSNHQde37NJhEjvJB9r03M0HITwDcmtJ+gmyOb2ZGKb2efQNJsckTzLMThswlSEIw==",
+                    "signature": "MEQCIHrQf6tOza4xUtAHUER2U7_uBGuNg7kgYTh_gyeP1soTAiB287dHtDRXvhqXolrY0divA9NvQniw54g0BanMxTF4xw==",
+                    "timestamp": "2025-08-08T06:43:42.947124+00:00"
+                }
+            ],
+            "previous_hash": "00fdb41c1f12a870d260839e09bdb2f597764dbf20a7530ac8227abe3b87a7a4",
+            "difficulty": 2,
+            "nonce": 49,
+            "hash": "0005f06fe4fcea5c7dbf70dd6781b35601cabf4c0ca8f0b688d84be9c16a79c1"
+        },
+        {
+            "index": 3,
+            "timestamp": "2025-08-08T13:44:18.274597+07:00",
+            "transactions": [
+                {
+                    "vote_id": 38,
+                    "encrypted_vote": "o8a79flsuknRt75APSSo7m0_jwVSILquqXjs0HnvQBsN-B1zN1s7rukj_PMk0rUwKe_9y5YARQThqV5fzmETrcWh7qGTm1Rgu219jwSdAVmscXwnwBAZ46vR7S8tZosj2WQir-tgb-xZaFn8LuM2r7V_AR2VxrMLRYw62tg7bvkLHU871AQHOpAR0fcbIuN94buV_SqhD8N8irmepIBZ1o9_cA_XDAVSqRjO6huBop32xgY2Zn_Mi2jHiYYnzT8AfMq2RfRkCVMv1aAKS5RRiojbsDE5gQtOt63Dr_0giYrbwsWkX85A_TtH7Cp1YWAfXL6dmeh8uggLNSG10BGl-A==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDL8kHlUlb8eWrt9IRRw6kolxtd/XGOy5iZ2YhiX6S3xGbYeVT6oJnjYwJh7X4djS5l2iGz4M8DJPoyelLfS7RQ==",
+                    "signature": "MEUCIEjPc1XZpvjIiLkC1NrJRKA41gfph_ej4IPX5yE9NkR-AiEA_Rk4M2qgzGVGeSbmWR6LEG9rrR-LJ3YPfFOjDuFuZiY=",
+                    "timestamp": "2025-08-08T06:44:18.258802+00:00"
+                }
+            ],
+            "previous_hash": "0005f06fe4fcea5c7dbf70dd6781b35601cabf4c0ca8f0b688d84be9c16a79c1",
+            "difficulty": 2,
+            "nonce": 273,
+            "hash": "00c828d23ebb03ad7db9a6406f4fbe8b354827a8f1845557e6c5ba17f7a7f464"
+        }
+    ]
+}

@@ -8,13 +8,12 @@
     <div class="pc-content">
         <div class="card">
             <div class="card-header">
-              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center">
                     <h3 class="mb-0"> {{ baucu.title }}</h3>
-                        <a href="{% url 'my_vote' baucu.id %}" class="btn btn-info me-2">
-                            <i class="ti ti-chart-bar"></i> Xem phiếu của tôi
-                        </a>
+                    <a href="{% url 'my_vote' baucu.id %}" class="btn btn-info me-2">
+                        <i class="ti ti-chart-bar"></i> Xem phiếu của tôi
+                    </a>
                 </div>
-
             </div>
             <div class="card-body">
                 <div class="row mb-4">
@@ -26,7 +25,7 @@
                         <h4>Thời gian</h4>
                         <p><strong>Bắt đầu:</strong> {{ baucu.start_date|date:"H:i, d/m/Y" }}</p>
                         <p><strong>Kết thúc:</strong> {{ baucu.end_date|date:"H:i, d/m/Y" }}</p>
-
+                        <p><strong>Được bầu tối đa:</strong> {{ baucu.max_choices }} người</p>
                     </div>
                 </div>
                 <hr>
@@ -43,7 +42,36 @@
                 {% endif %}
 
                 <h4>Danh sách ứng cử viên</h4>
+                <div class="list-group mb-3">
+                    {% for ungcuvien in ungcuviens %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 align-items-center">
+                            <div class="me-3">
+                                {% if ungcuvien.avatar %}
+                                    <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60" style="object-fit: cover;">
+                                {% else %}
+                                    <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">{{ ungcuvien.name }}</h5>
+                                <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="ms-auto">
+                                {% if is_active and request.user.is_authenticated and is_voter and not has_voted %}
+                                    <input type="checkbox" class="form-check-input" name="candidates" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center p-5">
+                        <p class="text-muted">Chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
+                    </div>
+                    {% endfor %}
+                </div>
 
+                {# LOGIC HIỂN THỊ THÔNG BÁO #}
                 {% if not request.user.is_authenticated %}
                     <div class="alert alert-warning text-center" role="alert">
                         <i class="ti ti-user-x f-48 mb-3"></i>
@@ -56,59 +84,35 @@
                         <h4 class="alert-heading">Chưa phải là Cử tri!</h4>
                         <p>Tài khoản của bạn chưa được đăng ký làm cử tri. Vui lòng <a href="{% url 'view_dangky_cutri' %}" class="alert-link">đăng ký làm cử tri</a> để có thể tham gia bỏ phiếu.</p>
                     </div>
+
                 {% elif is_ended %}
-                    {# --- LOGIC MỚI: HIỂN THỊ KẾT QUẢ HOẶC THÔNG BÁO CHỜ --- #}
+                    {# Kiểm tra nếu đã có kết quả để hiển thị #}
                     {% if winners %}
-                        <div class="text-center border-primary shadow-sm py-4 rounded">
-                            <i class="ti ti-trophy text-warning" style="font-size: 4rem;"></i>
-                            <h4 class="alert-heading mt-2">CUỘC BẦU CỬ ĐÃ KẾT THÚC!</h4>
-                            
-                            <!-- KHU VỰC CÔNG BỐ NGƯỜI THẮNG CUỘC -->
-                            {% if winners|length > 1 %}
-                                <p class="lead">Kết quả hòa giữa các ứng viên:</p>
-                                {% for winner in winners %}
-                                    <h3 class="fw-bold d-inline-block me-3">{{ winner.name }}</h3>
-                                {% endfor %}
-                            {% else %}
-                                {% with winner=winners.0 %}
-                                <p class="lead">Người thắng cuộc là:</p>
-                                {% if winner.avatar %}
-                                    <img src="{{ winner.avatar.url }}" class="rounded-circle my-3 shadow" alt="{{ winner.name }}" width="120" height="120" style="object-fit: cover;">
-                                {% endif %}
-                                <h2 class="fw-bold text-primary">{{ winner.name }}</h2>
-                                {% endwith %}
+                    <div class="alert alert-light text-center border-primary shadow-sm py-4 rounded">
+                        <i class="ti ti-trophy text-warning" style="font-size: 4rem;"></i>
+                        <h4 class="alert-heading mt-2">CUỘC BẦU CỬ ĐÃ KẾT THÚC!</h4>
+                        <hr>
+                        {% if winners|length > 1 %}
+                            <p class="lead">Kết quả hòa giữa các ứng viên:</p>
+                            {% for winner in winners %}
+                                <h3 class="fw-bold d-inline-block me-3">{{ winner.name }}</h3>
+                            {% endfor %}
+                        {% else %}
+                            {% with winner=winners.0 %}
+                            <p class="lead">Người thắng cuộc là:</p>
+                            {% if winner.avatar %}
+                                <img src="{{ winner.avatar.url }}" class="rounded-circle my-3 shadow" alt="{{ winner.name }}" width="120" height="120" style="object-fit: cover;">
                             {% endif %}
-                            <hr>
-                            
-                            <!-- BẢNG KẾT QUẢ CHI TIẾT -->
-                            <p class="lead">Kết quả chi tiết:</p>
-                            <div class="table-responsive px-3">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Hạng</th>
-                                            <th>Ứng cử viên</th>
-                                            <th class="text-end">Số phiếu</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for item in election_results %}
-                                        <tr>
-                                            <td><strong>{{ forloop.counter }}</strong></td>
-                                            <td>{{ item.name }}</td>
-                                            <td class="text-end">{{ item.count }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                            <h2 class="fw-bold text-primary">{{ winner.name }}</h2>
+                            {% endwith %}
+                        {% endif %}
+                    </div>
                     {% elif is_pending_tally %}
-                        <div class="alert alert-info text-center" role="alert">
-                            <i class="ti ti-hourglass-empty f-48 mb-3"></i>
-                            <h4 class="alert-heading">Đang chờ kiểm phiếu</h4>
-                            <p>Cuộc bầu cử đã kết thúc. Kết quả đang được Hội đồng Kiểm phiếu xử lý và sẽ được công bố sớm. Vui lòng quay lại sau.</p>
-                        </div>
+                    <div class="alert alert-info text-center" role="alert">
+                        <i class="ti ti-hourglass-empty f-48 mb-3"></i>
+                        <h4 class="alert-heading">Đang chờ kiểm phiếu</h4>
+                        <p>Cuộc bầu cử đã kết thúc. Kết quả đang được Hội đồng Kiểm phiếu xử lý và sẽ được công bố sớm. Vui lòng quay lại sau.</p>
+                    </div>
                     {% else %}
                         <div class="alert alert-secondary text-center" role="alert">
                             <i class="ti ti-info-circle f-48 mb-3"></i>
@@ -116,74 +120,22 @@
                             <p>Không có phiếu bầu nào được ghi nhận trong cuộc bầu cử này.</p>
                         </div>
                     {% endif %}
-                {% elif has_voted %}
-                        <div class="list-group mb-3">
-                            {% for ungcuvien in ungcuviens %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 align-items-center">
-                                    <div class="me-3">
-                                        {% if ungcuvien.avatar %}
-                                            <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60">
-                                        {% else %}
-                                            <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h5 class="mb-1">{{ ungcuvien.name }}</h5>
-                                        <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
-                                    </div>
-
-                                </div>
-                            </div>
-                            {%endfor%}
+                        {% elif has_voted %}
                     <div class="alert alert-success text-center" role="alert">
                         <i class="ti ti-circle-check f-48 mb-3"></i>
                         <h4 class="alert-heading">Bạn đã bỏ phiếu!</h4>
                         <p>Cảm ơn bạn đã tham gia. Phiếu bầu của bạn đã được ghi nhận an toàn.</p>
-
                     </div>
-     
                 {% elif not is_active %}
                     <div class="alert alert-info text-center" role="alert">
                         <i class="ti ti-clock-off f-48 mb-3"></i>
                         <h4 class="alert-heading">Cuộc bầu cử chưa diễn ra hoặc đã kết thúc.</h4>
                         <p>Vui lòng quay lại trong khoảng thời gian bỏ phiếu đã được thông báo.</p>
+                    </div>
                 {% else %}
-                    <form method="POST" action="{% url 'bo_phieu' baucu.id %}" id="voteForm" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="list-group mb-3">
-                            {% for ungcuvien in ungcuviens %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 align-items-center">
-                                    <div class="me-3">
-                                        {% if ungcuvien.avatar %}
-                                            <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60">
-                                        {% else %}
-                                            <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h5 class="mb-1">{{ ungcuvien.name }}</h5>
-                                        <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <!-- === THAY ĐỔI TỪ RADIO SANG CHECKBOX === -->
-                                        <input type="checkbox" 
-                                            class="form-check-input" 
-                                            name="candidates"  {# Đổi tên thành số nhiều #}
-                                            id="uc{{ ungcuvien.id }}" 
-                                            value="{{ ungcuvien.id }}">
-                                    </div>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <div class="text-center p-5">
-                                <p class="text-muted">Chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        {% if ungcuviens %} 
+                    {% if ungcuviens %}
+                        <form method="POST" action="{% url 'bo_phieu' baucu.id %}" id="voteForm" enctype="multipart/form-data">
+                            {% csrf_token %}
                             <h5 class="mt-4 mb-3">Cung cấp khóa bí mật của bạn:</h5>
                             <div class="form-check form-switch mb-3">
                                 <input class="form-check-input" type="checkbox" id="toggleKeyInputMethod" checked>
@@ -211,22 +163,20 @@
                                     <textarea class="form-control" id="id_private_key_pem_b64" name="private_key_pem_b64" rows="5"></textarea>
                                     <div class="form-text">Dán chuỗi "private_key_pem_b64" từ file JSON đã tải xuống.</div>
                                 </div>
-
                             </div>
-
 
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn btn-primary" id="submitVoteButton" onclick="return confirm('Bạn có chắc chắn muốn bỏ phiếu không? Hành động này không thể thay đổi.')">
                                     <i class="ti ti-hand-click"></i> Xác nhận bỏ phiếu
                                 </button>
                             </div>
-                        {% else %}
-                            <div class="alert alert-warning text-center mt-4" role="alert">
-                                <h4 class="alert-heading">Không có ứng cử viên để bỏ phiếu.</h4>
-                                <p>Cuộc bầu cử này hiện chưa có ứng cử viên nào.</p>
-                            </div>
-                        {% endif %}
-                    </form>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-warning text-center mt-4" role="alert">
+                            <h4 class="alert-heading">Không có ứng cử viên để bỏ phiếu.</h4>
+                            <p>Cuộc bầu cử này hiện chưa có ứng cử viên nào.</p>
+                        </div>
+                    {% endif %}
                 {% endif %}
 
                 <div class="mt-4">
@@ -248,11 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const keyFile = document.getElementById('keyFile');
     const public_key_textarea = document.getElementById('id_public_key');
     const private_key_pem_b64_textarea = document.getElementById('id_private_key_pem_b64');
-    // const salt_textarea = document.getElementById('id_salt'); // BỎ DÒNG NÀY VÌ KHÔNG CẦN DÙNG SALT NỮA
-
-    // QUAN TRỌNG: Lấy trường mật khẩu giải mã nếu nó vẫn còn trong DOM (hoặc nếu bạn muốn kiểm soát nó)
-    // const password_for_key_decryption_input = document.getElementById('id_password_for_key_decryption'); // Dòng này có thể bị loại bỏ
-
+    
     const voteForm = document.getElementById('voteForm');
 
     if (voteForm) {
@@ -266,10 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 public_key_textarea.setAttribute('required', 'required');
                 private_key_pem_b64_textarea.setAttribute('required', 'required');
             }
-
         }
-
-
 
         fileInputSection.style.display = toggleKeyInputMethod.checked ? 'block' : 'none';
         stringInputSection.style.display = toggleKeyInputMethod.checked ? 'none' : 'block';
@@ -288,5 +231,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-{% endblock%}
+{% endblock %}

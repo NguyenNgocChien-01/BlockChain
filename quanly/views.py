@@ -9,6 +9,7 @@ from django.core.management import call_command
 from django.conf import settings
 from django.core.mail import EmailMessage
 from quanly.crypto_utils import generate_threshold_keys, combine_shares_and_decrypt
+from user.user_utils import get_client_ip
 from .models import *
 from quanly.blockchain_core import Blockchain, VoteTransaction
 from quanly.blockchain_utils import *
@@ -429,40 +430,63 @@ def revoke_voter_status(request, user_id):
 def ketqua_baucu(request, id):
     """
     Hiển thị kết quả bầu cử bằng cách đọc file JSON đã được giải mã,
-    chỉ sau khi "Lễ Kiểm phiếu" đã hoàn tất.
+    có cơ chế phát hiện và xử lý sửa đổi.
     """
-    baucu = get_object_or_404(Ballot, id=id)
+    baucu = get_object_or_404(Ballot, pk=id)
+    
+    if baucu.end_date > timezone.now():
+        messages.warning(request, "Kết quả chỉ có thể xem sau khi cuộc bầu cử kết thúc.")
+        return redirect('chitiet_baucu', id=id)
+
+    # Lấy đường dẫn đến file kết quả đã giải mã bằng hàm tiện ích
+    filepath = get_decrypted_results_path(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
 
 
+    # --- BƯỚC 1: KIỂM TRA TÍNH TOÀN VẸN CỦA FILE TRƯỚC KHI ĐỌC ---
+    is_valid, verify_msg = verify_decrypted_results_integrity(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
+    if not is_valid:
+        # Nếu file đã bị sửa đổi, thực hiện các bước khẩn cấp
+        # backup_path = backup_tampered_file(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
+        # messages.info(request, f"Đang kiểm tra tính toàn vẹn của file kết quả: {backup_path}")
+        # return redirect('chitiet_baucu', id=id)
 
-    # 2. Lấy đường dẫn đến file kết quả đã giải mã
-    # Sử dụng đường dẫn mới đã được định nghĩa
-    original_path = get_blockchain_file_path(ballot_id=id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
-    base, ext = os.path.splitext(os.path.basename(original_path))
-    decrypted_filename = f"{base}_decrypted_results.json"
-    filepath = os.path.join(BLOCKCHAIN_EXPORT_DIR_RESULT, decrypted_filename)
+        log_tampering_event(
+            ballot=baucu,
+            verify_msg=verify_msg,
+            user=request.user,
+            ip_address=get_client_ip(request)
+        )
+        
+        # Thử phục hồi từ bản sao lưu an toàn gần nhất
+        if restore_from_backup(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT):
+            messages.warning(request, "CẢNH BÁO: File kết quả đã bị thay đổi! Hệ thống đã tự động phục hồi từ bản sao lưu an toàn gần nhất.")
+        else:
+            messages.error(request, "LỖI BẢO MẬT: File kết quả đã bị thay đổi và không thể phục hồi. Vui lòng liên hệ quản trị viên.")
+        
+        return redirect('chitiet_baucu', id=id)
+
+    ketqua = []
+    tong_so_phieu = 0
 
     try:
-        # 3. Đọc và hiển thị kết quả từ file
+        # --- BƯỚC 2: ĐỌC VÀ HIỂN THỊ KẾT QUẢ TỪ FILE SAU KHI ĐÃ XÁC MINH ---
         with open(filepath, 'r', encoding='utf-8') as f:
-            results_data = json.load(f)
-        
-        ketqua = results_data.get('results', [])
-        tong_so_phieu = sum(item['count'] for item in ketqua)
+            data = json.load(f)
+            ketqua = data.get('results', [])
+            tong_so_phieu = sum(item['count'] for item in ketqua)
 
     except FileNotFoundError:
-        messages.error(request, "Không tìm thấy file kết quả đã giải mã.")
-        return redirect('chitiet_baucu', id=id)
+        messages.warning(request, "File kết quả chưa được tạo. Vui lòng chạy lệnh kiểm phiếu.")
+        ketqua = []
     except Exception as e:
         messages.error(request, f"Lỗi khi đọc file kết quả: {e}")
-        return redirect('chitiet_baucu', id=id)
+        ketqua = []
         
     context = {
         'ballot': baucu,
-        'results': ketqua, # Giữ tên biến 'ketqua' để khớp với template
-
+        'results': ketqua,
+        'tong_so_phieu': tong_so_phieu,
     }
-
     return render(request, 'adminpages/baucu/ketqua.html', context)
 
 def danhsach_phieubau(request, ballot_id):
@@ -731,8 +755,9 @@ def handle_tally_votes(request, ballot, submitted_shares_qs):
         candidates_info = {c.id: c.name for c in Candidate.objects.filter(id__in=voted_candidate_ids)}
         
         for candidate_id, count in vote_counts.items():
+            candidate_name = Candidate.objects.get(id=candidate_id).name
             results.append({
-                'name': candidates_info.get(candidate_id, f"ID không xác định: {candidate_id}"),
+                'name': candidates_info.get(candidate_id, f"{candidate_name}"),
                 'count': count
             })
         
@@ -746,7 +771,7 @@ def handle_tally_votes(request, ballot, submitted_shares_qs):
         # submitted_shares_qs.delete()
 
         messages.success(request, "Kiểm phiếu và giải mã hoàn tất! Kết quả đã được công khai hóa.")
-        return render(request, 'adminpages/baucu/tally_results.html', {
+        return render(request, 'adminpages/baucu/ketqua.html', {
             'ballot': ballot,
             'results': sorted_results
         })

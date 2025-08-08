@@ -29,6 +29,7 @@ from .user_utils import Wallet, VoteValidator, get_client_ip
 from quanly.blockchain_core import Blockchain, VoteTransaction
 from quanly.blockchain_utils import get_blockchain_file_path
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BLOCKCHAIN_EXPORT_DIR_RESULT = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain_result')
 # Create your views here.
 def user(request):
@@ -116,22 +117,16 @@ def ds_baucu(request):
     
     return render(request, 'userpages/baucu/baucu.html', context)
 
-
 def chitiet_baucu_u(request, id):
-    """
-    Hiển thị trang chi tiết. Nếu cuộc bầu cử đã kết thúc,
-    sẽ tự động kiểm tra và hiển thị kết quả nếu có.
-    """
     ballot = get_object_or_404(Ballot, pk=id)
     candidates = Candidate.objects.filter(ballot=ballot)
     
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     is_active = ballot.start_date <= now <= ballot.end_date
     is_ended = now > ballot.end_date
     is_voter = hasattr(request.user, 'voter')
     has_voted = False
 
-    # Các biến mới để xử lý kết quả
     election_results = None
     is_pending_tally = False
     winners = []
@@ -143,30 +138,25 @@ def chitiet_baucu_u(request, id):
         ).exists()
 
     if is_ended:
-        original_path = get_blockchain_file_path(ballot_id=id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
-        base, ext = os.path.splitext(os.path.basename(original_path))
-        decrypted_filename = f"{base}_decrypted_results.json"
-        filepath = os.path.join(BLOCKCHAIN_EXPORT_DIR_RESULT, decrypted_filename)
-
+        # Kiểm tra nếu kết quả đã được niêm phong
+        filepath = get_decrypted_results_path(ballot.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
         if os.path.exists(filepath):
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    results_data = json.load(f)
-                election_results = results_data.get('results', [])
-
-                if election_results:
-                    max_votes = max(item['count'] for item in election_results)
+            is_valid, verify_msg = verify_decrypted_results_integrity(ballot.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
+            if not is_valid:
+                messages.error(request, f"LỖI BẢO MẬT: File kết quả đã bị thay đổi! {verify_msg}")
+            else:
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        results_data = json.load(f)
                     
-                    # --- SỬA LỖI Ở ĐÂY: Dùng .strip() để loại bỏ khoảng trắng thừa ---
-                    winner_names = [
-                        item['name'].strip() for item in election_results if item['count'] == max_votes
-                    ]
-                    # --- KẾT THÚC SỬA LỖI ---
-                    
-                    winners = Candidate.objects.filter(ballot=ballot, name__in=winner_names)
+                    election_results = results_data.get('results', [])
 
-            except Exception:
-                is_pending_tally = True
+                    if election_results:
+                        max_votes = max(item['count'] for item in election_results)
+                        winner_names = [item['name'].strip() for item in election_results if item['count'] == max_votes]
+                        winners = Candidate.objects.filter(ballot=ballot, name__in=winner_names)
+                except (FileNotFoundError, json.JSONDecodeError, Exception):
+                    is_pending_tally = True
         else:
             is_pending_tally = True
 
@@ -176,7 +166,7 @@ def chitiet_baucu_u(request, id):
         'is_active': is_active,
         'has_voted': has_voted,
         'is_voter': is_voter,
-        'is_ended': is_ended,   
+        'is_ended': is_ended, 
         'election_results': election_results,
         'is_pending_tally': is_pending_tally,
         'winners': winners,

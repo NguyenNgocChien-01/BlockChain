@@ -108,6 +108,32 @@ def restore_from_backup(ballot_id: int, base_export_dir: str) -> bool:
         return True
     return False
 
+def restore_from_backup_result(ballot_id: int, export_dir: str) -> tuple[bool, str]:
+    """
+    Phục hồi file sổ cái từ bản sao lưu an toàn gần nhất.
+    Trả về True và thông báo nếu thành công, False và lỗi nếu thất bại.
+    """
+    source_file_path = get_blockchain_file_path(ballot_id, export_dir)
+    backup_dir = os.path.join(export_dir, 'backups')
+    
+    # Tìm tất cả các file backup cho cuộc bầu cử này
+    backups = sorted(
+        [f for f in os.listdir(backup_dir) if f.startswith(f"blockchain_{ballot_id}")]
+    , reverse=True)
+    
+    if not backups:
+        return False, "Không có bản sao lưu nào để phục hồi."
+        
+    last_backup_path = os.path.join(backup_dir, backups[0])
+    
+    try:
+        shutil.copyfile(last_backup_path, source_file_path)
+        return True, f"Đã phục hồi file từ bản sao lưu gần nhất: {os.path.basename(last_backup_path)}."
+    except FileNotFoundError:
+        return False, f"Không tìm thấy file backup tại đường dẫn: {last_backup_path}."
+    except Exception as e:
+        return False, f"Lỗi không xác định khi phục hồi: {e}."
+
 def backup_tampered_file(ballot_id: int, base_export_dir: str) -> str:
     """Tạo bản sao lưu của file bị thay đổi vào thư mục 'tampered_backups'."""
     original_path = get_blockchain_file_path(ballot_id, base_export_dir)
@@ -132,9 +158,7 @@ def backup_tampered_file(ballot_id: int, base_export_dir: str) -> str:
 # === 2. HÀM TIỆN ÍCH MỚI CHO FILE KẾT QUẢ (ĐÃ GIẢI MÃ) ===
 # ==============================================================================
 
-# ==============================================================================
-# === 2. HÀM TIỆN ÍCH MỚI CHO FILE KẾT QUẢ (ĐÃ GIẢI MÃ) ===
-# ==============================================================================
+
 
 def get_decrypted_results_path(ballot_id: int, base_export_dir: str) -> str:
     """Trả về đường dẫn đến file kết quả đã được giải mã."""
@@ -143,39 +167,53 @@ def get_decrypted_results_path(ballot_id: int, base_export_dir: str) -> str:
     decrypted_filename = f"{base}_decrypted_results.json"
     return os.path.join(base_export_dir, decrypted_filename)
 
-def save_decrypted_blockchain_to_json(ballot, sorted_results, base_export_dir: str) -> tuple[bool, str]:
-    """Lưu kết quả đã giải mã ra file JSON, đã được niêm phong bằng 'results_hash'."""
+def save_decrypted_blockchain_to_json(ballot: Ballot, sorted_results: list, base_export_dir: str) -> tuple[bool, str]:
+    """
+    Lưu kết quả đã giải mã ra file JSON, đã được niêm phong bằng 'results_hash'.
+    """
     filepath = get_decrypted_results_path(ballot.id, base_export_dir)
     try:
+        # Bước 1: Tạo một chuỗi JSON từ kết quả đã sắp xếp
         results_string = json.dumps(sorted_results, sort_keys=True, ensure_ascii=False)
+        
+        # Bước 2: Tính toán hash của chuỗi kết quả đó
         results_hash = hashlib.sha256(results_string.encode('utf-8')).hexdigest()
 
-        final_data = {
+        # Bước 3: Tạo cấu trúc dữ liệu cho file kết quả
+        final_results_data = {
             "ballot_id": ballot.id,
             "ballot_title": ballot.title,
             "tally_completed_at": timezone.localtime(timezone.now()).isoformat(),
-            "results_hash": results_hash, # <-- NIÊM PHONG
+            "results_hash": results_hash, # <-- NIÊM PHONG KẾT QUẢ
             "results": sorted_results
         }
+
+        # Bước 4: Ghi dữ liệu vào file JSON
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(final_data, f, indent=4, ensure_ascii=False)
-        return True, f"Đã lưu thành công file kết quả: {os.path.basename(filepath)}"
+            json.dump(final_results_data, f, indent=4, ensure_ascii=False)
+        
+        return True, f"Đã lưu thành công file kết quả đã giải mã: {os.path.basename(filepath)}"
     except Exception as e:
         return False, f"Lỗi khi lưu file kết quả: {e}"
 
 def verify_decrypted_results_integrity(ballot_id: int, base_export_dir: str) -> tuple[bool, str]:
-    """Kiểm tra tính toàn vẹn của file kết quả đã giải mã."""
+    """
+    Kiểm tra tính toàn vẹn của file kết quả đã giải mã bằng cách xác minh results_hash nội bộ.
+    """
     filepath = get_decrypted_results_path(ballot_id, base_export_dir)
     if not os.path.exists(filepath):
         return True, "File kết quả chưa tồn tại."
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
         if "results" not in data or "results_hash" not in data:
             return False, "File kết quả bị hỏng cấu trúc."
         
         stored_hash = data["results_hash"]
         results_data = data["results"]
+        
+        # Tái tạo chuỗi JSON và tính toán hash
         recalculated_string = json.dumps(results_data, sort_keys=True, ensure_ascii=False)
         current_hash = hashlib.sha256(recalculated_string.encode('utf-8')).hexdigest()
         
@@ -185,7 +223,7 @@ def verify_decrypted_results_integrity(ballot_id: int, base_export_dir: str) -> 
             return False, "File kết quả đã bị sửa đổi! Hash không khớp."
     except Exception as e:
         return False, f"Lỗi khi xác minh file kết quả: {e}"
-
+    
 def get_backup_results_path(ballot_id: int, base_export_dir: str) -> str:
     """Trả về đường dẫn đến file backup cho kết quả đã giải mã."""
     original_path = get_decrypted_results_path(ballot_id, base_export_dir)
@@ -278,31 +316,31 @@ def log_tampering_event(ballot, verify_msg, user, ip_address, backup_path=None):
         print(f"LỖI NGHIÊM TRỌNG: Không thể ghi log an ninh vào CSDL. Lỗi: {e}")
 
 
-def save_decrypted_blockchain_to_json(ballot, sorted_results, base_export_dir: str) -> tuple[bool, str]:
-    """
-    Hàm mới: Lưu kết quả đã được giải mã và kiểm đếm ra một file JSON công khai.
-    """
-    # Tạo một tên file riêng cho kết quả đã giải mã
-    original_path = get_blockchain_file_path(ballot.id, base_export_dir)
-    base, ext = os.path.splitext(os.path.basename(original_path))
-    decrypted_filename = f"{base}_decrypted_results.json"
-    decrypted_filepath = os.path.join(base_export_dir, decrypted_filename)
+# def save_decrypted_blockchain_to_json(ballot, sorted_results, base_export_dir: str) -> tuple[bool, str]:
+#     """
+#     Hàm mới: Lưu kết quả đã được giải mã và kiểm đếm ra một file JSON công khai.
+#     """
+#     # Tạo một tên file riêng cho kết quả đã giải mã
+#     original_path = get_blockchain_file_path(ballot.id, base_export_dir)
+#     base, ext = os.path.splitext(os.path.basename(original_path))
+#     decrypted_filename = f"{base}_decrypted_results.json"
+#     decrypted_filepath = os.path.join(base_export_dir, decrypted_filename)
 
-    try:
-        # Tạo cấu trúc dữ liệu cho file kết quả
-        final_results_data = {
-            "ballot_id": ballot.id,
-            "ballot_title": ballot.title,
-            "tally_completed_at": timezone.localtime(timezone.now()).isoformat(),
-            "results": sorted_results
-        }
+#     try:
+#         # Tạo cấu trúc dữ liệu cho file kết quả
+#         final_results_data = {
+#             "ballot_id": ballot.id,
+#             "ballot_title": ballot.title,
+#             "tally_completed_at": timezone.localtime(timezone.now()).isoformat(),
+#             "results": sorted_results
+#         }
 
-        # Ghi dữ liệu vào file JSON
-        with open(decrypted_filepath, 'w', encoding='utf-8') as f:
-            json.dump(final_results_data, f, indent=4, ensure_ascii=False)
+#         # Ghi dữ liệu vào file JSON
+#         with open(decrypted_filepath, 'w', encoding='utf-8') as f:
+#             json.dump(final_results_data, f, indent=4, ensure_ascii=False)
         
-        return True, f"Đã lưu thành công file kết quả đã giải mã: {decrypted_filename}"
-    except Exception as e:
-        return False, f"Lỗi khi lưu file JSON đã giải mã: {e}"
+#         return True, f"Đã lưu thành công file kết quả đã giải mã: {decrypted_filename}"
+#     except Exception as e:
+#         return False, f"Lỗi khi lưu file JSON đã giải mã: {e}"
     
 
