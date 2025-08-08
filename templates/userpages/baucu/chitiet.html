@@ -26,6 +26,7 @@
                         <h4>Thời gian</h4>
                         <p><strong>Bắt đầu:</strong> {{ baucu.start_date|date:"H:i, d/m/Y" }}</p>
                         <p><strong>Kết thúc:</strong> {{ baucu.end_date|date:"H:i, d/m/Y" }}</p>
+                        <p><strong>Được bầu tối đa:</strong> {{ baucu.max_choices }} người</p>
                     </div>
                 </div>
                 <hr>
@@ -56,30 +57,47 @@
                         <p>Tài khoản của bạn chưa được đăng ký làm cử tri. Vui lòng <a href="{% url 'view_dangky_cutri' %}" class="alert-link">đăng ký làm cử tri</a> để có thể tham gia bỏ phiếu.</p>
                     </div>
                 {% elif is_ended %}
-                    <!-- *** KCÔNG BỐ NGƯỜI THẮNG CUỘC *** -->
-                    <div class="alert alert-light text-center border-primary shadow-sm py-4">
-                        <i class="ti ti-trophy text-warning" style="font-size: 4rem;"></i>
-                        <h4 class="alert-heading mt-2">CUỘC BẦU CỬ ĐÃ KẾT THÚC!</h4>
-                        <hr>
-                        {% if winners %}
-                            {% if winners|length > 1 %}
-                                <p class="lead">Kết quả hòa giữa các ứng viên:</p>
-                                {% for winner in winners %}
-                                    <h3 class="fw-bold d-inline-block me-3">{{ winner.name }}</h3>
-                                {% endfor %}
-                            {% else %}
-                                {% with winner=winners.0 %}
-                                <p class="lead">Người thắng cuộc là:</p>
-                                {% if winner.avatar %}
-                                    <img src="{{ winner.avatar.url }}" class="rounded-circle my-3 shadow" alt="{{ winner.name }}" width="120" height="120">
-                                {% endif %}
-                                <h2 class="fw-bold text-primary">{{ winner.name }}</h2>
-                                {% endwith %}
-                            {% endif %}
-                        {% else %}
-                            <p class="text-muted">Chưa có phiếu bầu nào được ghi nhận trong cuộc bầu cử này.</p>
-                        {% endif %}
-                    </div>
+                    {# --- LOGIC MỚI: HIỂN THỊ KẾT QUẢ HOẶC THÔNG BÁO CHỜ --- #}
+                    {% if election_results %}
+                        <div class="text-center border-primary shadow-sm py-4">
+                            <i class="ti ti-trophy text-warning" style="font-size: 4rem;"></i>
+                            <h4 class="alert-heading mt-2">CUỘC BẦU CỬ ĐÃ KẾT THÚC!</h4>
+                            <p class="lead">Dưới đây là kết quả cuối cùng:</p>
+                            <hr>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Hạng</th>
+                                            <th>Ứng cử viên</th>
+                                            <th class="text-end">Số phiếu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in election_results %}
+                                        <tr>
+                                            <td><strong>{{ forloop.counter }}</strong></td>
+                                            <td>{{ item.name }}</td>
+                                            <td class="text-end">{{ item.count }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% elif is_pending_tally %}
+                        <div class="alert alert-info text-center" role="alert">
+                            <i class="ti ti-hourglass-empty f-48 mb-3"></i>
+                            <h4 class="alert-heading">Đang chờ kiểm phiếu</h4>
+                            <p>Cuộc bầu cử đã kết thúc. Kết quả đang được Hội đồng Kiểm phiếu xử lý và sẽ được công bố sớm. Vui lòng quay lại sau.</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary text-center" role="alert">
+                            <i class="ti ti-info-circle f-48 mb-3"></i>
+                            <h4 class="alert-heading">Cuộc bầu cử đã kết thúc</h4>
+                            <p>Không có phiếu bầu nào được ghi nhận trong cuộc bầu cử này.</p>
+                        </div>
+                    {% endif %}
                 {% elif has_voted %}
                         <div class="list-group mb-3">
                             {% for ungcuvien in ungcuviens %}

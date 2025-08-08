@@ -108,7 +108,7 @@ class Voter(models.Model):
 class Vote(models.Model):
     """Bảng đại diện cho mỗi phiếu bầu, hoạt động như một giao dịch (transaction)."""
     ballot = models.ForeignKey(Ballot, on_delete=models.CASCADE, verbose_name="Cuộc bầu cử")
-    # candidates = models.ManyToManyField(Candidate, verbose_name="Các ứng viên đã bầu")
+    candidates = models.ManyToManyField(Candidate, verbose_name="Các ứng viên đã bầu", null=True,blank=True )
     encrypted_vote_data = models.TextField("Dữ liệu phiếu bầu đã mã hóa")
     # Dữ liệu mã hóa để đảm bảo tính toàn vẹn và xác thực
     voter_public_key = models.TextField("Khóa công khai của cử tri")
@@ -120,8 +120,8 @@ class Vote(models.Model):
         verbose_name_plural = "Các Phiếu Bầu (Votes)"
 
     def __str__(self):
-        candidate_names = ", ".join([c.name for c in self.candidates.all()])
-        return f"Phiếu cho: {candidate_names}"
+        # Hiển thị thông tin không phụ thuộc vào nội dung đã mã hóa
+        return f"Phiếu bầu mã hóa #{self.id} cho '{self.ballot.title}'"
     
 
 
@@ -150,3 +150,21 @@ class UserTamperLog(models.Model):
 
 
 
+class SubmittedKeyShare(models.Model):
+    """
+    Lưu trữ các mảnh khóa bí mật đã được nộp bởi thành viên Hội đồng
+    cho một cuộc bầu cử cụ thể.
+    """
+    ballot = models.ForeignKey(Ballot, on_delete=models.CASCADE, related_name="submitted_shares")
+    council_member = models.ForeignKey(User, on_delete=models.CASCADE)
+    key_share = models.TextField("Mảnh khóa bí mật đã nộp")
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Đảm bảo mỗi thành viên chỉ có thể nộp 1 mảnh khóa cho 1 cuộc bầu cử
+        unique_together = ('ballot', 'council_member')
+        verbose_name = "Mảnh khóa Đã nộp"
+        verbose_name_plural = "Các Mảnh khóa Đã nộp"
+
+    def __str__(self):
+        return f"Mảnh khóa của {self.council_member.username} cho '{self.ballot.title}'"

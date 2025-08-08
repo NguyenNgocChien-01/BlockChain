@@ -30,11 +30,8 @@ class BallotAdmin(admin.ModelAdmin):
         # dựa trên giá trị của trường 'type' để trải nghiệm tốt hơn.
         return fieldsets
 from .models import *
-# admin.site.register(Ballot)
 admin.site.register(Voter)
 admin.site.register(Vote)
-# admin.site.register(Block)
 admin.site.register(Candidate)
 admin.site.register(UserTamperLog)
-
-# Register your models here.
+admin.site.register(SubmittedKeyShare)

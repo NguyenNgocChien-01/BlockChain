@@ -202,3 +202,31 @@ def log_tampering_event(ballot, verify_msg, user, ip_address, backup_path=None):
         print(f"Đã ghi cảnh báo an ninh cho cuộc bầu cử ID {ballot.id} vào CSDL.")
     except Exception as e:
         print(f"LỖI NGHIÊM TRỌNG: Không thể ghi log an ninh vào CSDL. Lỗi: {e}")
+
+
+def save_decrypted_blockchain_to_json(ballot, sorted_results, base_export_dir: str) -> tuple[bool, str]:
+    """
+    Hàm mới: Lưu kết quả đã được giải mã và kiểm đếm ra một file JSON công khai.
+    """
+    # Tạo một tên file riêng cho kết quả đã giải mã
+    original_path = get_blockchain_file_path(ballot.id, base_export_dir)
+    base, ext = os.path.splitext(os.path.basename(original_path))
+    decrypted_filename = f"{base}_decrypted_results.json"
+    decrypted_filepath = os.path.join(base_export_dir, decrypted_filename)
+
+    try:
+        # Tạo cấu trúc dữ liệu cho file kết quả
+        final_results_data = {
+            "ballot_id": ballot.id,
+            "ballot_title": ballot.title,
+            "tally_completed_at": timezone.localtime(timezone.now()).isoformat(),
+            "results": sorted_results
+        }
+
+        # Ghi dữ liệu vào file JSON
+        with open(decrypted_filepath, 'w', encoding='utf-8') as f:
+            json.dump(final_results_data, f, indent=4, ensure_ascii=False)
+        
+        return True, f"Đã lưu thành công file kết quả đã giải mã: {decrypted_filename}"
+    except Exception as e:
+        return False, f"Lỗi khi lưu file JSON đã giải mã: {e}"

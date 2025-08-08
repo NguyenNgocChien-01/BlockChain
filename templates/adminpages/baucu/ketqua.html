@@ -1,62 +1,45 @@
 {% extends 'adminpages/index.html' %}
 {% load static %}
 
-{% block title %}Kết Quả: {{ baucu.title }}{% endblock %}
+{% block title %}Kết Quả: {{ ballot.title }}{% endblock %}
 
 {% block content %}
 <div class="pc-container">
     <div class="pc-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Kết Quả Bầu Cử: {{ baucu.title }}</h4>
-                    <a href="{% url 'danhsach_phieubau' baucu.id %}" class="btn btn-outline-secondary">
-                        <i class="ti ti-book"></i> Xem Sổ Cái Chi Tiết
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">Tổng số phiếu đã bầu: <strong>{{ tong_so_phieu }}</strong></p>
-                <hr>
-                
-                {% if ketqua %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Hạng</th>
-                                    <th>Ứng Cử Viên</th>
-                                    <th class="text-end">Số Phiếu</th>
-                                    <th class="text-end">Tỷ Lệ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in ketqua %}
-                                <tr>
-                                    <td><strong>{{ forloop.counter }}</strong></td>
-                                    <td><h5 class="mb-0">{{ item.candidate__name }}</h5></td>
-                                    <td class="text-end fw-bold">{{ item.so_phieu }}</td>
-                                    <td class="text-end text-muted">{{ item.phan_tram }}%</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="ti ti-chart-pie f-48 text-muted mb-3"></i>
-                    <h5 class="text-muted">Chưa có phiếu bầu nào</h5>
-                    <p class="text-muted mb-0">Hiện chưa có phiếu bầu nào được ghi nhận cho cuộc bầu cử này.</p>
-                </div>
-                {% endif %}
-                
-                <div class="mt-5">
-                    <a href="{% url 'baucu' %}" class="btn btn-secondary">
-                        <i class="ti ti-arrow-left"></i> Quay lại danh sách
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="card">
+    <div class="card-header">
+        <h4><i class="ti ti-chart-bar 
+        -2"></i>Kết quả Cuối cùng cho: {{ ballot.title }}</h4>
+    </div>
+    <div class="card-body">
+        {% comment %} <div class="alert alert-success">
+            <h5 class="alert-heading">Giải mã thành công!</h5>
+            <p>Dưới đây là kết quả kiểm phiếu cuối cùng.</p>
+        </div> {% endcomment %}
+        
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Hạng</th>
+                    <th>Ứng cử viên</th>
+                    <th class="text-end">Số phiếu</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in results %}
+                <tr>
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td>{{ item.name }}</td>
+                    <td class="text-end">{{ item.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{% url 'chitiet_baucu' ballot.id  %}" class="btn btn-secondary mt-3">Quay lại</a>
+    </div>
+</div>
+
     </div>
 </div>
 {% endblock %}

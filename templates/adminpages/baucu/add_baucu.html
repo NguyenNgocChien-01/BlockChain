@@ -67,45 +67,38 @@
     <div class="form-group mb-3" id="add_eligible_voters_wrapper" style="display: none;">
         <label class="form-label" for="add_id_eligible_voters">Chọn Cử tri được phép tham gia</label>
         <select multiple class="form-control" id="add_id_eligible_voters" name="eligible_voters" size="5">
+        {% if voters %}
             {% for voter in voters %}
                 <option value="{{ voter.id }}">{{ voter.user.username }}</option>
             {% endfor %}
+        {% else %}
+            <option value="" disabled>Không có cử tri nào được phép</option>
+        {% endif %}
         </select>
         <small class="form-text text-muted">Giữ phím Ctrl để chọn nhiều cử tri.</small>
     </div>
 
     <hr>
     
-    <!-- THÊM NÚT CHUYỂN ĐỔI AN NINH -->
-    <div class="form-check form-switch mb-3">
-        <input class="form-check-input" type="checkbox" id="toggleSecuritySettings" name="toggleSecuritySettings" checked>
-        <label class="form-check-label" for="toggleSecuritySettings">Sử dụng Cài đặt An ninh & Kiểm phiếu nâng cao</label>
-        <small class="form-text text-muted d-block">
-            Sử dụng kỹ thuật mật mã ngưỡng để đảm bảo tính công bằng và chống thông đồng khi kiểm phiếu.
-        </small>
-    </div>
     
-    <!-- KHỐI CÀI ĐẶT AN NINH (SẼ ĐƯỢC ẨN/HIỆN) -->
-    <div id="securitySettingsSection">
-        <h5>Cài đặt An ninh & Kiểm phiếu</h5>
-        <div class="row">
-            <div class="col-md-8">
-                <div class="form-group mb-3">
-                    <label class="form-label" for="add_council_members">Chọn Thành viên Hội đồng Kiểm phiếu</label>
-                    <select multiple class="form-control" id="add_council_members" name="council_members" size="5" required>
-                        {% for member in potential_council_members %}
-                            <option value="{{ member.id }}">{{ member.username }} ({{ member.get_full_name }})</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text text-muted">Chọn các thành viên có uy tín để tham gia giải mã phiếu bầu.</small>
-                </div>
+   <h5>Cài đặt An ninh & Kiểm phiếu</h5>
+    <p class="text-muted">Tất cả các cuộc bầu cử đều được bảo mật bằng Mật mã Ngưỡng. Vui lòng chọn Hội đồng Kiểm phiếu và đặt ngưỡng giải mã.</p>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label class="form-label" for="add_council_members">Chọn Thành viên Hội đồng</label>
+                <select multiple class="form-control" id="add_council_members" name="council_members" size="5" required>
+                    {% for member in potential_council_members %}
+                        <option value="{{ member.id }}">{{ member.username }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <div class="col-md-4">
-                <div class="form-group mb-3">
-                    <label class="form-label" for="add_threshold">Ngưỡng giải mã</label>
-                    <input type="number" class="form-control" id="add_threshold" name="threshold" value="2" min="2" required>
-                    <small class="form-text text-muted">Số lượng thành viên tối thiểu cần thiết để giải mã phiếu bầu. Phải nhỏ hơn hoặc bằng số lượng thành viên hội đồng.</small>
-                </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label" for="add_threshold">Ngưỡng giải mã</label>
+                <input type="number" class="form-control" id="add_threshold" name ="threshold"value="2" min="2" required>
+                <small class="form-text text-muted">Số lượng tối thiểu cần thiết.</small>
             </div>
         </div>
     </div>

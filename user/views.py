@@ -29,7 +29,7 @@ from .user_utils import Wallet, VoteValidator, get_client_ip
 from quanly.blockchain_core import Blockchain, VoteTransaction
 from quanly.blockchain_utils import get_blockchain_file_path
 
-
+BLOCKCHAIN_EXPORT_DIR_RESULT = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain_result')
 # Create your views here.
 def user(request):
     if not request.user.is_authenticated:
@@ -117,17 +117,22 @@ def ds_baucu(request):
     return render(request, 'userpages/baucu/baucu.html', context)
 
 def chitiet_baucu_u(request, id):
-
+    """
+    Hiển thị trang chi tiết. Nếu cuộc bầu cử đã kết thúc,
+    sẽ đọc và hiển thị kết quả từ file JSON đã giải mã.
+    """
     ballot = get_object_or_404(Ballot, pk=id)
     candidates = Candidate.objects.filter(ballot=ballot)
     
-    # Các biến kiểm tra trạng thái
     now = timezone.now()
     is_active = ballot.start_date <= now <= ballot.end_date
-    is_ended = now > ballot.end_date 
-    has_voted = False
+    is_ended = now > ballot.end_date
     is_voter = hasattr(request.user, 'voter')
-    winners = [] 
+    has_voted = False
+
+    # Các biến mới để xử lý kết quả
+    election_results = None
+    is_pending_tally = False
 
     if is_voter:
         has_voted = Vote.objects.filter(
@@ -135,22 +140,27 @@ def chitiet_baucu_u(request, id):
             voter_public_key=request.user.voter.public_key
         ).exists()
 
-
+    # Chỉ xử lý kết quả khi cuộc bầu cử đã kết thúc
     if is_ended:
-        # Đếm số phiếu cho mỗi ứng viên
-        results = Vote.objects.filter(ballot=ballot)\
-            .values('candidate')\
-            .annotate(vote_count=Count('id'))\
-            .order_by('-vote_count')
+        # --- LOGIC MỚI: TỰ ĐỘNG KIỂM TRA SỰ TỒN TẠI CỦA FILE KẾT QUẢ ---
+        # Xây dựng đường dẫn đến file kết quả
+        original_path = get_blockchain_file_path(ballot_id=id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
+        base, ext = os.path.splitext(os.path.basename(original_path))
+        decrypted_filename = f"{base}_decrypted_results.json"
+        filepath = os.path.join(BLOCKCHAIN_EXPORT_DIR_RESULT, decrypted_filename)
 
-        # Nếu có kết quả
-        if results:
-            # Lấy số phiếu cao nhất
-            max_votes = results[0]['vote_count']
-            # Tìm tất cả các ứng viên có số phiếu bằng số phiếu cao nhất (xử lý trường hợp hòa)
-            winner_ids = [r['candidate'] for r in results if r['vote_count'] == max_votes]
-            winners = Candidate.objects.filter(id__in=winner_ids)
-
+        # Nếu file kết quả đã tồn tại, đọc nó
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    results_data = json.load(f)
+                election_results = results_data.get('results', [])
+            except Exception:
+                # Nếu file tồn tại nhưng bị lỗi, coi như vẫn đang chờ
+                is_pending_tally = True
+        else:
+            # Nếu file chưa tồn tại, nghĩa là đang chờ kiểm phiếu
+            is_pending_tally = True
 
     context = {
         'baucu': ballot,
@@ -158,11 +168,11 @@ def chitiet_baucu_u(request, id):
         'is_active': is_active,
         'has_voted': has_voted,
         'is_voter': is_voter,
-        'is_ended': is_ended,  
-        'winners': winners,    
+        'is_ended': is_ended,   
+        'election_results': election_results, # Truyền kết quả
+        'is_pending_tally': is_pending_tally, # Truyền trạng thái chờ
     }
     return render(request, 'userpages/baucu/chitiet.html', context)
-
 def view_dangky_cutri(request):
     return render(request, 'userpages/dangky_cutri.html')
 
@@ -343,6 +353,7 @@ def get_client_ip(request):
 #     }
 #     return render(request, 'userpages/baucu/change_vote.html', context)
 
+from quanly.crypto_utils import encrypt_vote
 def bo_phieu(request, id):
     if request.method != 'POST':
         return redirect('chitiet_baucu_u', id=id)
@@ -350,92 +361,113 @@ def bo_phieu(request, id):
     ballot = get_object_or_404(Ballot, pk=id)
     blockchain_export_dir = os.path.join(settings.BASE_DIR, 'quanly', 'save_blockchain')
     file_path = get_blockchain_file_path(ballot.id, blockchain_export_dir)
-    
+
+        # --- BƯỚC 1: KIỂM TRA TÍNH TOÀN VẸN CỦA SỔ CÁI (NẾU CÓ) ---
     is_valid, verify_msg = verify_blockchain_integrity(ballot.id, blockchain_export_dir)
+
     if not is_valid:
         tampered_backup_path = backup_tampered_file(ballot.id, blockchain_export_dir)
+
         log_tampering_event(
-            ballot=ballot, verify_msg=verify_msg, user=request.user,
-            ip_address=get_client_ip(request), backup_path=tampered_backup_path
+            ballot=ballot,
+            verify_msg=verify_msg,
+            user=request.user,
+            ip_address=get_client_ip(request),
+            backup_path=tampered_backup_path
         )
-        if not restore_from_backup(ballot.id, blockchain_export_dir):
-            messages.error(request, "LỖI BẢO MẬT: Sổ cái đã bị thay đổi và không có bản sao lưu để phục hồi.")
+
+        # Thử phục hồi từ bản sao lưu
+        if restore_from_backup(ballot.id, blockchain_export_dir):
+            messages.warning(
+                request,
+                "CẢNH BÁO: Sổ cái đã bị thay đổi! Hệ thống đã tự động phục hồi. Giao dịch của bạn sẽ được xử lý."
+            )
+        else:
+            messages.error(
+                request,
+                "LỖI BẢO MẬT: Sổ cái đã bị thay đổi và không có bản sao lưu để phục hồi."
+            )
             return redirect('chitiet_baucu_u', id=id)
-        messages.warning(request, "CẢNH BÁO: Sổ cái đã bị thay đổi! Hệ thống đã tự động phục hồi. Giao dịch của bạn sẽ được xử lý.")
 
     try:
-        # --- GIAI ĐOẠN 1: ĐỌC VÀ XÁC MINH SỔ CÁI HIỆN TẠI ---
-        blockchain = Blockchain(difficulty=2)
-        if os.path.exists(file_path):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                chain_data = json.load(f).get("blocks", [])
-                blockchain = Blockchain.from_dict_list(chain_data, difficulty=2)
-            
-            is_valid, error_msg = blockchain.is_chain_valid()
-            if not is_valid:
-                messages.error(request, f"LỖI BẢO MẬT: Sổ cái đã bị thay đổi! {error_msg}")
-                return redirect('chitiet_baucu_u', id=id)
-
         # --- GIAI ĐOẠN 2: XÁC THỰC QUYỀN VÀ DỮ LIỆU CỦA NGƯỜI DÙNG ---
         if not hasattr(request.user, 'voter'):
             raise ValueError('Bạn cần đăng ký làm cử tri để bỏ phiếu.')
         voter = request.user.voter
         
-        for block in blockchain.chain:
-            for tx in block.transactions:
-                if tx.voter_public_key == voter.public_key:
-                    raise ValueError('Bạn đã bỏ phiếu trong cuộc bầu cử này rồi.')
+        validator = VoteValidator(ballot, voter)
+        is_ok, error_msg = validator.is_eligible()
+        if not is_ok:
+            raise ValueError(error_msg)
 
         candidate_ids = request.POST.getlist('candidates')
+        if not candidate_ids:
+            raise ValueError('Bạn chưa chọn ứng cử viên nào.')
+        if len(candidate_ids) > ballot.max_choices:
+            raise ValueError(f"Bạn chỉ được phép chọn tối đa {ballot.max_choices} ứng cử viên.")
+
+        # --- GIAI ĐOẠN 3: MÃ HÓA PHIẾU BẦU VÀ KÝ SỐ ---
+        if not ballot.council_public_key:
+            raise ValueError("Cuộc bầu cử này chưa được thiết lập an ninh. Vui lòng liên hệ quản trị viên.")
+
+        encrypted_vote = encrypt_vote(ballot.council_public_key, candidate_ids)
+        
         key_data = json.loads(request.FILES['key_file'].read().decode('utf-8'))
         wallet = Wallet(private_key_pem_b64=key_data.get('private_key_pem_b64'), public_key_str=key_data.get('public_key'))
         if wallet.public_key_str != voter.public_key:
             raise ValueError('File khóa không khớp với tài khoản của bạn.')
         
         timestamp_str = timezone.localtime(timezone.now()).isoformat()
-        sorted_ids_str = ",".join(sorted(candidate_ids))
-        data_to_sign = f"{ballot.id}-{sorted_ids_str}-{voter.public_key}-{timestamp_str}"
+        data_to_sign = f"{ballot.id}-{encrypted_vote}-{voter.public_key}-{timestamp_str}"
         signature = wallet.sign(data_to_sign)
+        
         if not Wallet.verify(voter.public_key, data_to_sign, signature):
             raise ValueError('Lỗi xác minh chữ ký.')
 
-        # --- GIAI ĐOẠN 3: CẬP NHẬT VÀ GHI LẠI BLOCKCHAIN ---
+        # --- GIAI ĐOẠN 4: CẬP NHẬT VÀ GHI LẠI BLOCKCHAIN ---
         with transaction.atomic():
             vote_record = Vote.objects.create(
-                ballot=ballot, voter_public_key=voter.public_key,
-                signature=signature, timestamp=timestamp_str
+                ballot=ballot,
+                encrypted_vote_data=encrypted_vote,
+                voter_public_key=voter.public_key,
+                signature=signature,
+                timestamp=timestamp_str
             )
-            vote_record.candidates.set(candidate_ids)
-
-        candidate_names = ", ".join(Candidate.objects.filter(id__in=candidate_ids).values_list('name', flat=True))
+        
         new_transaction = VoteTransaction(
             vote_id=vote_record.id,
-            candidate_names=candidate_names,
+            encrypted_vote=encrypted_vote,
             voter_public_key=voter.public_key,
             signature=signature,
-            timestamp=timezone.localtime(timezone.now()).isoformat()
+            timestamp=vote_record.timestamp.isoformat()
         )
+        
+        blockchain = Blockchain(difficulty=2)
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                chain_data = json.load(f).get("blocks", [])
+                blockchain = Blockchain.from_dict_list(chain_data, difficulty=2)
         
         blockchain.add_block([new_transaction])
         
+        blocks_data_list = blockchain.to_dict_list()
+        full_blocks_json_string = json.dumps(blocks_data_list, indent=4, ensure_ascii=False, sort_keys=True)
+        new_chain_hash = hashlib.sha256(full_blocks_json_string.encode('utf-8')).hexdigest()
+
         full_data = {
             "ballot_id": ballot.id,
             "ballot_title": ballot.title,
             "exported_at": timezone.localtime(timezone.now()).isoformat(),
-            "blocks": blockchain.to_dict_list()
+            "chain_hash": new_chain_hash,
+            "blocks": blocks_data_list
         }
-
+        
 
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(full_data, f, indent=4)
-
-        
-        # --- THÊM BƯỚC TẠO BACKUP ---
-        # Tạo backup của file cũ TRƯỚC KHI ghi đè
+            json.dump(full_data, f, indent=4, ensure_ascii=False)
         create_backup(ballot.id, blockchain_export_dir)
-        # --- KẾT THÚC BƯỚC TẠO BACKUP ---
 
-        messages.success(request, 'Bỏ phiếu thành công!')
+        messages.success(request, 'Bỏ phiếu thành công! Phiếu của bạn đã được mã hóa và ghi vào sổ cái.')
         return redirect('chitiet_baucu_u', id=id)
 
     except Exception as e:

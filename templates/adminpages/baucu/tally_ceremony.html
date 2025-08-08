@@ -1,0 +1,83 @@
+
+<!-- adminpages/baucu/tally_ceremony.html -->
+{% extends 'adminpages/index.html' %}
+{% load static %}
+{% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+<div class="card">
+    <div class="card-header">
+        <h4><i class="ti ti-key me-2"></i>Lễ Kiểm phiếu cho: {{ ballot.title }}</h4>
+    </div>
+    <div class="card-body">
+
+
+        <div class="alert alert-info">
+            <h5 class="alert-heading">Trạng thái Thu thập Mảnh khóa</h5>
+            <p>Đã nhận được <strong>{{ submitted_count }}</strong> trên tổng số <strong>{{ members_status|length }}</strong> mảnh khóa. Cần ít nhất <strong>{{ threshold }}</strong> mảnh để có thể giải mã.</p>
+            <progress class="progress" value="{{ submitted_count }}" max="{{ threshold }}"></progress>
+        </div>
+
+        <hr>
+
+        <h5>Danh sách Thành viên Hội đồng</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status in members_status %}
+                <tr>
+                    <td>{{ status.user.username }}</td>
+                    <td>
+                        {% if status.has_submitted %}
+                            <span class="badge bg-success">Đã 
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning">Chưa nộp</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+
+        <!-- Form để thành viên hiện tại nộp mảnh khóa -->
+        <div class="my-4">
+            <h5>Nộp Mảnh khóa của bạn</h5>
+            <p>Nếu bạn là một thành viên của Hội đồng và chưa nộp mảnh khóa, vui lòng tải lên file `.key` của bạn tại đây.</p>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input type="file" class="form-control" name="key_share_file" required>
+                    <button class="btn btn-primary" type="submit" name="submit_share">Nộp Mảnh khóa</button>
+                </div>
+            </form>
+        </div>
+
+        <hr>
+
+        <!-- Nút để giải mã cuối cùng -->
+        <div class="text-center mt-4">
+            <form method="POST">
+                {% csrf_token %}
+                {% if can_tally %}
+                    <button type="submit" name="tally_votes" class="btn btn-lg btn-success" onclick="return confirm('Bạn có chắc chắn muốn giải mã và kiểm phiếu không? Hành động này không thể hoàn tác.')">
+                        <i class="ti ti-lock-open me-2"></i>Giải mã và Kiểm phiếu
+                    </button>
+                {% else %}
+                    <button class="btn btn-lg btn-secondary" disabled>Chưa đủ điều kiện Giải mã</button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+        </div>
+    </div>
