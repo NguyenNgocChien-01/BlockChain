@@ -1,8 +1,8 @@
 {
     "ballot_id": 53,
     "ballot_title": "BẦU NHÓM TRƯỞNG",
-    "exported_at": "2025-08-08T21:34:48.343980+07:00",
-    "chain_hash": "a19f1194aa5aab1a7fed9949d382ff290e6dcf197530b74723ef0930c7a61796",
+    "exported_at": "2025-08-08T22:01:21.943931+07:00",
+    "chain_hash": "02e18419dffd115ac24dfa2b569490d100977a2154258c8a187e5f9996fb6095",
     "blocks": [
         {
             "index": 0,
@@ -54,6 +54,23 @@
             "difficulty": 2,
             "nonce": 94,
             "hash": "00a7f5230c4d18acc46d0bd7917ad565179dcb74ba119b5cf80efb1354db1e6d"
+        },
+        {
+            "index": 3,
+            "timestamp": "2025-08-08T22:01:21.936931+07:00",
+            "transactions": [
+                {
+                    "vote_id": 45,
+                    "encrypted_vote": "Vw74sZa9gnJ-ru3CkE_CtzMpEAtfd7ED9wSZZesQJ14guaXclQog-KsB3T6znDN3GhjSdlCqYO5cK1XxIDxWkys1w-YVVe54C9z8y2NnA0y2uDRvt-NDpYLkcJ9Xr6HrrYw8af-YWsrSMllLCsFYwkMKViQG5TJ3zqYBCkbGyxedzjwhMEx2b5tJdfnbxNgLiN4icuClvuvW1lKCXkk1Kq3QPvsfev19EA1nRu9wV3Uv7r0ITp_UqHbRxuFbTGmdHvaNWkczcO0LVajay3aqEAPNcnFuvYN_ha5dwjL33Csi-bOMiSFBGuEbyTHHsmqXC6xnXHyxghqpGFdMKSgffA==",
+                    "voter_public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtA0cBKIZEhqzXrRUDXxm0GL3A9+InWGjcnugvXeJ6r8qcgabpPPRy0NnGkzDcRKgCZJ/U23a+dvuMmvMBWCYvg==",
+                    "signature": "MEQCIGOj79zmJyh14zhnSkLaoT7rf0_k4Q8E5JRn2ZRnLTuCAiBy95myMAdgiswDtuS2gJEwaHeEtCWUr6cCOUc7L_X5Sw==",
+                    "timestamp": "2025-08-08T15:01:21.929929+00:00"
+                }
+            ],
+            "previous_hash": "00a7f5230c4d18acc46d0bd7917ad565179dcb74ba119b5cf80efb1354db1e6d",
+            "difficulty": 2,
+            "nonce": 562,
+            "hash": "00c0eec32b005d8c2654f47ce82d86826617f708f91ab1022ddac0001d9b19e4"
         }
     ]
 }

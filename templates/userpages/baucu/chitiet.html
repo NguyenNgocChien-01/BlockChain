@@ -42,36 +42,38 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-
-                <h4>Danh sách ứng cử viên</h4>
-                <div class="list-group mb-3">
-                    {% for ungcuvien in ungcuviens %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 align-items-center">
-                            <div class="me-3">
-                                {% if ungcuvien.avatar %}
-                                    <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60" style="object-fit: cover;">
-                                {% else %}
-                                    <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
-                                {% endif %}
+                    <form method="POST" action="{% url 'bo_phieu' baucu.id %}" id="voteForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="list-group mb-3">
+                            {% for ungcuvien in ungcuviens %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 align-items-center">
+                                    <div class="me-3">
+                                        {% if ungcuvien.avatar %}
+                                            <img src="{{ ungcuvien.avatar.url }}" class="rounded-circle" alt="{{ ungcuvien.name }}" width="60" height="60">
+                                        {% else %}
+                                            <img src="{% static 'images/user/avatar-8.jpg' %}" class="rounded-circle" alt="Default Avatar" width="60" height="60">
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">{{ ungcuvien.name }}</h5>
+                                        <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <!-- === THAY ĐỔI TỪ RADIO SANG CHECKBOX === -->
+                                        <input type="checkbox" 
+                                            class="form-check-input" 
+                                            name="candidates"  {# Đổi tên thành số nhiều #}
+                                            id="uc{{ ungcuvien.id }}" 
+                                            value="{{ ungcuvien.id }}">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1">{{ ungcuvien.name }}</h5>
-                                <p class="mb-1 text-muted small">{{ ungcuvien.description|truncatewords:20 }}</p>
+                            {% empty %}
+                            <div class="text-center p-5">
+                                <p class="text-muted">Chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
                             </div>
-                            <div class="ms-auto">
-                                {% if is_active and request.user.is_authenticated and is_voter and not has_voted %}
-                                    <input type="checkbox" class="form-check-input candidate-checkbox" name="candidates" id="uc{{ ungcuvien.id }}" value="{{ ungcuvien.id }}">
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center p-5">
-                        <p class="text-muted">Chưa có ứng cử viên nào trong cuộc bầu cử này.</p>
-                    </div>
-                    {% endfor %}
-                </div>
+                            {% endfor %}
 
                 {% if not request.user.is_authenticated %}
                     <div class="alert alert-warning text-center" role="alert">

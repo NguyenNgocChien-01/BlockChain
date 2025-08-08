@@ -1,16 +1,16 @@
 {
     "ballot_id": 53,
     "ballot_title": "BẦU NHÓM TRƯỞNG",
-    "tally_completed_at": "2025-08-08T21:36:35.699018+07:00",
-    "results_hash": "903604d8cb0c0e17147de903dd13d67c9c2882ede99a852b09386184aa681e2a",
+    "tally_completed_at": "2025-08-08T22:02:36.387919+07:00",
+    "results_hash": "d06f178f54dfce63cdf9a046e90ed7411f91a0b4da363c902cf2889d3575edd3",
     "results": [
         {
             "name": "Hoanh Anh",
-            "count": 1
+            "count": 2
         },
         {
             "name": "Ngoc Chien",
-            "count": 1
+            "count": 2
         }
     ]
 }
