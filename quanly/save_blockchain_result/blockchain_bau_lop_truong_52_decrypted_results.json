@@ -1,0 +1,27 @@
+{
+    "ballot_id": 52,
+    "ballot_title": "Bầu Lớp Trưởng",
+    "tally_completed_at": "2025-08-08T13:47:11.552131+07:00",
+    "results": [
+        {
+            "name": " Anh Kiet",
+            "count": 2
+        },
+        {
+            "name": " Tri Minh",
+            "count": 2
+        },
+        {
+            "name": " Hong Thang",
+            "count": 2
+        },
+        {
+            "name": " Phi Nhan",
+            "count": 1
+        },
+        {
+            "name": " Bao Vinh",
+            "count": 1
+        }
+    ]
+}

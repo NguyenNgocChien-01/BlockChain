@@ -1,78 +1,37 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <title>Home | Mantis Bootstrap 5 Admin Template</title>
-  <!-- [Meta] -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="description" content="Mantis is made using Bootstrap 5 design framework.">
-  <meta name="keywords" content="Mantis, Dashboard UI Kit, Bootstrap 5, Admin Template">
-  <meta name="author" content="CodedThemes">
+    <title>Admin Dashboard | Hệ thống Bầu cử</title>
+    <!-- [Meta] -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  
-  <!-- [Favicon] icon -->
-  <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/x-icon">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <!-- [Google Font] Family -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">
-  
-  <!-- [Tabler Icons] -->
-  <link rel="stylesheet" href="{% static 'fonts/tabler-icons.min.css' %}">
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- [Favicon] icon -->
+    <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/x-icon">
+    
+    <!-- [Fonts] -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{% static 'fonts/tabler-icons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/feather.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/fontawesome.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/material.css' %}">
 
-<!-- Bootstrap 5 JS (cho nút đóng hoạt động) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <!-- [Feather Icons] -->
-  <link rel="stylesheet" href="{% static 'fonts/feather.css' %}">
-  
-  <!-- [Font Awesome Icons] -->
-  <link rel="stylesheet" href="{% static 'fonts/fontawesome.css' %}">
-  
-  <!-- [Material Icons] -->
-  <link rel="stylesheet" href="{% static 'fonts/material.css' %}">
-  
-  <!-- [Template CSS Files] -->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}" id="main-style-link">
-  <link rel="stylesheet" href="{% static 'css/style-preset.css' %}">
-
-  {% comment %} <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" id="main-style-link"> {% endcomment %}
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <link rel="stylesheet" href="{% static 'css/style-preset.css' %}">
-  <style>
-  .alert {
-    position: relative;
-    padding: 12px 40px 12px 20px; /* thêm padding phải */
-    border-radius: 8px;
-    background-color: #f8d7da; /* ví dụ màu đỏ cho lỗi */
-    color: #721c24;
-    margin-bottom: 10px;
-  }
-
-  .alert .close-btn {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>
+    <!-- [Template CSS Files] -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" id="main-style-link">
+    <link rel="stylesheet" href="{% static 'css/style-preset.css' %}">
 </head>
-<!-- [Head] end -->
-<!-- [Body] Start -->
 
+<body>
+    <!-- [ Pre-loader ] start -->
+    <div class="loader-bg">
+        <div class="loader-track">
+            <div class="loader-fill"></div>
+        </div>
+    </div>
+    <!-- [ Pre-loader ] End -->
 <div class="modal fade" id="customMessageModal" tabindex="-1" aria-labelledby="customMessageModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg">
@@ -100,64 +59,89 @@
     </div>
   </div>
 </div>
-  <!-- [ Pre-loader ] start -->
-<div class="loader-bg">
-  <div class="loader-track">
-    <div class="loader-fill"></div>
-  </div>
-</div>
-<!-- [ Pre-loader ] End -->
- <!-- [ Sidebar Menu ] start -->
-<nav class="pc-sidebar">
-  <div class="navbar-wrapper">
-    <div class="m-header">
-      <a href="../dashboard/index.html" class="b-brand text-primary">
-        <!-- ========   Change your logo from here   ============ -->
-        {% comment %} <img src="../assets/images/logo-dark.svg" class="img-fluid logo-lg" alt="logo"> {% endcomment %}
-      </a>
-    </div>
-    <div class="navbar-content">
-      <ul class="pc-navbar">
+    <!-- [ Sidebar Menu ] start -->
+    <nav class="pc-sidebar">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="{% url 'trangchu' %}" class="b-brand text-primary">
+                    <!-- Your Logo Here -->
+                    <span class="fs-4 fw-bold">Bầu Cử Admin</span>
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="pc-navbar">
+                    <li class="pc-item pc-caption">
+                        <label>Hệ thống</label>
+                        <i class="ti ti-dashboard"></i>
+                    </li>
+                    <li class="pc-item">
+                        <a href="{% url 'baucu' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-archive"></i></span>
+                            <span class="pc-mtext">Quản lý Bầu Cử</span>
+                        </a>
+                    </li>
+                    <li class="pc-item">
+                        <a href="{% url 'ds_user' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-users"></i></span>
+                            <span class="pc-mtext">Quản lý Người dùng</span>
+                        </a>
+                    </li>
+                    {% comment %} <li class="pc-item">
+                        <a href="{% url 'chart_report' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-chart-bar"></i></span>
+                            <span class="pc-mtext">Báo cáo & Phân tích</span>
+                        </a>
+                    </li> {% endcomment %}
+                    <li class="pc-item">
+                        <a href="{% url 'lichsu_change' %}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-history"></i></span>
+                            <span class="pc-mtext">Lịch sử Cảnh báo</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- [ Sidebar Menu ] end -->
 
-
-        <li class="pc-item pc-caption">
-          <label>Hệ thống</label>
-          <i class="ti ti-dashboard"></i>
-        </li>
-        <li class="pc-item">
-          <a href="{% url 'baucu' %}" class="pc-link">
-            <span class="pc-micon"><i class="ti ti-typography"></i></span>
-            <span class="pc-mtext">Bầu Cử</span>
-          </a>
-        </li>
-        <li class="pc-item">
-          <a href="{% url 'ds_user' %}" class="pc-link">
-            <span class="pc-micon"><i class="ti ti-user"></i></span>
-            <span class="pc-mtext">Người dùng </span>
-          </a>
-        </li>
-        <li class="pc-item">
-          <a href="{% url 'chart' %}" class="pc-link">
-            <span class="pc-micon"><i class="ti ti-chart-bar"></i></span>
-            <span class="pc-mtext">Biểu đồ</span>
-          </a>
-        </li>
-        <li class="pc-item">
-          <a href="{% url 'lichsu_change' %}" class="pc-link">
-            <span class="pc-micon"><i class="ti ti-history"></i></span>
-            <span class="pc-mtext">Lịch sử cảnh báo</span>
-          </a>
-        </li>
-
-
-
-</nav>
-<!-- [ Sidebar Menu ] end --> <!-- [ Header Topbar ] start -->
-<header class="pc-header">
-
-<!-- [Mobile Media Block end] -->
-
-</header>
+    <!-- [ Header Topbar ] start -->
+    <header class="pc-header">
+        <div class="header-wrapper">
+            <div class="me-auto pc-mob-drp">
+                <!-- Mobile Menu Toggle -->
+            </div>
+            
+            <!-- =============================================================== -->
+            <!-- ================ KHU VỰC USER VÀ NÚT ĐĂNG XUẤT ================ -->
+            <!-- =============================================================== -->
+            <div class="ms-auto">
+                <ul class="list-unstyled">
+                    <li class="dropdown pc-h-item">
+                        <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                            <i class="ti ti-user"></i>
+                            <span>
+                                <span class="user-name ms-2">{{ request.user.username }}</span>
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end pc-h-dropdown">
+                            <h6 class="px-3 mb-3">Xin chào, {{ request.user.get_full_name|default:request.user.username }}</h6>
+                            <a href="{% url 'ds_user' %}" class="dropdown-item">
+                                <i class="ti ti-user"></i>
+                                <span>Hồ sơ</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{% url 'admin_logout' %}" class="dropdown-item">
+                                <i class="ti ti-logout"></i>
+                                <span>Đăng xuất</span>
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <!-- =============================================================== -->
+        </div>
+    </header>
+    <!-- [ Header ] end -->
 <!-- [ Header ] end -->
 <main>
 {% block content %}

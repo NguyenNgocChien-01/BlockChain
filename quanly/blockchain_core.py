@@ -9,9 +9,9 @@ class VoteTransaction:
     """
     Đại diện cho một giao dịch phiếu bầu trong một khối.
     """
-    def __init__(self, vote_id, candidate_names, voter_public_key, signature, timestamp):
+    def __init__(self, vote_id, encrypted_vote, voter_public_key, signature, timestamp):
         self.vote_id = vote_id
-        self.candidate_names = candidate_names
+        self.encrypted_vote = encrypted_vote 
         self.voter_public_key = voter_public_key
         self.signature = signature
         self.timestamp = timestamp

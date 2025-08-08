@@ -23,12 +23,16 @@
                         <a href="#" class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#councilMembersModal">
                             <i class="ti ti-crown"></i> Xem Hội đồng
                         </a>
-                        {%else%}
-                        ko o
                         {% endif %}
+                        {% if not is_active %}
+                        <a href="{% url 'tally_ceremony' baucu.id %}" class="btn btn-success me-2">
+                            <i class="ti ti-key"></i> Bắt đầu Kiểm phiếu
+                        </a>
+                      
                         <a href="{% url 'ketqua_baucu' baucu.id %}" class="btn btn-info me-2">
                             <i class="ti ti-chart-bar"></i> Xem Kết Quả
                         </a>
+                        {% endif %}
 
                         {% if is_active %} 
                         <a href="{% url 'ketthuc_baucu' baucu.id %}" 

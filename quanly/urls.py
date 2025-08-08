@@ -23,11 +23,14 @@ urlpatterns = [
     path('ds_user/delete/<int:id>/', delete_user, name='delete_user'),
     path('ds_user/edit/<int:id>/', edit_user, name='edit_user'),
     path('ds_user/<int:user_id>/revoke-voter/', views.revoke_voter_status, name='revoke_voter_status'),
-    path('ketqua/<int:id>/', views.ketqua_baucu, name='ketqua_baucu'),
+    path('ketqua/<int:id>/', ketqua_baucu, name='ketqua_baucu'),
     path('dsphieu/<int:ballot_id>/', danhsach_phieubau, name='danhsach_phieubau'),
     # path('baucu/dao_all/', dao_all_block, name='dao_all'),
     # path('baucu/dao-block/<int:id>/', dao_block , name='dao_block'),
     path('lichsu-change/', lichsu_change, name='lichsu_change'),
+    path('baucu/tally/<int:ballot_id>/', tally_ceremony_view, name='tally_ceremony'),
+    path('login/', admin_login_view, name='admin_login'),
+    path('logout/', admin_logout_view, name='admin_logout'),
 
 
 

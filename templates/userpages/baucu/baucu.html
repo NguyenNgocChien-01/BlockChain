@@ -72,7 +72,7 @@
                                 
                                 {% if baucu.start_date <= now and baucu.end_date >= now %}
                                     <a href="{% url 'chitiet_baucu_u' baucu.id %}" class="btn btn-success mt-auto">
-                                        <i class="ti ti-vote"></i> Tham gia bỏ phiếu
+                                     <i class="ti ti-vote"></i> Tham gia bỏ phiếu
                                     </a>
                                 {% elif baucu.start_date > now %}
                                     <button class="btn btn-secondary mt-auto" disabled>

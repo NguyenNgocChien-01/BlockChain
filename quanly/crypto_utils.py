@@ -1,46 +1,94 @@
 # quanly/crypto_utils.py
 import json
-from tgalice import n_pk, n_sk # type: ignore
+import os
+from base64 import urlsafe_b64encode, urlsafe_b64decode
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.backends import default_backend
+import pyshamir
 
 def generate_threshold_keys(num_members, threshold):
+    """
+    Tạo một cặp khóa RSA và chia nhỏ khóa bí mật bằng thuật toán Shamir's Secret Sharing.
+    """
+    # 1. Tạo một cặp khóa RSA để mã hóa
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+        backend=default_backend()
+    )
+    public_key = private_key.public_key()
+    
+    public_key_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+    
+    private_key_pem_bytes = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
 
-    # Tạo khóa công khai và các mảnh khóa bí mật
-    public_key, secret_key_shares = n_pk(k=threshold, n=num_members)
+    # 2. Chia nhỏ khóa bí mật (dạng bytes) thành các mảnh
+    # --- SỬA LỖI Ở ĐÂY: pyshamir.split trả về một danh sách các bytes ---
+    shares_bytes_list = pyshamir.split(private_key_pem_bytes, num_members, threshold)
     
-    # Chuyển đổi sang định dạng JSON để có thể lưu trữ
-    pk_json = public_key.to_json()
-    sk_shares_json = [sk.to_json() for sk in secret_key_shares]
+    # Chuyển đổi mỗi mảnh (bytes) thành chuỗi Base64 để có thể lưu trữ
+    shares_str = [urlsafe_b64encode(share).decode('ascii') for share in shares_bytes_list]
     
-    return pk_json, sk_shares_json
+    return public_key_pem, shares_str
 
-def encrypt_vote(public_key_json: str, candidate_ids: list) -> str:
+def encrypt_vote(public_key_pem: str, candidate_ids: list) -> str:
+    """
+    Mã hóa lựa chọn của cử tri bằng khóa công khai RSA của Hội đồng.
+    """
+    public_key = serialization.load_pem_public_key(
+        public_key_pem.encode('utf-8'),
+        backend=default_backend()
+    )
+    
+    message_to_encrypt = json.dumps(sorted(candidate_ids))
+    
+    ciphertext = public_key.encrypt(
+        message_to_encrypt.encode('utf-8'),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    return urlsafe_b64encode(ciphertext).decode('utf-8')
 
-    public_key = n_pk.from_json(public_key_json)
-    
-    # Chuyển danh sách ID thành một chuỗi để mã hóa, ví dụ: "1,5,9"
-    # Sắp xếp để đảm bảo tính nhất quán
-    message_to_encrypt = ",".join(map(str, sorted(candidate_ids)))
-    
-    # Mã hóa thông điệp
-    ciphertext = public_key.encrypt(message_to_encrypt)
-    
-    return ciphertext.to_json()
+def combine_shares_and_decrypt(key_shares_str: list, encrypted_vote_data: str) -> list:
+    """
+    Kết hợp các mảnh khóa để tái tạo khóa bí mật và giải mã phiếu bầu.
+    """
+    # 1. Chuyển đổi các chuỗi mảnh khóa Base64 về lại dạng bytes
+    # --- SỬA LỖI Ở ĐÂY: Không cần tách index và value ---
+    shares_bytes_list = [urlsafe_b64decode(share_str.encode('ascii')) for share_str in key_shares_str]
 
-def create_decryption_share(key_share_json: str, ciphertext_json: str) -> str:
-
-    key_share = n_sk.from_json(key_share_json)
-    ciphertext = n_pk.ciphertext_from_json(ciphertext_json)
+    # 2. Tái tạo lại khóa bí mật từ các mảnh
+    private_key_pem_bytes = pyshamir.combine(shares_bytes_list)
     
-    decryption_share = key_share.decrypt_share(ciphertext)
+    private_key = serialization.load_pem_private_key(
+        private_key_pem_bytes,
+        password=None,
+        backend=default_backend()
+    )
     
-    return decryption_share.to_json()
-
-def combine_decryption_shares(public_key_json: str, decryption_shares_json_list: list) -> str:
-
-    public_key = n_pk.from_json(public_key_json)
-    decryption_shares = [n_sk.decryption_share_from_json(s) for s in decryption_shares_json_list]
+    # 3. Giải mã dữ liệu
+    ciphertext = urlsafe_b64decode(encrypted_vote_data.encode('utf-8'))
     
-    # Giải mã thông điệp
-    decrypted_message = public_key.decrypt(decryption_shares)
+    decrypted_message = private_key.decrypt(
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
     
-    return str(decrypted_message)
+    candidate_ids = json.loads(decrypted_message.decode('utf-8'))
+    return candidate_ids
