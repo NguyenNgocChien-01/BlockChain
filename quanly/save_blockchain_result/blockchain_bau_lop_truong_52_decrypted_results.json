@@ -1,27 +1,27 @@
 {
     "ballot_id": 52,
     "ballot_title": "Bầu Lớp Trưởng",
-    "tally_completed_at": "2025-08-08T19:38:11.947784+07:00",
-    "results_hash": "19cafbb26cb3bc95f736fefee5ae8e733fc5f911e47f19b8be225b544f494797",
+    "tally_completed_at": "2025-08-09T02:27:10.394467+07:00",
+    "results_hash": "ca40fcec23ba9bc41e99414f76bd94ea9a50b01e9d17818d51c3b45febd6f7d6",
     "results": [
         {
-            "name": "ID không xác định: 58",
+            "name": "Anh Kiet",
+            "count": 3
+        },
+        {
+            "name": "Hong Thang",
+            "count": 3
+        },55
+        {
+            "name": "Bao Vinh",
             "count": 2
         },
         {
-            "name": "ID không xác định: 59",
-            "count": 2
-        },
-        {
-            "name": "ID không xác định: 60",
-            "count": 2
-        },
-        {
-            "name": "ID không xác định: 61",
+            "name": "Tri Minh",
             "count": 1
         },
         {
-            "name": "ID không xác định: 62",
+            "name": "Phi Nhan",
             "count": 1
         }
     ]

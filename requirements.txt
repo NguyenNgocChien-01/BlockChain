@@ -2,3 +2,4 @@ django
 django-user-agents
 pyshamir
 pycryptodome
+watchdog

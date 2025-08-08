@@ -426,57 +426,52 @@ def revoke_voter_status(request, user_id):
         messages.warning(request, f'Người dùng "{user_to_update.username}" không phải là cử tri.')
         
     return redirect('ds_user')
-
 def ketqua_baucu(request, id):
     """
-    Hiển thị kết quả bầu cử bằng cách đọc file JSON đã được giải mã,
-    có cơ chế phát hiện và xử lý sửa đổi.
+    Hiển thị kết quả bầu cử, có cơ chế phát hiện và xử lý sửa đổi.
     """
     baucu = get_object_or_404(Ballot, pk=id)
     
     if baucu.end_date > timezone.now():
-        messages.warning(request, "Kết quả chỉ có thể xem sau khi cuộc bầu cử kết thúc.")
+        messages.warning(request, "Kết quả chỉ có thể xem sau khi cuộc bầu cử kết thúc và đã được kiểm phiếu.")
         return redirect('chitiet_baucu', id=id)
 
-    # Lấy đường dẫn đến file kết quả đã giải mã bằng hàm tiện ích
-    filepath = get_decrypted_results_path(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
-
-
-    # --- BƯỚC 1: KIỂM TRA TÍNH TOÀN VẸN CỦA FILE TRƯỚC KHI ĐỌC ---
+    # --- BƯỚC 1: KIỂM TRA TÍNH TOÀN VẸN CỦA FILE KẾT QUẢ ---
     is_valid, verify_msg = verify_decrypted_results_integrity(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
     if not is_valid:
-        # Nếu file đã bị sửa đổi, thực hiện các bước khẩn cấp
-        # backup_path = backup_tampered_file(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
-        # messages.info(request, f"Đang kiểm tra tính toàn vẹn của file kết quả: {backup_path}")
-        # return redirect('chitiet_baucu', id=id)
-
+        # 1. Backup file đã bị sửa đổi để làm bằng chứng
+        backup_path = backup_tampered_file_for_results(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
+        
+        # 2. Ghi log lại sự cố
         log_tampering_event(
             ballot=baucu,
-            verify_msg=verify_msg,
+            verify_msg=f"FILE KẾT QUẢ: {verify_msg}",
             user=request.user,
-            ip_address=get_client_ip(request)
+            ip_address=get_client_ip(request),
+            backup_path=backup_path,
+            file_type='results'
         )
         
-        # Thử phục hồi từ bản sao lưu an toàn gần nhất
-        if restore_from_backup(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT):
-            messages.warning(request, "CẢNH BÁO: File kết quả đã bị thay đổi! Hệ thống đã tự động phục hồi từ bản sao lưu an toàn gần nhất.")
+        # 3. Thử phục hồi từ bản sao lưu an toàn
+        if restore_from_backup_for_results(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT):
+            messages.warning(request, "CẢNH BÁO: File kết quả đã bị thay đổi! Hệ thống đã tự động phục hồi. Vui lòng tải lại trang.")
+            return redirect('ketqua_baucu', id=id)
         else:
             messages.error(request, "LỖI BẢO MẬT: File kết quả đã bị thay đổi và không thể phục hồi. Vui lòng liên hệ quản trị viên.")
-        
-        return redirect('chitiet_baucu', id=id)
+            return redirect('chitiet_baucu', id=id)
 
+    # --- BƯỚC 2: ĐỌC VÀ HIỂN THỊ KẾT QUẢ TỪ FILE AN TOÀN ---
+    filepath = get_decrypted_results_path(baucu.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
     ketqua = []
     tong_so_phieu = 0
 
     try:
-        # --- BƯỚC 2: ĐỌC VÀ HIỂN THỊ KẾT QUẢ TỪ FILE SAU KHI ĐÃ XÁC MINH ---
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
             ketqua = data.get('results', [])
             tong_so_phieu = sum(item['count'] for item in ketqua)
-
     except FileNotFoundError:
-        messages.warning(request, "File kết quả chưa được tạo. Vui lòng chạy lệnh kiểm phiếu.")
+        messages.warning(request, "File kết quả chưa được tạo. Vui lòng thực hiện 'Lễ Kiểm phiếu' trước.")
         ketqua = []
     except Exception as e:
         messages.error(request, f"Lỗi khi đọc file kết quả: {e}")
@@ -651,8 +646,6 @@ def lichsu_change(request):
 #     except Exception as e:
 #         messages.error(request, f"Lỗi nghiêm trọng khi giải mã: {e}")
 #         return redirect('tally_ceremony', ballot_id=ballot.id)
-
-
 def tally_ceremony_view(request, ballot_id):
     """
     View chính xử lý toàn bộ quy trình "Lễ Kiểm phiếu".
@@ -691,6 +684,7 @@ def tally_ceremony_view(request, ballot_id):
         'can_tally': len(submitted_member_ids) >= ballot.threshold
     }
     return render(request, 'adminpages/baucu/tally_ceremony.html', context)
+
 
 
 def handle_submit_share(request, ballot):
@@ -745,7 +739,6 @@ def handle_tally_votes(request, ballot, submitted_shares_qs):
                 if hasattr(vote_obj, 'candidates'):
                     vote_obj.candidates.set(candidate_ids)
             
-            # Đánh dấu cuộc bầu cử đã được kiểm phiếu
             ballot.is_tallied = True
             ballot.save()
 
@@ -763,8 +756,10 @@ def handle_tally_votes(request, ballot, submitted_shares_qs):
         
         sorted_results = sorted(results, key=lambda x: x['count'], reverse=True)
         
-        # Lưu kết quả đã giải mã ra file JSON công khai
+        # 1. Lưu kết quả đã giải mã ra file JSON công khai
         save_decrypted_blockchain_to_json(ballot, sorted_results, BLOCKCHAIN_EXPORT_DIR_RESULT)
+        
+        # 2. TẠO BACKUP CHO FILE KẾT QUẢ VỪA TẠO
         create_backup_for_results(ballot.id, BLOCKCHAIN_EXPORT_DIR_RESULT)
         
         # Xóa các mảnh khóa đã nộp sau khi hoàn tất để tăng bảo mật

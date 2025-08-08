@@ -116,20 +116,24 @@ def ds_baucu(request):
     }
     
     return render(request, 'userpages/baucu/baucu.html', context)
-
 def chitiet_baucu_u(request, id):
+    """
+    Hiển thị trang chi tiết. Nếu cuộc bầu cử đã kết thúc,
+    sẽ tự động kiểm tra và hiển thị kết quả nếu có.
+    """
     ballot = get_object_or_404(Ballot, pk=id)
     candidates = Candidate.objects.filter(ballot=ballot)
     
-    now = timezone.localtime(timezone.now())
+    now = timezone.now()
     is_active = ballot.start_date <= now <= ballot.end_date
     is_ended = now > ballot.end_date
     is_voter = hasattr(request.user, 'voter')
     has_voted = False
 
+    # Các biến mới để xử lý kết quả
     election_results = None
     is_pending_tally = False
-    winners = []
+    winners = [] # Biến để lưu người thắng cuộc
 
     if is_voter:
         has_voted = Vote.objects.filter(
@@ -137,27 +141,40 @@ def chitiet_baucu_u(request, id):
             voter_public_key=request.user.voter.public_key
         ).exists()
 
+    # Chỉ xử lý kết quả khi cuộc bầu cử đã kết thúc
     if is_ended:
-        # Kiểm tra nếu kết quả đã được niêm phong
-        filepath = get_decrypted_results_path(ballot.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
-        if os.path.exists(filepath):
-            is_valid, verify_msg = verify_decrypted_results_integrity(ballot.id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
-            if not is_valid:
-                messages.error(request, f"LỖI BẢO MẬT: File kết quả đã bị thay đổi! {verify_msg}")
-            else:
-                try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        results_data = json.load(f)
-                    
-                    election_results = results_data.get('results', [])
+        # --- LOGIC MỚI: TỰ ĐỘNG KIỂM TRA SỰ TỒN TẠI CỦA FILE KẾT QUẢ ---
+        # Xây dựng đường dẫn đến file kết quả
+        original_path = get_blockchain_file_path(ballot_id=id, base_export_dir=BLOCKCHAIN_EXPORT_DIR_RESULT)
+        base, ext = os.path.splitext(os.path.basename(original_path))
+        decrypted_filename = f"{base}_decrypted_results.json"
+        filepath = os.path.join(BLOCKCHAIN_EXPORT_DIR_RESULT, decrypted_filename)
 
-                    if election_results:
-                        max_votes = max(item['count'] for item in election_results)
-                        winner_names = [item['name'].strip() for item in election_results if item['count'] == max_votes]
-                        winners = Candidate.objects.filter(ballot=ballot, name__in=winner_names)
-                except (FileNotFoundError, json.JSONDecodeError, Exception):
-                    is_pending_tally = True
+        # Nếu file kết quả đã tồn tại, đọc nó
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    results_data = json.load(f)
+                election_results = results_data.get('results', [])
+
+                # --- LOGIC MỚI: XÁC ĐỊNH NGƯỜI THẮNG CUỘC ---
+                if election_results:
+                    # 1. Tìm ra số phiếu cao nhất
+                    max_votes = max(item['count'] for item in election_results)
+                    
+                    # 2. Tìm tên của tất cả các ứng viên có số phiếu bằng số phiếu cao nhất
+                    winner_names = [
+                        item['name'].strip() for item in election_results if item['count'] == max_votes
+                    ]
+                    
+                    # 3. Lấy các đối tượng Candidate đầy đủ từ CSDL để có thể hiển thị ảnh
+                    winners = Candidate.objects.filter(ballot=ballot, name__in=winner_names)
+
+            except Exception:
+                # Nếu file tồn tại nhưng bị lỗi, coi như vẫn đang chờ
+                is_pending_tally = True
         else:
+            # Nếu file chưa tồn tại, nghĩa là đang chờ kiểm phiếu
             is_pending_tally = True
 
     context = {
@@ -166,13 +183,12 @@ def chitiet_baucu_u(request, id):
         'is_active': is_active,
         'has_voted': has_voted,
         'is_voter': is_voter,
-        'is_ended': is_ended, 
-        'election_results': election_results,
-        'is_pending_tally': is_pending_tally,
-        'winners': winners,
+        'is_ended': is_ended,   
+        'election_results': election_results, # Truyền kết quả
+        'is_pending_tally': is_pending_tally, # Truyền trạng thái chờ
+        'winners': winners, # Truyền danh sách người thắng cuộc
     }
     return render(request, 'userpages/baucu/chitiet.html', context)
-
 
 
 def view_dangky_cutri(request):
@@ -254,33 +270,43 @@ def _check_vote_eligibility(request, ballot, voter):
 
 
 def my_vote(request, id):
-
+    """
+    Hiển thị trang cho người dùng xem lại phiếu đã bầu của mình.
+    Nếu cuộc bầu cử đã kết thúc và được kiểm phiếu, nó sẽ hiển thị
+    các lựa chọn đã được giải mã.
+    """
     ballot = get_object_or_404(Ballot, pk=id)
     
     if not hasattr(request.user, 'voter'):
-        messages.error(request, "Bạn không phải là cử tri.")
+        messages.error(request, "Tài khoản của bạn chưa được đăng ký làm cử tri.")
         return redirect('chitiet_baucu_u', id=id)
 
     now = timezone.now()
     is_ended = now > ballot.end_date
+    my_vote_obj = None
+    my_decrypted_candidates = [] # Biến để lưu các lựa chọn đã giải mã
 
+    try:
+        # Bước 1: Lấy bản ghi phiếu bầu của người dùng từ CSDL
+        # Dùng prefetch_related để tối ưu, sẵn sàng lấy danh sách ứng viên nếu có
+        my_vote_obj = Vote.objects.prefetch_related('candidates').get(
+            ballot=ballot, 
+            voter_public_key=request.user.voter.public_key
+        )
+    except Vote.DoesNotExist:
+        my_vote_obj = None
 
-
-    # my_vote = Vote.objects.prefetch_related('candidates').get(
-    #     ballot=ballot, 
-    #     voter_public_key=request.user.voter.public_key
-    # )
-    my_vote = Vote.objects.get(
-    ballot=ballot, 
-    voter_public_key=request.user.voter.public_key
-)
-
-
+    # Bước 2: Nếu cuộc bầu cử đã kết thúc và đã được kiểm phiếu,
+    # lấy ra các lựa chọn đã được giải mã.
+    # (Hàm kiểm phiếu của admin đã cập nhật lại trường 'candidates' trong CSDL)
+    if is_ended and my_vote_obj:
+        my_decrypted_candidates = my_vote_obj.candidates.all()
 
     context = {
         'baucu': ballot,
-        'my_vote': my_vote,
+        'my_vote': my_vote_obj,
         'is_ended': is_ended, 
+        'my_decrypted_candidates': my_decrypted_candidates, # Truyền danh sách đã giải mã
     }
     return render(request, 'userpages/baucu/my_vote.html', context)
 

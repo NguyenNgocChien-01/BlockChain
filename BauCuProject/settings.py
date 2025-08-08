@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "quanly",
     "user",
     'django_user_agents',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
